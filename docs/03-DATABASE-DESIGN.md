@@ -119,7 +119,7 @@
 | `categories` | id، parent_id nullable، name، slug، description، image_id nullable، sort_order، is_active، timestamps | شجرة أقسام متعددة المستويات؛ تكون قيمة `parent_id` فارغة للقسم الرئيسي، وتشير إلى القسم الأب للقسم الفرعي، ويمكن تكرار العلاقة لبناء مستويات إضافية حسب الحاجة. يجب منع ربط القسم بنفسه أو بأحد أحفاده لتجنب الدورات. |
 | `products` | id، category_id، sku nullable، name، slug، description، ingredients، product_type، base_price، is_active، sort_order، preparation_time nullable، timestamps | بيانات المنتج الأساسية |
 | `product_visibility_windows` | id، product_id، starts_at_time، ends_at_time، sort_order، timestamps | فترات ظهور يومية متعددة للمنتج؛ تتكرر كل يوم |
-| `product_images` | id، product_id، storage_disk، storage_path، alt_text، sort_order، is_primary، timestamps | صور المنتجات |
+| `product_images` | id، product_id، storage_disk، storage_path، alt_text، sort_order، is_primary، timestamps | عدة صور لكل منتج مع ترتيب عرض واضح وصورة أساسية واحدة فقط لكل منتج؛ يجب فرض عدم وجود أكثر من صورة أساسية واحدة للمنتج والتحقق من ارتباط كل صورة بمنتج واحد |
 | `category_product` | غير مستخدم في نموذج الإطلاق | لا تُستخدم علاقة متعدد-لمتعدد؛ يخزن كل منتج `category_id` إلزاميًا يشير إلى قسم واحد فقط، ويمكن أن يكون القسم المختار في أي مستوى من شجرة الأقسام |
 | `product_option_groups` | id، product_id، name، selection_type، min_select، max_select، is_required، sort_order، is_active | مجموعات الاختيارات والإضافات |
 | `product_options` | id، option_group_id، name، price_delta، is_active، sort_order | خيارات المنتج وتغير السعر |
@@ -451,7 +451,7 @@ erDiagram
 | 2 | هل حساب العميل إلزامي أم يسمح بالضيف دائمًا؟ | علاقة users/customers/orders |
 | 3 | هل الهاتف فريد عالميًا؟ وهل يسمح لأكثر من حساب؟ | قيود users/customers |
 | 4 | هل المنتجات والأسعار مشتركة أم تختلف حسب الفرع؟ | products وbranch_products |
-| 5 | هل صور المنتج متعددة دائمًا أم صورة أساسية فقط؟ | product_images |
+| 5 | قواعد الصور التقنية المتبقية: من يرفع الصور؟ وما الصيغ والأبعاد والحجم الأقصى والتخزين والضغط والنسخ الاحتياطي؟ | product_images، التخزين والنسخ الاحتياطي |
 | 6 | هل السلة تحفظ في الخادم أم محليًا؟ ومدة صلاحيتها؟ | carts/cart_items |
 | 7 | حالات الطلب وانتقالاتها النهائية | orders/order_status_history |
 | 8 | هل الطلب يقبل تعديل البنود بعد التأكيد؟ | order_adjustments وتاريخ التعديلات |
