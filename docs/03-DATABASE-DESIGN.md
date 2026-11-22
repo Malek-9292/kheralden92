@@ -178,7 +178,7 @@
 | الجدول | الحقول الأساسية المقترحة | الغرض |
 |---|---|---|
 | `orders` | id، order_number، branch_id، customer_id nullable، created_by_user_id nullable، order_type، status، payment_method، customer_name_snapshot، customer_phone_snapshot، delivery_address_snapshot nullable، subtotal، discount_total، delivery_fee، total، currency، minimum_order_snapshot nullable، customer_note nullable، idempotency_key، placed_at، completed_at nullable، cancelled_at nullable، timestamps | رأس الطلب ولقطته المالية والتشغيلية |
-| `order_items` | id، order_id، product_id nullable، product_name_snapshot، sku_snapshot nullable، quantity، unit_price، line_subtotal، line_discount، line_total، product_note nullable، timestamps | بنود الطلب مع لقطة المنتج |
+| `order_items` | id، order_id، product_id nullable، product_name_snapshot، sku_snapshot nullable، quantity، unit_price، line_subtotal، line_total، product_note nullable، timestamps | بنود الطلب مع لقطة المنتج؛ لا يخزن خصمًا موزعًا على مستوى البند |
 | `order_item_options` | id، order_item_id، option_group_name_snapshot، option_name_snapshot، price_delta، quantity، timestamps | الخيارات والإضافات المختارة وقت الطلب |
 | `order_status_history` | id، order_id، from_status nullable، to_status، changed_by_user_id nullable، reason nullable، created_at | تاريخ تغييرات الحالة |
 | `order_adjustments` | id، order_id، adjustment_type، label، amount، source_type nullable، source_id nullable، created_by_user_id، created_at | تعديلات مالية موثقة إذا سمحت السياسة بها |
@@ -187,7 +187,8 @@
 - لا يعتمد عرض الطلب التاريخي على الاسم أو السعر الحالي في جدول المنتجات.
 - يحتفظ `order_items` باسم الصنف وسعر الوحدة والكميات والإجماليات وقت الطلب.
 - يحتفظ `order_item_options` بأسماء الخيارات وأسعارها وقت الطلب.
-- يحتفظ `orders` ببيانات العميل والعنوان ورسوم التوصيل والخصم والإجمالي كما تم اعتمادها وقت إنشاء الطلب.
+- يحتفظ `orders` ببيانات العميل والعنوان ورسوم التوصيل وإجمالي الخصم والإجمالي كما تم اعتمادها وقت إنشاء الطلب.
+- يسجل الخصم على مستوى الطلب كقيمة مستقلة، ويعرض كسطر مستقل عند وجوده؛ لا يوزع على بنود `order_items` ولا يخفض أسعارها الفردية.
 - يمكن أن يصبح `product_id` فارغًا عند أرشفة منتج أو حذفه منطقيًا، بينما تبقى اللقطة التاريخية.
 - يجب تعريف قاعدة التقريب وتوزيع الخصم بين البنود في سياسة التسعير قبل التنفيذ.
 
@@ -457,6 +458,7 @@ erDiagram
 | 0.1 | 2026-11-22 | إنشاء مسودة تصميم قاعدة البيانات استنادًا إلى SRS 0.1 وArchitecture 0.1 | بانتظار المراجعة والاعتماد |
 | 0.2 | 2026-11-22 | إضافة حقل وسيلة الدفع إلى الطلب وإلغاء حقول وجداول حالة ومعاملات ومحاولات الدفع من النطاق الحالي | محدث للمراجعة |
 | 0.3 | 2026-11-22 | توثيق اعتماد عرض المبالغ بثلاث خانات عشرية، مع إبقاء دقة التخزين النهائية وقواعد التقريب وتوزيع الخصم قيد الحسم | محدث للمراجعة |
+| 0.4 | 2026-11-22 | اعتماد تخزين الخصم على مستوى الطلب كسطر مستقل، وإزالة خصم مستوى البند من نموذج order_items | محدث للمراجعة |
 
 ---
 
