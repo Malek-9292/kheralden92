@@ -118,6 +118,7 @@
 |---|---|---|
 | `categories` | id، parent_id nullable، name، slug، description، image_id nullable، sort_order، is_active، timestamps | الأقسام والأقسام الفرعية |
 | `products` | id، sku nullable، name، slug، description، ingredients، product_type، base_price، is_active، sort_order، preparation_time nullable، timestamps | بيانات المنتج الأساسية |
+| `product_visibility_windows` | id، product_id، starts_at_time، ends_at_time، sort_order، timestamps | فترات ظهور يومية متعددة للمنتج؛ تتكرر كل يوم |
 | `product_images` | id، product_id، storage_disk، storage_path، alt_text، sort_order، is_primary، timestamps | صور المنتجات |
 | `category_product` | category_id، product_id، sort_order | ربط المنتجات بالأقسام عند الحاجة لعلاقة متعدد-لمتعدد |
 | `product_option_groups` | id، product_id، name، selection_type، min_select، max_select، is_required، sort_order، is_active | مجموعات الاختيارات والإضافات |
@@ -129,6 +130,9 @@
 - مكونات صواني المشويات تعرض في تفاصيل الصنف فقط وفق SRS؛ مكان حفظها لا يفرض ظهورها في القائمة.
 - الصمون قاعدة عرض/إعداد افتراضي للسندويتشات، والاستثناءات مثل الصاج تسجل على المنتج أو خيار الخبز المعتمد. لا ينبغي استنتاج الخبز من اسم المنتج آليًا دون قاعدة واضحة.
 - صور المنتج تحفظ كمسارات تخزين لا كملفات BLOB داخل MySQL.
+- لكل منتج صفر أو أكثر من فترات الظهور اليومية في `product_visibility_windows`؛ عدم وجود فترات يعني عدم تطبيق جدول زمني خاص بالمنتج.
+- تتكرر الفترات المحددة يوميًا وفق توقيت الكويت (Asia/Kuwait). تحفظ أوقات البداية والنهاية كوقت يومي، ويجب التحقق من صحة النطاقات ومنع تداخل الفترات للمنتج نفسه.
+- يجب أن يطبق الاستعلام عن قائمة العميل وفحص الإضافة للسلة وتأكيد الطلب شرط وقت الظهور على الخادم؛ لا يكفي إخفاء المنتج في الواجهة.
 - هل السعر موحد أم خاص بكل فرع؟ القرار مفتوح؛ `branch_products.price_override` اقتراح لاستيعاب الاحتمال وليس اعتمادًا له.
 
 ### 4.4 العملاء والعناوين (Customer & Addresses)
@@ -294,6 +298,7 @@ erDiagram
     CATEGORIES ||--o{ CATEGORY_PRODUCT : groups
     PRODUCTS ||--o{ CATEGORY_PRODUCT : categorized
     PRODUCTS ||--o{ PRODUCT_IMAGES : has
+    PRODUCTS ||--o{ PRODUCT_VISIBILITY_WINDOWS : visible_during
     PRODUCTS ||--o{ PRODUCT_OPTION_GROUPS : offers
     PRODUCT_OPTION_GROUPS ||--o{ PRODUCT_OPTIONS : contains
     ORDERS ||--|{ ORDER_ITEMS : contains
@@ -324,6 +329,7 @@ erDiagram
 | permissions | UNIQUE(code) | ثبات رمز الصلاحية |
 | branches | UNIQUE(code) | رمز فرع فريد |
 | products | INDEX(is_active, sort_order)؛ INDEX(sku) عند استخدامه | عرض القائمة والبحث |
+| product_visibility_windows | INDEX(product_id, starts_at_time, ends_at_time) | تقييم فترات ظهور المنتج اليومية |
 | categories | INDEX(parent_id, sort_order, is_active) | ترتيب الأقسام |
 | areas | INDEX(governorate_id, is_active, sort_order) | اختيار المناطق |
 | branch_delivery_areas | UNIQUE(branch_id, area_id) | قاعدة تغطية واحدة لكل فرع ومنطقة |
