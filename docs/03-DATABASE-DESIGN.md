@@ -72,7 +72,8 @@
 | Delivery Configuration | المحافظات/المناطق، تغطية الفرع، رسوم التوصيل، الحد الأدنى |
 | Cart & Pricing | قواعد الخصم والقسائم واستخدامها |
 | Ordering | الطلبات، البنود، الخيارات المختارة، تاريخ الحالات، مفاتيح منع التكرار |
-| Payments & Cash | المدفوعات، محاولات الدفع، الاستردادات، الورديات، حركات الصندوق |
+| Ordering | وسيلة الدفع المختارة المحفوظة ضمن الطلب |
+| Cash Register & Shifts | الورديات وحركات الصندوق النقدية وفق سياسة تشغيلية تعتمد لاحقًا |
 | Kitchen Operations | محطات المطبخ، عناصر التوجيه، حالات التحضير عند اعتماد تفاصيلها |
 | Printing | الأجهزة، الطابعات، مهام الطباعة، محاولات التنفيذ |
 | Notifications & Support | الإشعارات وسجلات الإرسال وطلبات الدعم |
@@ -176,7 +177,7 @@
 
 | الجدول | الحقول الأساسية المقترحة | الغرض |
 |---|---|---|
-| `orders` | id، order_number، branch_id، customer_id nullable، created_by_user_id nullable، order_type، status، payment_status، customer_name_snapshot، customer_phone_snapshot، delivery_address_snapshot nullable، subtotal، discount_total، delivery_fee، total، currency، minimum_order_snapshot nullable، customer_note nullable، idempotency_key، placed_at، completed_at nullable، cancelled_at nullable، timestamps | رأس الطلب ولقطته المالية والتشغيلية |
+| `orders` | id، order_number، branch_id، customer_id nullable، created_by_user_id nullable، order_type، status، payment_method، customer_name_snapshot، customer_phone_snapshot، delivery_address_snapshot nullable، subtotal، discount_total، delivery_fee، total، currency، minimum_order_snapshot nullable، customer_note nullable، idempotency_key، placed_at، completed_at nullable، cancelled_at nullable، timestamps | رأس الطلب ولقطته المالية والتشغيلية |
 | `order_items` | id، order_id، product_id nullable، product_name_snapshot، sku_snapshot nullable، quantity، unit_price، line_subtotal، line_discount، line_total، product_note nullable، timestamps | بنود الطلب مع لقطة المنتج |
 | `order_item_options` | id، order_item_id، option_group_name_snapshot، option_name_snapshot، price_delta، quantity، timestamps | الخيارات والإضافات المختارة وقت الطلب |
 | `order_status_history` | id، order_id، from_status nullable، to_status، changed_by_user_id nullable، reason nullable، created_at | تاريخ تغييرات الحالة |
@@ -194,23 +195,21 @@
 
 **حالات الطلب:** الحالة الحالية تحفظ في `orders.status` لتسهيل القراءة، وكل انتقال يسجل في `order_status_history`. أسماء الحالات النهائية والانتقالات المسموحة ما زالت قرارًا مفتوحًا في SRS.
 
-### 4.8 الدفع والاسترداد والصندوق
+### 4.8 وسيلة الدفع والورديات والصندوق
+
+لا يحتاج النطاق الحالي إلى جداول معاملات دفع أو محاولات دفع أو حالات دفع أو استرداد. تحفظ وسيلة الدفع المختارة مباشرة ضمن سجل الطلب في الحقل `orders.payment_method`، وتكون إحدى القيم المعتمدة: `cash` أو `knet` أو `payment_link`.
 
 | الجدول | الحقول الأساسية المقترحة | الغرض |
 |---|---|---|
-| `payments` | id، order_id، payment_method، provider nullable، provider_reference nullable، amount، currency، status، idempotency_key، paid_at nullable، metadata nullable، timestamps | سجل الدفع وحالته |
-| `payment_attempts` | id، payment_id، attempt_number، request_reference nullable، response_reference nullable، status، error_code nullable، attempted_at، completed_at nullable | محاولات الدفع |
-| `refunds` | id، payment_id، order_id، amount، reason، status، provider_reference nullable، processed_by_user_id nullable، processed_at nullable، timestamps | عمليات الاسترداد |
 | `cashier_shifts` | id، branch_id، cashier_user_id، opened_at، opening_amount، closed_at nullable، closing_amount nullable، status، notes nullable | الورديات |
-| `cash_transactions` | id، shift_id، order_id nullable، transaction_type، amount، reference nullable، created_by_user_id، created_at | حركات الصندوق |
+| `cash_transactions` | id، shift_id، order_id nullable، transaction_type، amount، reference nullable، created_by_user_id، created_at | حركات الصندوق عند اعتماد قواعدها التشغيلية |
 
 **قواعد:**
-- حالة الدفع مستقلة عن حالة الطلب.
-- لا يسجل الدفع الإلكتروني ناجحًا دون تأكيد موثوق من المزود عند استخدامه.
-- يجب منع تسجيل العملية المالية مرتين باستخدام مفاتيح فريدة مناسبة.
-- الدفع النقدي عند الاستلام/التوصيل مطلوب وفق SRS، لكن تفاصيل توقيت التحصيل وتوزيعه على الوردية تحتاج اعتمادًا.
-- لا يتم تفعيل جداول الاسترداد تشغيليًا قبل اعتماد سياسة الإلغاء والاسترداد.
-- وسائل الدفع الإلكترونية ومزودها لم يعتمدا بعد.
+- لا يوجد حقل لحالة الدفع في `orders`، ولا تنشأ سجلات `payments` أو `payment_attempts` أو `refunds` ضمن النطاق الحالي.
+- لا يسجل النظام نتيجة دفع نقدي أو KNET أو رابط دفع؛ يسجل وسيلة الدفع المختارة فقط.
+- لا يوجد تكامل مع لوحة البنك أو جهاز KNET لتلقي نتائج الدفع.
+- إنشاء رابط الدفع وإرساله مسؤولية الكاشير من لوحة البنك الخارجية، ولا يسجل نظام فتوش عملية الإنشاء أو الإرسال.
+- تفاصيل الورديات وحركات الصندوق النقدية والاستردادات تحتاج اعتماد سياسات منفصلة قبل تنفيذها.
 
 ### 4.9 المطبخ والطباعة
 
