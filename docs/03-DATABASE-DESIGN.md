@@ -167,8 +167,8 @@
 |---|---|---|
 | `carts` | id، customer_id nullable، session_key nullable، branch_id، order_type، expires_at، timestamps | سلة مؤقتة إذا اعتمد حفظ السلة في الخادم |
 | `cart_items` | id، cart_id، product_id، quantity، selected_options_snapshot، notes، timestamps | عناصر السلة وخياراتها |
-| `coupons` | id، code، description، discount_type، discount_value، starts_at، ends_at، usage_limit nullable، per_customer_limit nullable، minimum_order_amount nullable، is_active، timestamps | تعريف القسائم |
-| `coupon_redemptions` | id، coupon_id، customer_id nullable، order_id، discount_amount، redeemed_at | استخدام القسائم |
+| `coupons` | id، code، description، discount_type، discount_value، starts_at، ends_at، usage_limit nullable، per_customer_limit nullable، minimum_order_amount nullable، is_active، timestamps | تعريف القسائم؛ يطبق كوبون واحد كحد أقصى على الطلب |
+| `coupon_redemptions` | id، coupon_id، customer_id nullable، order_id، discount_amount، redeemed_at | استخدام القسائم؛ يجب فرض عدم وجود أكثر من استرداد/خصم واحد مرتبط بالطلب |
 | `offers` | id، name، description، starts_at، ends_at، rules، is_active، timestamps | العروض عند اعتماد قواعدها |
 
 السلة قد تحفظ محليًا أو في الخادم؛ وجود جداولها اقتراح إذا كانت هناك حاجة للمزامنة بين الأجهزة أو استمرار السلة. يجب اعتماد سياسة الضيف ومدة الاحتفاظ بالسلة قبل تنفيذها. قواعد تعارض العروض والقسائم ما زالت مفتوحة.
@@ -189,6 +189,7 @@
 - يحتفظ `order_item_options` بأسماء الخيارات وأسعارها وقت الطلب.
 - يحتفظ `orders` ببيانات العميل والعنوان ورسوم التوصيل وإجمالي الخصم والإجمالي كما تم اعتمادها وقت إنشاء الطلب.
 - يسجل الخصم على مستوى الطلب كقيمة مستقلة، ويعرض كسطر مستقل عند وجوده؛ لا يوزع على بنود `order_items` ولا يخفض أسعارها الفردية.
+- يمكن ربط طلب واحد بكوبون واحد فقط؛ يمنع النظام تطبيق كوبون ثانٍ أو جمع خصم ترويجي إضافي مع خصم الكوبون على الطلب نفسه.
 - يمكن أن يصبح `product_id` فارغًا عند أرشفة منتج أو حذفه منطقيًا، بينما تبقى اللقطة التاريخية.
 - يجب تعريف قاعدة التقريب وتوزيع الخصم بين البنود في سياسة التسعير قبل التنفيذ.
 
