@@ -121,8 +121,8 @@
 | `product_visibility_windows` | id، product_id، starts_at_time، ends_at_time، sort_order، timestamps | فترات ظهور يومية متعددة للمنتج؛ تتكرر كل يوم |
 | `product_images` | id، product_id، storage_disk، storage_path، alt_text، sort_order، is_primary، timestamps | عدة صور لكل منتج مع ترتيب عرض واضح وصورة أساسية واحدة فقط لكل منتج؛ يجب فرض عدم وجود أكثر من صورة أساسية واحدة للمنتج والتحقق من ارتباط كل صورة بمنتج واحد |
 | `category_product` | غير مستخدم في نموذج الإطلاق | لا تُستخدم علاقة متعدد-لمتعدد؛ يخزن كل منتج `category_id` إلزاميًا يشير إلى قسم واحد فقط، ويمكن أن يكون القسم المختار في أي مستوى من شجرة الأقسام |
-| `product_option_groups` | id، product_id، name، selection_type، min_select، max_select، is_required، sort_order، is_active | مجموعات الاختيارات والإضافات |
-| `product_options` | id، option_group_id، name، price_delta، is_active، sort_order | خيارات المنتج وتغير السعر |
+| `product_option_groups` | id، product_id، name، group_type، selection_type، min_select، max_select، is_required، sort_order، is_active | مجموعات اختيار اختيارية حسب الصنف، مثل الحجم أو الإضافات؛ لا يلزم إنشاء مجموعة حجم أو خيارات لصنف لا يدعمها |
+| `product_options` | id، option_group_id، name، price_delta nullable، price_override nullable، is_active، sort_order | خيارات المنتج؛ يستخدم `price_override` للسعر النهائي المستقل لخيار الحجم، ويستخدم `price_delta` لفرق سعر الإضافة؛ لا يجتمع الحقلان للخيار نفسه |
 | `branch_products` | id، branch_id، product_id، is_available، price_override nullable، timestamps | توفر/سعر المنتج على مستوى الفرع عند اعتماد هذا السلوك |
 
 **ملاحظات تصميمية:**
