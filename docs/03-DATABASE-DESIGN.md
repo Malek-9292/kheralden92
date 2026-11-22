@@ -167,11 +167,11 @@
 |---|---|---|
 | `carts` | id، customer_id nullable، session_key nullable، branch_id، order_type، expires_at، timestamps | سلة مؤقتة إذا اعتمد حفظ السلة في الخادم |
 | `cart_items` | id، cart_id، product_id، quantity، selected_options_snapshot، notes، timestamps | عناصر السلة وخياراتها |
-| `coupons` | id، code، description، discount_type، discount_value، order_type_scope (pickup / delivery / both)، starts_at، ends_at، usage_limit nullable، per_customer_limit nullable، minimum_order_amount nullable، is_active، timestamps | تعريف القسائم؛ يحدد كل كوبون أنواع الطلب المسموح بها؛ يطبق كوبون واحد كحد أقصى على الطلب |
+| `coupons` | id، code، description، discount_type، discount_value، order_type_scope (pickup / delivery / both)، starts_at، ends_at، usage_limit nullable، per_customer_limit nullable، minimum_order_amount nullable، is_active، timestamps | تعريف القسائم؛ يحدد كل كوبون أنواع الطلب المسموح بها، وحدًا إجماليًا اختياريًا للاستخدام، وحدًا اختياريًا مستقلًا لكل عميل؛ ترك أي حد بقيمة NULL يعني عدم وجود سقف لذلك الحد؛ يطبق كوبون واحد كحد أقصى على الطلب |
 | `coupon_redemptions` | id، coupon_id، customer_id nullable، order_id، discount_amount، redeemed_at | استخدام القسائم؛ يجب فرض عدم وجود أكثر من استرداد/خصم واحد مرتبط بالطلب |
 | `offers` | id، name، description، starts_at، ends_at، rules، is_active، timestamps | العروض عند اعتماد قواعدها |
 
-السلة قد تحفظ محليًا أو في الخادم؛ وجود جداولها اقتراح إذا كانت هناك حاجة للمزامنة بين الأجهزة أو استمرار السلة. يجب اعتماد سياسة الضيف ومدة الاحتفاظ بالسلة قبل تنفيذها. قواعد تعارض العروض والقسائم ما زالت مفتوحة. يحدد `order_type_scope` أهلية الكوبون لكل طلب: `pickup` للاستلام فقط، و`delivery` للتوصيل فقط، و`both` لكليهما؛ يجب التحقق منه على الخادم عند تطبيق الكوبون وعند تأكيد الطلب.
+السلة قد تحفظ محليًا أو في الخادم؛ وجود جداولها اقتراح إذا كانت هناك حاجة للمزامنة بين الأجهزة أو استمرار السلة. يجب اعتماد سياسة الضيف ومدة الاحتفاظ بالسلة قبل تنفيذها. قواعد تعارض العروض والقسائم ما زالت مفتوحة. يحدد `order_type_scope` أهلية الكوبون لكل طلب: `pickup` للاستلام فقط، و`delivery` للتوصيل فقط، و`both` لكليهما؛ يجب التحقق منه على الخادم عند تطبيق الكوبون وعند تأكيد الطلب. يحدد `usage_limit` الحد الإجمالي الاختياري لاستخدامات الكوبون، ويحدد `per_customer_limit` الحد الاختياري لكل عميل بصورة مستقلة؛ القيمة `NULL` تعني أن الحد المقابل غير محدود. يجب احتساب الاستخدامات المؤهلة ومنع تجاوز أي حد في المعاملات المتزامنة.
 
 ### 4.7 الطلبات وبنودها (Ordering)
 
