@@ -117,10 +117,10 @@
 | الجدول | الحقول الأساسية المقترحة | الغرض |
 |---|---|---|
 | `categories` | id، parent_id nullable، name، slug، description، image_id nullable، sort_order، is_active، timestamps | شجرة أقسام متعددة المستويات؛ تكون قيمة `parent_id` فارغة للقسم الرئيسي، وتشير إلى القسم الأب للقسم الفرعي، ويمكن تكرار العلاقة لبناء مستويات إضافية حسب الحاجة. يجب منع ربط القسم بنفسه أو بأحد أحفاده لتجنب الدورات. |
-| `products` | id، sku nullable، name، slug، description، ingredients، product_type، base_price، is_active، sort_order، preparation_time nullable، timestamps | بيانات المنتج الأساسية |
+| `products` | id، category_id، sku nullable، name، slug، description، ingredients، product_type، base_price، is_active، sort_order، preparation_time nullable، timestamps | بيانات المنتج الأساسية |
 | `product_visibility_windows` | id، product_id، starts_at_time، ends_at_time، sort_order، timestamps | فترات ظهور يومية متعددة للمنتج؛ تتكرر كل يوم |
 | `product_images` | id، product_id، storage_disk، storage_path، alt_text، sort_order، is_primary، timestamps | صور المنتجات |
-| `category_product` | category_id، product_id، sort_order | ربط المنتجات بالأقسام عند الحاجة لعلاقة متعدد-لمتعدد |
+| `category_product` | غير مستخدم في نموذج الإطلاق | لا تُستخدم علاقة متعدد-لمتعدد؛ يخزن كل منتج `category_id` إلزاميًا يشير إلى قسم واحد فقط، ويمكن أن يكون القسم المختار في أي مستوى من شجرة الأقسام |
 | `product_option_groups` | id، product_id، name، selection_type، min_select، max_select، is_required، sort_order، is_active | مجموعات الاختيارات والإضافات |
 | `product_options` | id، option_group_id، name، price_delta، is_active، sort_order | خيارات المنتج وتغير السعر |
 | `branch_products` | id، branch_id، product_id، is_available، price_override nullable، timestamps | توفر/سعر المنتج على مستوى الفرع عند اعتماد هذا السلوك |
