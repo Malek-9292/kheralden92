@@ -116,7 +116,7 @@
 
 | الجدول | الحقول الأساسية المقترحة | الغرض |
 |---|---|---|
-| `categories` | id، parent_id nullable، name، slug، description، image_id nullable، sort_order، is_active، timestamps | شجرة أقسام متعددة المستويات؛ تكون قيمة `parent_id` فارغة للقسم الرئيسي، وتشير إلى القسم الأب للقسم الفرعي، ويمكن تكرار العلاقة لبناء مستويات إضافية حسب الحاجة. يجب منع ربط القسم بنفسه أو بأحد أحفاده لتجنب الدورات. |
+| `categories` | id، parent_id nullable، name، slug، description، image_id nullable، sort_order، is_active، timestamps | شجرة أقسام متعددة المستويات؛ تكون قيمة `parent_id` فارغة للقسم الرئيسي، وتشير إلى القسم الأب للقسم الفرعي، ويمكن تكرار العلاقة لبناء مستويات إضافية حسب الحاجة. يجب منع ربط القسم بنفسه أو بأحد أحفاده لتجنب الدورات. الأقسام الرئيسية الأولية المعتمدة لكتالوج فتوش الخالدية: أفطار الخالدية، العصائر، مشويات الخالدية، صواني مشويات، مواعين الخالدية، الساندويتشات الخفيفة، الساندويتشات الحارة والباردة، ساندويتشات الصاج. |
 | `products` | id، category_id، sku nullable، name، slug، description، ingredients، product_type، base_price، is_active، sort_order، preparation_time nullable، timestamps | بيانات المنتج الأساسية |
 | `product_visibility_windows` | id، product_id، starts_at_time، ends_at_time، sort_order، timestamps | فترات ظهور يومية متعددة للمنتج؛ تتكرر كل يوم |
 | `product_images` | id، product_id، storage_disk، storage_path، alt_text، sort_order، is_primary، timestamps | عدة صور لكل منتج مع ترتيب عرض واضح وصورة أساسية واحدة فقط لكل منتج؛ يجب فرض عدم وجود أكثر من صورة أساسية واحدة للمنتج والتحقق من ارتباط كل صورة بمنتج واحد |
