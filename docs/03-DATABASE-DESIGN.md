@@ -155,11 +155,17 @@
 
 | الجدول | الحقول الأساسية المقترحة | الغرض |
 |---|---|---|
-| `branch_delivery_areas` | id، branch_id، area_id، is_serviceable، delivery_fee، minimum_order_amount، estimated_delivery_minutes nullable، timestamps | تغطية المنطقة ورسومها والحد الأدنى لكل فرع |
+| `delivery_area_groups` | id، branch_id، name، minimum_order_amount، is_active، sort_order، timestamps | مجموعات مناطق التوصيل، ولكل مجموعة حد أدنى موحد قابل للتطبيق على أعضائها |
+| `branch_delivery_areas` | id، branch_id، area_id، delivery_area_group_id nullable، is_serviceable، delivery_fee، minimum_order_amount nullable، estimated_delivery_minutes nullable، timestamps | تغطية المنطقة ورسومها وحدها الأدنى الفردي الاختياري وتبعيتها لمجموعة |
 | `delivery_rule_history` | id، branch_delivery_area_id، old_fee، new_fee، old_minimum، new_minimum، changed_by، changed_at، reason nullable | سجل تغييرات قواعد التوصيل |
 
 **قواعد:**
-- يجب التحقق من صلاحية المنطقة ورسومها والحد الأدنى على الخادم عند إتمام الطلب.
+- يمكن أن تكون المنطقة بلا مجموعة، وعندها يكون `branch_delivery_areas.minimum_order_amount` هو الحد الأدنى المطبق.
+- إذا كانت المنطقة ضمن مجموعة، فإن `branch_delivery_areas.minimum_order_amount` عند وجود قيمة له يتقدم على حد المجموعة؛ وإذا كانت القيمة NULL يرث حد `delivery_area_groups.minimum_order_amount`.
+- يمكن للمدير استخدام حد المجموعة الموحد لكل المناطق بترك حدود المناطق الفردية فارغة، أو تخصيص حد فردي لبعض المناطق، أو ترك مناطق أخرى خارج المجموعات بحدود مستقلة؛ هذه الأنماط متاحة بالتوازي.
+- رسوم التوصيل تظل في `branch_delivery_areas.delivery_fee` لكل منطقة، ولا تُورث من المجموعة.
+- يجب ألا تنتمي المنطقة لأكثر من مجموعة واحدة ضمن الفرع نفسه، مع قيد فريد مناسب على عضوية المنطقة.
+- يجب التحقق من صلاحية المنطقة ورسومها والحد الأدنى الفعلي بعد تطبيق قاعدة الوراثة/التجاوز على الخادم عند إتمام الطلب.
 - الطلب يحتفظ بقيم الرسوم والحد الأدنى المطبقة وقت الإنشاء في لقطة الطلب.
 - قيمة الحد الأدنى لا تطبق على الاستلام من المطعم.
 - الرسوم والحد الأدنى لكل منطقة لم يتم إدخالها بعد؛ هذه الوثيقة تحدد شكل البيانات فقط.
@@ -293,6 +299,8 @@ erDiagram
     CUSTOMERS ||--o{ CUSTOMER_ADDRESSES : saves
     GOVERNORATES ||--o{ AREAS : contains
     AREAS ||--o{ CUSTOMER_ADDRESSES : selected
+    BRANCHES ||--o{ DELIVERY_AREA_GROUPS : organizes
+    DELIVERY_AREA_GROUPS ||--o{ BRANCH_DELIVERY_AREAS : contains
     BRANCHES ||--o{ BRANCH_DELIVERY_AREAS : serves
     AREAS ||--o{ BRANCH_DELIVERY_AREAS : covered
     CATEGORIES ||--o{ CATEGORY_PRODUCT : groups
@@ -332,7 +340,8 @@ erDiagram
 | product_visibility_windows | INDEX(product_id, starts_at_time, ends_at_time) | تقييم فترات ظهور المنتج اليومية |
 | categories | INDEX(parent_id, sort_order, is_active) | ترتيب الأقسام |
 | areas | INDEX(governorate_id, is_active, sort_order) | اختيار المناطق |
-| branch_delivery_areas | UNIQUE(branch_id, area_id) | قاعدة تغطية واحدة لكل فرع ومنطقة |
+| delivery_area_groups | UNIQUE(branch_id, name) | منع تكرار اسم المجموعة داخل الفرع إذا اعتمدت الأسماء الفريدة |
+| branch_delivery_areas | UNIQUE(branch_id, area_id)؛ INDEX(delivery_area_group_id) | قاعدة تغطية واحدة لكل فرع ومنطقة والبحث عن أعضاء المجموعة |
 | orders | UNIQUE(order_number)؛ UNIQUE(branch_id, idempotency_key) عند اعتماد هذا النطاق؛ INDEX(branch_id, status, created_at)؛ INDEX(customer_id, created_at) | منع التكرار وقوائم الطلبات |
 | order_items | INDEX(order_id) | تفاصيل الطلب |
 | order_status_history | INDEX(order_id, created_at) | سجل الحالة |
