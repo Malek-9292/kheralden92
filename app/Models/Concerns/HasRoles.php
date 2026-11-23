@@ -16,7 +16,7 @@ trait HasRoles
     {
         return $this->roles()
             ->where('slug', $slug)
-            ->where(fn ($query) => $query->whereNull('branch_id')->orWhere('branch_id', $this->branch_id))
+            ->where(fn ($query) => $query->whereNull('roles.branch_id')->orWhere('roles.branch_id', $this->branch_id))
             ->exists();
     }
 
