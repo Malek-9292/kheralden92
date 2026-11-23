@@ -9,6 +9,7 @@ use App\Models\BranchSetting;
 use App\Models\DeliveryArea;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\OrderWorkflow;
 use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -92,6 +93,7 @@ class OrderController extends Controller
         $trackingToken = Str::random(64);
 
         $order = DB::transaction(function () use ($data, $branch, $trackingToken, $idempotencyHash, $request): Order {
+            $workflow = app(OrderWorkflow::class);
             $area = null;
             $deliveryFee = 0;
             $minimumOrder = 0;
@@ -206,7 +208,9 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Kitchen ticket is enqueued when cashier accepts (status → confirmed), per DEC-095.
+            // Cash (current checkout): auto-confirm + kitchen ticket in this same
+            // transaction. Unpaid online payments would stay pending until paid.
+            $order = $workflow->acceptOnPlacement($order->fresh()->load('items'));
 
             AuditLog::query()->create([
                 'branch_id' => $branch->id,
@@ -217,9 +221,13 @@ class OrderController extends Controller
                 'after_values' => [
                     'order_number' => $order->order_number,
                     'fulfillment_type' => $order->fulfillment_type,
+                    'status' => $order->status,
+                    'payment_method' => $order->payment_method,
+                    'payment_status' => $order->payment_status,
                     'subtotal' => $order->subtotal,
                     'delivery_fee' => $order->delivery_fee,
                     'total' => $order->total,
+                    'kitchen_print_enqueued' => $order->status === 'confirmed',
                 ],
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),

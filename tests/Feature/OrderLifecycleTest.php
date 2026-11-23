@@ -114,7 +114,7 @@ class OrderLifecycleTest extends TestCase
         $this->assertSame('طلب مكرر من العميل', data_get($log->after_values, 'reason'));
     }
 
-    public function test_kitchen_ticket_is_created_only_when_order_is_confirmed(): void
+    public function test_staff_confirm_of_pending_order_enqueues_kitchen_ticket_idempotently(): void
     {
         [$user, $token, $order] = $this->createStaffAndOrder();
 
@@ -133,6 +133,13 @@ class OrderLifecycleTest extends TestCase
             'job_type' => 'kitchen_ticket',
             'status' => 'pending',
         ]);
+        $this->assertEquals(1, PrintJob::query()
+            ->where('order_id', $order->id)
+            ->where('job_type', 'kitchen_ticket')
+            ->count());
+
+        // Re-enqueue via dispatcher must not create a second kitchen job.
+        app(PrintJobDispatcher::class)->enqueueKitchenTicket($order->fresh()->load('items'));
         $this->assertEquals(1, PrintJob::query()
             ->where('order_id', $order->id)
             ->where('job_type', 'kitchen_ticket')

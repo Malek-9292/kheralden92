@@ -47,8 +47,10 @@ class Index extends Component
             $branchIds = collect([(int) $this->branchId]);
         }
 
-        $from = Carbon::parse($data['dateFrom'], 'Asia/Kuwait')->startOfDay()->utc();
-        $to = Carbon::parse($data['dateTo'], 'Asia/Kuwait')->endOfDay()->utc();
+        // Timestamps are stored in APP_TIMEZONE (Asia/Kuwait) wall-clock — do not
+        // convert the filter window to UTC or evening orders fall outside "today".
+        $from = Carbon::parse($data['dateFrom'], 'Asia/Kuwait')->startOfDay();
+        $to = Carbon::parse($data['dateTo'], 'Asia/Kuwait')->endOfDay();
 
         $base = Order::query()->whereIn('branch_id', $branchIds)->whereBetween('created_at', [$from, $to]);
         if ($this->fulfillmentFilter !== '') {
@@ -77,9 +79,7 @@ class Index extends Component
         $statusCounts = (clone $base)->select('status', DB::raw('COUNT(*) as total'))
             ->groupBy('status')->pluck('total', 'status');
 
-        $dayExpression = DB::connection()->getDriverName() === 'sqlite'
-            ? "DATE(datetime(paid_at, '+3 hours'))"
-            : 'DATE(DATE_ADD(paid_at, INTERVAL 3 HOUR))';
+        $dayExpression = 'DATE(paid_at)';
 
         $dailySales = (clone $paidOrders)
             ->selectRaw("{$dayExpression} as day, SUM(total) as total")
@@ -130,8 +130,8 @@ class Index extends Component
             $branchIds = collect([(int) $this->branchId]);
         }
 
-        $from = Carbon::parse($data['dateFrom'], 'Asia/Kuwait')->startOfDay()->utc();
-        $to = Carbon::parse($data['dateTo'], 'Asia/Kuwait')->endOfDay()->utc();
+        $from = Carbon::parse($data['dateFrom'], 'Asia/Kuwait')->startOfDay();
+        $to = Carbon::parse($data['dateTo'], 'Asia/Kuwait')->endOfDay();
 
         $query = Order::query()
             ->whereIn('branch_id', $branchIds)
