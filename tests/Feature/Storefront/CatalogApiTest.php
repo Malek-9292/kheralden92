@@ -96,12 +96,19 @@ class CatalogApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        Product::query()->create([
+        $unavailable = Product::query()->create([
             'branch_id' => $branch->id,
             'category_id' => $activeCategory->id,
             'name' => 'عصير غير متاح',
             'slug' => 'unavailable-juice',
             'price' => '1.000',
+            'is_active' => true,
+        ]);
+
+        ProductAvailabilityWindow::query()->create([
+            'product_id' => $unavailable->id,
+            'start_time' => '13:00:00',
+            'end_time' => '15:00:00',
             'is_active' => true,
         ]);
 
