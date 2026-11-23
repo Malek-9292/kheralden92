@@ -1,5 +1,10 @@
-const CACHE_NAME = 'fatoosh-storefront-v1';
-const SHELL = ['/'];
+const CACHE_NAME = 'fatoosh-storefront-v2';
+const SHELL = [
+    '/',
+    '/manifest.webmanifest',
+    '/icons/fatoosh.svg',
+    '/images/product-placeholder.jpg',
+];
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)));
@@ -26,7 +31,21 @@ self.addEventListener('fetch', event => {
                 const copy = response.clone();
                 caches.open(CACHE_NAME).then(cache => cache.put('/', copy));
                 return response;
-            }).catch(() => caches.match('/'))
+            }).catch(() => caches.match('/').then(cached => cached || new Response(
+                '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>فتوش الخالدية</title></head><body style="font-family:Tahoma,Arial,sans-serif;padding:24px;text-align:center;color:#18352a"><h1>فتوش الخالدية</h1><p>أنت غير متصل. أعد المحاولة عند عودة الإنترنت.</p></body></html>',
+                { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+            )))
+        );
+        return;
+    }
+
+    if (SHELL.includes(url.pathname) || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/images/')) {
+        event.respondWith(
+            caches.match(request).then(cached => cached || fetch(request).then(response => {
+                const copy = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+                return response;
+            }))
         );
     }
 });

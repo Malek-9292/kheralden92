@@ -19,8 +19,12 @@
     <div class="stats">
         <div class="stat"><span>إجمالي الطلبات</span><strong>{{ number_format($totalOrders) }}</strong></div>
         <div class="stat"><span>الطلبات المسددة</span><strong>{{ number_format($paidCount) }}</strong></div>
+        <div class="stat"><span>غير مسددة (مفتوحة)</span><strong>{{ number_format($unpaidOpenOrders) }}</strong></div>
         <div class="stat"><span>المبيعات المحصلة</span><strong>{{ number_format((float)$paidRevenue,3) }} د.ك</strong></div>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr))">
         <div class="stat"><span>متوسط الفاتورة المسددة</span><strong>{{ number_format($averageTicket,3) }} د.ك</strong></div>
+        <div class="stat"><span>الطلبات الملغاة</span><strong>{{ number_format($cancelledOrders) }}</strong></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
         <div class="panel">

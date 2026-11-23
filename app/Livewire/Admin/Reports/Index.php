@@ -56,6 +56,10 @@ class Index extends Component
 
         $totalOrders = (clone $base)->count();
         $cancelledOrders = (clone $base)->where('status', 'cancelled')->count();
+        $unpaidOpenOrders = (clone $base)
+            ->where('payment_status', 'unpaid')
+            ->whereNotIn('status', ['cancelled'])
+            ->count();
 
         $paidOrders = Order::query()
             ->whereIn('branch_id', $branchIds)
@@ -96,6 +100,7 @@ class Index extends Component
         return view('livewire.admin.reports.index', [
             'totalOrders' => $totalOrders,
             'cancelledOrders' => $cancelledOrders,
+            'unpaidOpenOrders' => $unpaidOpenOrders,
             'paidCount' => $paidCount,
             'paidRevenue' => $paidRevenue,
             'averageTicket' => $averageTicket,

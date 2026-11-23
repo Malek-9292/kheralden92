@@ -44,6 +44,15 @@
         .line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #edf1ed;font-size:13px}
         .qty{display:flex;gap:8px;align-items:center}.qty button{width:27px;height:27px;border:0;border-radius:7px;background:#edf4ee;color:#225d3b}
         .muted{color:#718176;font-size:12px}.empty{text-align:center;padding:35px;color:#75857a}
+        .skeleton{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+        .skeleton .card{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;min-height:220px}
+        .skeleton .ph{background:linear-gradient(90deg,#edf3ed 25%,#f7faf7 50%,#edf3ed 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;height:120px}
+        .skeleton .line{height:12px;margin:12px;border-radius:6px;background:#edf3ed}
+        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        .offline{background:#fff4df;color:#8a6416;text-align:center;padding:10px 14px;font-size:13px}
+        .error-box{background:#fdecec;color:#b42318;border-radius:12px;padding:18px;text-align:center}
+        @media(max-width:950px){.skeleton{grid-template-columns:repeat(3,minmax(0,1fr))}}
+        @media(max-width:650px){.skeleton{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
         .actions{display:flex;gap:8px;justify-content:flex-start;margin-top:16px;flex-wrap:wrap}
         .secondary{border:1px solid #d9e4db;background:#fff;color:#355b42;border-radius:10px;padding:10px 14px}
         @media(max-width:950px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -52,12 +61,20 @@
 </head>
 <body>
 <header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="openTrack">تتبع طلب</button><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></div></header>
+<div id="offlineBanner" class="offline" hidden>أنت غير متصل بالإنترنت. يمكنك تصفح آخر منيو محفوظ عند توفره، ولن يُرسل الطلب حتى يعود الاتصال.</div>
 <div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
 <section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
 <main class="wrap">
-    <div class="tools"><input id="search" class="search" type="search" placeholder="ابحث عن صنف..."><span id="branchName" class="muted">فتوش الخالدية</span></div>
-    <nav class="categories" id="categories"><button class="chip active" data-category="">الكل</button></nav>
-    <div id="products" class="grid"><div class="empty">جارٍ تحميل المنيو...</div></div>
+    <div class="tools"><input id="search" class="search" type="search" placeholder="ابحث عن صنف..." aria-label="بحث في المنيو"><span id="branchName" class="muted">فتوش الخالدية</span></div>
+    <nav class="categories" id="categories" aria-label="أقسام المنيو"><button class="chip active" data-category="">الكل</button></nav>
+    <div id="products" class="grid" aria-live="polite">
+        <div class="skeleton" id="loadingSkeleton" aria-label="جارٍ تحميل المنيو">
+            <div class="card"><div class="ph"></div><div class="line"></div><div class="line" style="width:40%"></div></div>
+            <div class="card"><div class="ph"></div><div class="line"></div><div class="line" style="width:55%"></div></div>
+            <div class="card"><div class="ph"></div><div class="line"></div><div class="line" style="width:35%"></div></div>
+            <div class="card"><div class="ph"></div><div class="line"></div><div class="line" style="width:48%"></div></div>
+        </div>
+    </div>
 </main>
 <footer id="storeFooter" class="muted" style="text-align:center;padding:18px 14px 105px"></footer>
 <div class="cartbar"><div><strong id="cartCount">السلة (0)</strong><div class="muted" id="cartTotal">0.000 د.ك</div></div><button class="primary" id="openCart">عرض السلة وإتمام الطلب</button></div>
@@ -134,7 +151,11 @@
             renderCartBar();
             if(!settingsRes.ok)el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
             renderCategories();renderProducts();renderGovernorates();renderAreas();
-        }catch(e){el('products').innerHTML='<div class="empty">تعذر تحميل المنيو حاليًا. حدّث الصفحة وحاول مرة أخرى.</div>';}
+        }catch(e){el('products').innerHTML='<div class="error-box"><div style="margin-bottom:10px">تعذر تحميل المنيو حاليًا.</div><button class="primary" id="retryMenu">إعادة المحاولة</button></div>';el('retryMenu').onclick=()=>loadMenu();}
+    }
+    function setOnlineState(){
+        el('offlineBanner').hidden=navigator.onLine;
+        if(!navigator.onLine) el('submitOrder').disabled=true;
     }
     function applySettings(settings){
         const name=settings.restaurant_name||'فتوش الخالدية';
@@ -174,7 +195,7 @@
             const img=p.primary_image?.url||p.images?.[0]?.url||'/images/product-placeholder.jpg';
             const badges=(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+(p.bread_label?'<span class="badge-bread">'+esc(p.bread_label)+'</span>':'');
             return '<article class="product"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy"><div class="body">'+badges+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><button class="secondary" data-details="'+p.id+'">تفاصيل الصنف</button><button class="add" data-add="'+p.id+'">＋ أضف للسلة</button></div></article>';
-        }).join(''):'<div class="empty">لا توجد أصناف مطابقة لبحثك</div>';
+        }).join(''):'<div class="empty">'+(state.products.length?'لا توجد أصناف مطابقة لبحثك أو للقسم المختار.':'لا توجد أصناف متاحة في المنيو حاليًا.')+'</div>';
         el('products').querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addProduct(Number(b.dataset.add))));
         el('products').querySelectorAll('[data-details]').forEach(b=>b.addEventListener('click',()=>showProductDetails(Number(b.dataset.details))));
     }
@@ -222,7 +243,7 @@
     function renderCartBar(){localStorage.setItem('fatoosh-cart',JSON.stringify(state.cart));const count=cartItems().reduce((n,i)=>n+i.quantity,0);el('cartCount').textContent='السلة ('+count+')';el('cartTotal').textContent=money(subtotal())+' د.ك';}
     function renderCartItems(){
         const items=cartItems();
-        el('cartItems').innerHTML=items.length?items.map(i=>'<div class="line"><div><strong>'+esc(i.name)+'</strong><div class="muted">'+money(i.price)+' د.ك</div></div><div class="qty"><button data-dec="'+i.id+'">−</button><strong>'+i.quantity+'</strong><button data-inc="'+i.id+'">＋</button></div></div>').join(''):'<div class="empty">السلة فارغة</div>';
+        el('cartItems').innerHTML=items.length?items.map(i=>'<div class="line"><div><strong>'+esc(i.name)+'</strong><div class="muted">'+money(i.price)+' د.ك</div></div><div class="qty"><button data-dec="'+i.id+'" aria-label="إنقاص">−</button><strong>'+i.quantity+'</strong><button data-inc="'+i.id+'" aria-label="زيادة">＋</button></div></div>').join(''):'<div class="empty">سلتك فارغة. أضف أصنافًا من المنيو ثم عد لإتمام الطلب.</div>';
         el('cartItems').querySelectorAll('[data-dec]').forEach(b=>b.onclick=()=>changeQty(Number(b.dataset.dec),-1));
         el('cartItems').querySelectorAll('[data-inc]').forEach(b=>b.onclick=()=>changeQty(Number(b.dataset.inc),1));
         const delivery=el('fulfillment').value==='delivery',area=selectedArea();
@@ -250,6 +271,7 @@
     el('submitOrder').onclick=async()=>{
         const delivery=el('fulfillment').value==='delivery',area=selectedArea();
         el('checkoutError').textContent='';
+        if(!navigator.onLine){el('checkoutError').textContent='لا يوجد اتصال بالإنترنت. أعد المحاولة عند عودة الشبكة.';return;}
         if(!cartItems().length){el('checkoutError').textContent='السلة فارغة.';return;}
         if(!el('customerName').value.trim()||!el('customerPhone').value.trim()){el('checkoutError').textContent='اكتب الاسم ورقم الهاتف.';return;}
         if(delivery&&(!el('deliveryGovernorate').value||!area||!el('block').value.trim()||!el('street').value.trim()||!el('house').value.trim())){el('checkoutError').textContent='أكمل المحافظة والمنطقة والقطعة والشارع ورقم المنزل.';return;}
@@ -267,8 +289,8 @@
             if(token) localStorage.setItem('fatoosh-last-order',JSON.stringify(state.lastOrder));
             el('successDetails').textContent='رقم الطلب: '+data.order.order_number+' · الإجمالي: '+money(data.order.total)+' د.ك'+(token?' · رمز التتبع: '+token:' · تم تأكيد الطلب السابق بنفس المفتاح.');
             state.cart={};state.idempotencyKey=null;renderCartBar();hide('checkoutModal');show('successModal');
-        }catch(e){el('checkoutError').textContent=e.message;}
-        finally{btn.disabled=false;btn.textContent='تأكيد الطلب';}
+        }catch(e){el('checkoutError').textContent=navigator.onLine?(e.message||'تعذر إرسال الطلب.'):'انقطع الاتصال أثناء الإرسال. احتفظ بالسلة وحاول مرة أخرى.';}
+        finally{btn.disabled=false;btn.textContent='تأكيد الطلب';setOnlineState();}
     };
     el('trackFromSuccess').onclick=()=>{hide('successModal');el('openTrack').click();};
     el('trackSubmit').onclick=async()=>{
@@ -287,6 +309,9 @@
     el('finishOrder').onclick=()=>{hide('successModal');el('customerName').value='';el('customerPhone').value='';el('notes').value='';};
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.deferredInstall=e;el('installBtn').hidden=false;});
     el('installBtn').onclick=async()=>{if(state.deferredInstall){state.deferredInstall.prompt();state.deferredInstall=null;el('installBtn').hidden=true;}};
+    window.addEventListener('online',setOnlineState);
+    window.addEventListener('offline',setOnlineState);
+    setOnlineState();
     if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
     loadMenu();renderCartBar();
 })();
