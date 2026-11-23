@@ -22,6 +22,20 @@ class AdminSearchController extends Controller
         $user = $request->user();
         $branchIds = $branchAccess->visibleBranchIds($user);
         $results = [];
+        $moduleManager = app(\App\Support\Modules\ModuleManager::class);
+        $moduleByPermission = [
+            'orders.view' => 'Orders',
+            'catalog.view' => 'Catalog',
+            'delivery.manage' => 'Delivery',
+            'employees.manage' => 'Identity',
+            'branches.manage' => 'Branches',
+            'roles.manage' => 'AccessControl',
+            'cashier.use' => 'Cashier',
+            'printing.manage' => 'Printing',
+            'settings.manage' => 'SystemSettings',
+            'reports.view' => 'Reporting',
+            'modules.manage' => 'SystemSettings',
+        ];
 
         $navigation = [
             ['permission' => 'dashboard.view', 'label' => 'لوحة التحكم', 'url' => '/admin/dashboard'],
@@ -40,6 +54,11 @@ class AdminSearchController extends Controller
         ];
 
         foreach ($navigation as $item) {
+            $requiredModule = $moduleByPermission[$item['permission']] ?? null;
+            if ($requiredModule && ! $moduleManager->enabled($requiredModule)) {
+                continue;
+            }
+
             if ($user->hasPermissionTo($item['permission']) || $user->hasRole('system_admin')) {
                 if (mb_stripos($item['label'], $term) !== false) {
                     $results['sections'][] = [
@@ -51,7 +70,7 @@ class AdminSearchController extends Controller
             }
         }
 
-        if ($user->hasPermissionTo('orders.view') || $user->hasRole('system_admin')) {
+        if (($user->hasPermissionTo('orders.view') || $user->hasRole('system_admin')) && $moduleManager->enabled('Orders')) {
             $orders = Order::query()
                 ->whereIn('branch_id', $branchIds)
                 ->where(function ($query) use ($term): void {
@@ -71,7 +90,7 @@ class AdminSearchController extends Controller
             ])->values();
         }
 
-        if ($user->hasPermissionTo('catalog.view') || $user->hasRole('system_admin')) {
+        if (($user->hasPermissionTo('catalog.view') || $user->hasRole('system_admin')) && $moduleManager->enabled('Catalog')) {
             $results['products'] = Product::query()
                 ->whereIn('branch_id', $branchIds)
                 ->where('name', 'like', "%{$term}%")
@@ -99,7 +118,7 @@ class AdminSearchController extends Controller
                 ])->values();
         }
 
-        if ($user->hasPermissionTo('employees.manage') || $user->hasRole('system_admin')) {
+        if (($user->hasPermissionTo('employees.manage') || $user->hasRole('system_admin')) && $moduleManager->enabled('Identity')) {
             $results['employees'] = User::query()
                 ->whereIn('branch_id', $branchIds)
                 ->where(function ($query) use ($term): void {
@@ -117,7 +136,7 @@ class AdminSearchController extends Controller
                 ])->values();
         }
 
-        if ($user->hasPermissionTo('delivery.manage') || $user->hasRole('system_admin')) {
+        if (($user->hasPermissionTo('delivery.manage') || $user->hasRole('system_admin')) && $moduleManager->enabled('Delivery')) {
             $results['delivery_areas'] = DeliveryArea::query()
                 ->whereIn('branch_id', $branchIds)
                 ->where('name', 'like', "%{$term}%")
@@ -132,7 +151,7 @@ class AdminSearchController extends Controller
                 ])->values();
         }
 
-        if ($user->hasPermissionTo('branches.manage') || $user->hasRole('system_admin')) {
+        if (($user->hasPermissionTo('branches.manage') || $user->hasRole('system_admin')) && $moduleManager->enabled('Branches')) {
             $results['branches'] = Branch::query()
                 ->where(function ($query) use ($term): void {
                     $query->where('name', 'like', "%{$term}%")
