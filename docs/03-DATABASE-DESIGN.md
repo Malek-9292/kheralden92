@@ -117,7 +117,7 @@
 | الجدول | الحقول الأساسية المقترحة | الغرض |
 |---|---|---|
 | `categories` | id، parent_id nullable، name، slug، description، image_id nullable، sort_order، is_active، timestamps | شجرة أقسام متعددة المستويات؛ تكون قيمة `parent_id` فارغة للقسم الرئيسي، وتشير إلى القسم الأب للقسم الفرعي، ويمكن تكرار العلاقة لبناء مستويات إضافية حسب الحاجة. يجب منع ربط القسم بنفسه أو بأحد أحفاده لتجنب الدورات. الأقسام الرئيسية الأولية المعتمدة لكتالوج فتوش الخالدية: أفطار الخالدية، العصائر، مشويات الخالدية، صواني مشويات، مواعين الخالدية، الساندويتشات الخفيفة، الساندويتشات الحارة والباردة، ساندويتشات الصاج. |
-| `products` | id، category_id، sku nullable، name، slug، description، ingredients، product_type، base_price، is_active، sort_order، preparation_time nullable، timestamps | بيانات المنتج الأساسية |
+| `products` | id، category_id، sku nullable، name، slug، description، ingredients، product_type، base_price، is_active، sort_order، timestamps | بيانات المنتج الأساسية |
 | `product_visibility_windows` | id، product_id، starts_at_time، ends_at_time، sort_order، timestamps | فترات ظهور يومية متعددة للمنتج؛ تتكرر كل يوم |
 | `product_images` | id، product_id، storage_disk، storage_path، alt_text، sort_order، is_primary، timestamps | صورة أساسية واحدة إلزامية على الأقل لكل منتج، وصور إضافية اختيارية مع ترتيب عرض واضح؛ يجب فرض وجود صورة أساسية واحدة فقط لكل منتج عند الحفظ والنشر، ومنع أكثر من صورة أساسية والتحقق من ارتباط كل صورة بمنتج واحد |
 | `category_product` | غير مستخدم في نموذج الإطلاق | لا تُستخدم علاقة متعدد-لمتعدد؛ يخزن كل منتج `category_id` إلزاميًا يشير إلى قسم واحد فقط، ويمكن أن يكون القسم المختار في أي مستوى من شجرة الأقسام |
