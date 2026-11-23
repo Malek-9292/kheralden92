@@ -36,6 +36,12 @@ class OrderCheckoutTest extends TestCase
             'auditable_id' => $response->json('order.id'),
         ]);
 
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $response->json('order.id'),
+            'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
+        ]);
+
         $orderNumber = $response->json('order.order_number');
         $trackingToken = $response->json('tracking_token');
 
