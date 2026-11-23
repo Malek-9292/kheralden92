@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DeliveryAreaController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\CashierController;
 use App\Http\Controllers\Admin\AdminSearchController;
+use App\Livewire\Admin\Dashboard;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -74,7 +75,12 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     });
 
     Route::middleware(['auth', 'employee.active'])->group(function (): void {
+        Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('home');
         Route::get('/search', AdminSearchController::class)->name('search');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:dashboard.view'])->group(function (): void {
+        Route::get('/dashboard', Dashboard::class)->name('dashboard');
     });
 
     Route::middleware(['auth', 'employee.active'])->group(function (): void {
