@@ -55,16 +55,16 @@
                         ])
                         @php($statusClass = $order->status === 'cancelled' ? 'danger' : (in_array($order->status, ['pending', 'ready'], true) ? 'warn' : ''))
                         <tr>
-                            <td>
+                            <td data-label="رقم الطلب">
                                 <a href="/admin/orders?search={{ urlencode($order->order_number) }}">
                                     <strong>{{ $order->order_number }}</strong>
                                 </a>
                             </td>
-                            <td>{{ $order->customer_name }}<div class="muted">{{ $order->customer_phone }}</div></td>
-                            <td>{{ $order->fulfillment_type === 'pickup' ? 'استلام من المطعم' : 'توصيل' }}</td>
-                            <td>{{ $order->total }} د.ك</td>
-                            <td><span class="status {{ $statusClass }}">{{ $statusLabels[$order->status] ?? $order->status }}</span></td>
-                            <td>{{ $order->created_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') }}</td>
+                            <td data-label="العميل">{{ $order->customer_name }}<div class="muted">{{ $order->customer_phone }}</div></td>
+                            <td data-label="نوع الاستلام">{{ $order->fulfillment_type === 'pickup' ? 'استلام من المطعم' : 'توصيل' }}</td>
+                            <td data-label="الإجمالي">{{ $order->total }} د.ك</td>
+                            <td data-label="الحالة"><span class="status {{ $statusClass }}">{{ $statusLabels[$order->status] ?? $order->status }}</span></td>
+                            <td data-label="التاريخ">{{ $order->created_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') }}</td>
                         </tr>
                     @endforeach
                     </tbody>

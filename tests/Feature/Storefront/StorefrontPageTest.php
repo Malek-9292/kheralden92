@@ -21,7 +21,10 @@ class StorefrontPageTest extends TestCase
             ->assertSee('loadingSkeleton')
             ->assertSee('offlineBanner')
             ->assertSee('serviceWorker')
-            ->assertSee('IBM+Plex+Sans+Arabic');
+            ->assertSee('IBM+Plex+Sans+Arabic')
+            ->assertSee('viewport-fit=cover', false)
+            ->assertSee('object-fit:contain', false)
+            ->assertSee('min-width:1024px', false);
 
         $this->assertFileExists(public_path('manifest.webmanifest'));
         $this->assertStringContainsString('فتوش الخالدية', file_get_contents(public_path('manifest.webmanifest')));

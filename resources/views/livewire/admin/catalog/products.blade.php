@@ -2,7 +2,7 @@
     @if(session('status'))<div style="padding:12px 15px;border-radius:10px;background:#e5f4e9;color:#205d3b;margin-bottom:14px">{{ session('status') }}</div>@endif
     <div class="panel" style="margin-bottom:18px">
         <h2>{{ $editingId ? 'تعديل صنف' : 'إضافة صنف جديد' }}</h2>
-        <form wire:submit="save" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <form wire:submit="save" class="form-grid">
             @if($isSystemAdmin)
                 <label style="font-size:13px">الفرع
                     <select wire:model="branchId" required style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px;background:#fff">
@@ -54,7 +54,7 @@
                 </div>
                 <p class="muted" style="margin:0 0 10px">بدون فترات يظهر الصنف طوال اليوم. الأوقات بتوقيت الكويت.</p>
                 @forelse($availabilityWindows as $index => $window)
-                    <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end;margin-bottom:8px">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end;margin-bottom:8px">
                         <label style="font-size:12px">من
                             <input type="time" wire:model="availabilityWindows.{{ $index }}.start_time" style="display:block;width:100%;padding:9px;border:1px solid #d8e3da;border-radius:9px;margin-top:4px">
                         </label>
@@ -136,16 +136,16 @@
                 <tbody>
                 @forelse($products as $product)
                     <tr wire:key="product-{{ $product->id }}">
-                        <td>@if($product->primaryImage)<img src="{{ $product->primaryImage->url }}" alt="{{ $product->name }}" style="width:58px;height:48px;object-fit:cover;border-radius:8px">@else—@endif</td>
-                        <td><strong>{{ $product->name }}</strong><div class="muted">{{ \Illuminate\Support\Str::limit($product->description,55) }}</div></td>
-                        <td>{{ $product->category?->name }}</td>
-                        <td>{{ $product->price }} د.ك</td>
-                        <td><span class="status">{{ $product->is_active ? 'متاح' : 'متوقف' }}</span></td>
-                        <td>{{ $product->is_best_seller ? 'نعم' : 'لا' }}</td>
-                        <td><div style="display:flex;gap:6px;flex-wrap:wrap">
-                            <button wire:click="edit({{ $product->id }})" style="border:0;border-radius:8px;padding:7px 10px;background:#edf3f8;color:#315b83;cursor:pointer;font:inherit;font-size:12px">تعديل</button>
-                            <button wire:click="toggleActive({{ $product->id }})" style="border:0;border-radius:8px;padding:7px 10px;background:#f0f4ef;color:#42664c;cursor:pointer;font:inherit;font-size:12px">{{ $product->is_active ? 'إيقاف' : 'تفعيل' }}</button>
-                            <button wire:click="toggleBestSeller({{ $product->id }})" style="border:0;border-radius:8px;padding:7px 10px;background:#fff5df;color:#805d16;cursor:pointer;font:inherit;font-size:12px">{{ $product->is_best_seller ? 'إزالة الأكثر طلبًا' : 'الأكثر طلبًا' }}</button>
+                        <td data-label="الصورة">@if($product->primaryImage)<img src="{{ $product->primaryImage->url }}" alt="{{ $product->name }}" style="width:72px;height:54px;object-fit:contain;background:#edf3ed;border-radius:8px">@else—@endif</td>
+                        <td data-label="الصنف"><strong>{{ $product->name }}</strong><div class="muted">{{ \Illuminate\Support\Str::limit($product->description,55) }}</div></td>
+                        <td data-label="القسم">{{ $product->category?->name }}</td>
+                        <td data-label="السعر">{{ $product->price }} د.ك</td>
+                        <td data-label="الحالة"><span class="status">{{ $product->is_active ? 'متاح' : 'متوقف' }}</span></td>
+                        <td data-label="الأكثر طلبًا">{{ $product->is_best_seller ? 'نعم' : 'لا' }}</td>
+                        <td data-label="إجراءات"><div style="display:flex;gap:6px;flex-wrap:wrap">
+                            <button wire:click="edit({{ $product->id }})" style="border:0;border-radius:8px;padding:10px 12px;min-height:40px;background:#edf3f8;color:#315b83;cursor:pointer;font:inherit;font-size:12px">تعديل</button>
+                            <button wire:click="toggleActive({{ $product->id }})" style="border:0;border-radius:8px;padding:10px 12px;min-height:40px;background:#f0f4ef;color:#42664c;cursor:pointer;font:inherit;font-size:12px">{{ $product->is_active ? 'إيقاف' : 'تفعيل' }}</button>
+                            <button wire:click="toggleBestSeller({{ $product->id }})" style="border:0;border-radius:8px;padding:10px 12px;min-height:40px;background:#fff5df;color:#805d16;cursor:pointer;font:inherit;font-size:12px">{{ $product->is_best_seller ? 'إزالة الأكثر طلبًا' : 'الأكثر طلبًا' }}</button>
                         </div></td>
                     </tr>
                 @empty

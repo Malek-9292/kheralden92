@@ -69,4 +69,15 @@ class ModuleManagerTest extends TestCase
         $this->expectException(RuntimeException::class);
         $manager->assertDependenciesSatisfied();
     }
+
+    #[Test]
+    public function database_override_survives_when_eloquent_is_unavailable(): void
+    {
+        $manager = new ModuleManager([
+            'Storefront' => ['enabled' => true, 'core' => false, 'depends_on' => []],
+        ]);
+
+        // Schema may report the table exists while Eloquent is mid-boot; override must not throw.
+        $this->assertTrue($manager->enabled('Storefront'));
+    }
 }

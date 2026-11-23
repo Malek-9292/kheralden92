@@ -21,3 +21,4 @@
 /storage/logs/*
 /bootstrap/cache/*
 /composer.phar
+database/preview.sqlite
