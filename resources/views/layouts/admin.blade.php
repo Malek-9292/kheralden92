@@ -38,21 +38,24 @@
 <div class="shell">
     <aside class="sidebar">
         <div class="brand">فتوش الخالدية <small>نظام إدارة المطعم</small></div>
+        @php($moduleManager = app(\App\Support\Modules\ModuleManager::class))
         <nav class="nav">
             @php($currentPath = '/'.ltrim(request()->path(), '/'))
             @if(auth()->user()->hasPermissionTo('dashboard.view')) <a class="{{ $currentPath === '/admin/dashboard' ? 'active' : '' }}" href="/admin/dashboard">الرئيسية</a> @endif
-            @if(auth()->user()->hasPermissionTo('orders.view')) <a class="{{ str_starts_with($currentPath, '/admin/orders') ? 'active' : '' }}" href="/admin/orders">الطلبات</a> @endif
-            @if(auth()->user()->hasPermissionTo('catalog.view'))
+            @if(auth()->user()->hasPermissionTo('orders.view') && $moduleManager->enabled('Orders')) <a class="{{ str_starts_with($currentPath, '/admin/orders') ? 'active' : '' }}" href="/admin/orders">الطلبات</a> @endif
+            @if(auth()->user()->hasPermissionTo('catalog.view') && $moduleManager->enabled('Catalog'))
                 <a class="{{ str_starts_with($currentPath, '/admin/products') ? 'active' : '' }}" href="/admin/products">الأصناف</a>
                 <a class="{{ str_starts_with($currentPath, '/admin/categories') ? 'active' : '' }}" href="/admin/categories">الأقسام</a>
             @endif
-            @if(auth()->user()->hasPermissionTo('delivery.manage')) <a class="{{ str_starts_with($currentPath, '/admin/delivery-areas') ? 'active' : '' }}" href="/admin/delivery-areas">مناطق التوصيل</a> @endif
-            @if(auth()->user()->hasPermissionTo('employees.manage')) <a class="{{ str_starts_with($currentPath, '/admin/employees') ? 'active' : '' }}" href="/admin/employees">الموظفون</a> @endif
-            @if(auth()->user()->hasPermissionTo('branches.manage')) <a class="{{ str_starts_with($currentPath, '/admin/branches') ? 'active' : '' }}" href="/admin/branches">الفروع</a> @endif
-            @if(auth()->user()->hasPermissionTo('roles.manage')) <a class="{{ str_starts_with($currentPath, '/admin/roles') ? 'active' : '' }}" href="/admin/roles">الأدوار والصلاحيات</a> @endif
-            @if(auth()->user()->hasPermissionTo('cashier.use')) <a class="{{ str_starts_with($currentPath, '/admin/cashier') ? 'active' : '' }}" href="/admin/cashier">الكاشير</a> @endif
-            @if(auth()->user()->hasPermissionTo('printing.manage')) <a class="{{ str_starts_with($currentPath, '/admin/printers') ? 'active' : '' }}" href="/admin/printers">الطابعات</a> @endif
-            @if(auth()->user()->hasPermissionTo('settings.manage')) <a class="{{ str_starts_with($currentPath, '/admin/settings') ? 'active' : '' }}" href="/admin/settings">إعدادات المطعم</a> @endif
+            @if(auth()->user()->hasPermissionTo('delivery.manage') && $moduleManager->enabled('Delivery')) <a class="{{ str_starts_with($currentPath, '/admin/delivery-areas') ? 'active' : '' }}" href="/admin/delivery-areas">مناطق التوصيل</a> @endif
+            @if(auth()->user()->hasPermissionTo('employees.manage') && $moduleManager->enabled('Identity')) <a class="{{ str_starts_with($currentPath, '/admin/employees') ? 'active' : '' }}" href="/admin/employees">الموظفون</a> @endif
+            @if(auth()->user()->hasPermissionTo('branches.manage') && $moduleManager->enabled('Branches')) <a class="{{ str_starts_with($currentPath, '/admin/branches') ? 'active' : '' }}" href="/admin/branches">الفروع</a> @endif
+            @if(auth()->user()->hasPermissionTo('roles.manage') && $moduleManager->enabled('AccessControl')) <a class="{{ str_starts_with($currentPath, '/admin/roles') ? 'active' : '' }}" href="/admin/roles">الأدوار والصلاحيات</a> @endif
+            @if(auth()->user()->hasPermissionTo('cashier.use') && $moduleManager->enabled('Cashier')) <a class="{{ str_starts_with($currentPath, '/admin/cashier') ? 'active' : '' }}" href="/admin/cashier">الكاشير</a> @endif
+            @if(auth()->user()->hasPermissionTo('printing.manage') && $moduleManager->enabled('Printing')) <a class="{{ str_starts_with($currentPath, '/admin/printers') ? 'active' : '' }}" href="/admin/printers">الطابعات</a> @endif
+            @if(auth()->user()->hasPermissionTo('settings.manage') && $moduleManager->enabled('SystemSettings')) <a class="{{ str_starts_with($currentPath, '/admin/settings') ? 'active' : '' }}" href="/admin/settings">إعدادات المطعم</a> @endif
+            @if(auth()->user()->hasPermissionTo('reports.view') && $moduleManager->enabled('Reporting')) <a class="{{ str_starts_with($currentPath, '/admin/reports') ? 'active' : '' }}" href="/admin/reports">التقارير</a> @endif
+            @if(auth()->user()->hasPermissionTo('modules.manage') && $moduleManager->enabled('SystemSettings')) <a class="{{ str_starts_with($currentPath, '/admin/modules') ? 'active' : '' }}" href="/admin/modules">مدير الوحدات</a> @endif
         </nav>
         <div class="muted" style="color:#b9d7c5;margin-top:auto">{{ auth()->user()->name }}</div>
         <form method="POST" action="/admin/session" onsubmit="return false">
