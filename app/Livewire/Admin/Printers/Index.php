@@ -100,6 +100,10 @@ class Index extends Component
         $before = $printer->is_active;
         $printer->update(['is_active' => ! $before]);
 
+        if ($before) {
+            $printer->jobs()->whereIn('status', ['pending', 'processing'])->update(['printer_id' => null, 'status' => 'pending', 'claimed_at' => null]);
+        }
+
         AuditLog::query()->create([
             'branch_id' => $printer->branch_id,
             'actor_id' => $user->id,
