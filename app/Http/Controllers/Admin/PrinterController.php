@@ -9,6 +9,7 @@ use App\Services\BranchAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PrinterController extends Controller
 {
@@ -29,7 +30,10 @@ class PrinterController extends Controller
     {
         $data = $request->validate([
             'branch_id' => ['required', 'integer', 'exists:branches,id'],
-            'code' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'code' => [
+                'required', 'string', 'max:50', 'regex:/^[A-Za-z0-9_-]+$/',
+                Rule::unique('printers', 'code')->where(fn ($query) => $query->where('branch_id', (int) $request->input('branch_id'))),
+            ],
             'name' => ['required', 'string', 'max:150'],
             'purpose' => ['required', 'in:kitchen,cashier'],
             'connection_type' => ['required', 'in:usb,network'],
