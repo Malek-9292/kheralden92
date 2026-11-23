@@ -71,7 +71,7 @@ class Index extends Component
                 'permission_slugs' => $role->permissions()->pluck('slug')->all(),
             ] : null;
 
-            if (! $role) {
+            if ($role === null) {
                 $role = new Role([
                     'branch_id' => $branchId,
                     'guard_name' => 'web',
