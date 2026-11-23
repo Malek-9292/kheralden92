@@ -31,7 +31,12 @@ class OrderCheckoutTest extends TestCase
             ->assertJsonPath('order.block', null)
             ->assertJsonPath('order.street', null);
 
-        $this->assertDatabaseHas('audit_logs', [\n            'action' => 'order.created',\n            'auditable_id' => $response->json('order.id'),\n        ]);\n\n        $orderNumber = $response->json('order.order_number');
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'order.created',
+            'auditable_id' => $response->json('order.id'),
+        ]);
+
+        $orderNumber = $response->json('order.order_number');
         $trackingToken = $response->json('tracking_token');
 
         $this->withHeader('X-Order-Tracking-Token', $trackingToken)
