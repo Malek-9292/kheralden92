@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Storefront\CatalogController;
+use App\Http\Controllers\Storefront\DeliveryAreaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json([
@@ -8,6 +9,8 @@ Route::get('/health', fn () => response()->json([
     'application' => config('app.name'),
     'timezone' => config('app.timezone'),
 ]))->name('api.health');
+
+Route::get('/delivery-areas/{branchCode}', [DeliveryAreaController::class, 'index'])->name('delivery-areas.index');
 
 Route::prefix('catalog/{branchCode}')->name('catalog.')->group(function (): void {
     Route::get('/categories', [CatalogController::class, 'categories'])->name('categories');
