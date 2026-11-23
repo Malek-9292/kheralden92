@@ -29,6 +29,7 @@
         table{width:100%;border-collapse:collapse;min-width:580px}th,td{text-align:right;padding:12px 10px;border-bottom:1px solid #edf1ed;font-size:13px}
         th{color:#718176;font-weight:600;background:#fafcfa}.status{display:inline-block;padding:5px 9px;border-radius:20px;background:#edf5ef;color:#286344;font-size:11px}
         .empty{padding:28px;text-align:center;color:#819086;font-size:13px}
+        .field{display:flex;flex-direction:column;gap:6px;font-size:13px}.field input,.field select,.field textarea{border:1px solid #d8e3da;border-radius:9px;padding:11px;min-width:0;font:inherit;background:#fff}.field.full{grid-column:1/-1}
         @media(max-width:900px){.shell{grid-template-columns:1fr}.sidebar{padding:14px;gap:12px}.nav{display:flex;overflow:auto}.nav a{white-space:nowrap}.brand small{display:inline;margin-right:8px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.main{padding:18px}}
         @media(max-width:520px){.topbar{align-items:flex-start;flex-direction:column}.search{width:100%}.stats{gap:9px}.stat{padding:14px}.stat strong{font-size:23px}}
     </style>
