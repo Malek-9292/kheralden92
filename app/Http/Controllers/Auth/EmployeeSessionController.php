@@ -31,7 +31,14 @@ class EmployeeSessionController extends Controller
         $request->session()->regenerate();
         $user = $request->user();
 
-        $user->forceFill(['last_login_at' => now()])->save();\n        DB::table('employee_login_attempts')->insert([\n            'user_id' => $user->id,\n            'login_identifier' => $credentials['phone'],\n            'ip_address' => $request->ip(),\n            'was_successful' => true,\n            'attempted_at' => now(),\n        ]);
+        $user->forceFill(['last_login_at' => now()])->save();
+        DB::table('employee_login_attempts')->insert([
+            'user_id' => $user->id,
+            'login_identifier' => $credentials['phone'],
+            'ip_address' => $request->ip(),
+            'was_successful' => true,
+            'attempted_at' => now(),
+        ]);
 
         $user->employeeSessions()->create([
             'branch_id' => $user->branch_id,
