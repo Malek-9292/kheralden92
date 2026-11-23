@@ -76,7 +76,7 @@ class AdminSearchController extends Controller
                 ->map(fn (Product $product) => [
                     'title' => $product->name,
                     'subtitle' => 'صنف · '.$product->price.' د.ك',
-                    'url' => '/admin/products/'.$product->id,
+                    'url' => '/admin/products?search='.urlencode($product->name),
                     'type' => 'product',
                 ])->values();
 
@@ -89,7 +89,7 @@ class AdminSearchController extends Controller
                 ->map(fn (Category $category) => [
                     'title' => $category->name,
                     'subtitle' => 'قسم',
-                    'url' => '/admin/categories',
+                    'url' => '/admin/categories?search='.urlencode($category->name),
                     'type' => 'category',
                 ])->values();
         }
