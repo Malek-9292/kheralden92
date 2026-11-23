@@ -67,6 +67,17 @@ class PrintAgentController extends Controller
         $printer = $this->authenticatePrinter($request);
         $job = PrintJob::query()->whereKey($jobId)->where('printer_id', $printer->id)->firstOrFail();
 
+        // Idempotent: agent may retry complete after USB success if the HTTP ack was lost.
+        if ($job->status === 'completed') {
+            $printer->update(['last_seen_at' => now()]);
+
+            return response()->json([
+                'message' => 'تم تأكيد اكتمال الطباعة مسبقًا.',
+                'status' => 'completed',
+                'idempotent' => true,
+            ]);
+        }
+
         abort_unless($job->status === 'processing', 409, 'مهمة الطباعة ليست قيد التنفيذ.');
 
         $job->update([
@@ -77,7 +88,11 @@ class PrintAgentController extends Controller
 
         $printer->update(['last_seen_at' => now()]);
 
-        return response()->json(['message' => 'تم تأكيد اكتمال الطباعة.']);
+        return response()->json([
+            'message' => 'تم تأكيد اكتمال الطباعة.',
+            'status' => 'completed',
+            'idempotent' => false,
+        ]);
     }
 
     public function fail(Request $request, int $jobId): JsonResponse
@@ -85,6 +100,27 @@ class PrintAgentController extends Controller
         $printer = $this->authenticatePrinter($request);
         $data = $request->validate(['error' => ['required', 'string', 'max:2000']]);
         $job = PrintJob::query()->whereKey($jobId)->where('printer_id', $printer->id)->firstOrFail();
+
+        // Idempotent: ignore fail after a successful complete (late/duplicate fail).
+        if ($job->status === 'completed') {
+            $printer->update(['last_seen_at' => now()]);
+
+            return response()->json([
+                'message' => 'تم تجاهل بلاغ الفشل لأن المهمة مكتملة.',
+                'status' => 'completed',
+                'idempotent' => true,
+            ]);
+        }
+
+        if (in_array($job->status, ['failed', 'pending'], true)) {
+            $printer->update(['last_seen_at' => now()]);
+
+            return response()->json([
+                'message' => 'تم تسجيل حالة المهمة مسبقًا.',
+                'status' => $job->status,
+                'idempotent' => true,
+            ]);
+        }
 
         abort_unless($job->status === 'processing', 409, 'مهمة الطباعة ليست قيد التنفيذ.');
 
@@ -101,6 +137,7 @@ class PrintAgentController extends Controller
         return response()->json([
             'message' => $terminal ? 'تم إيقاف المهمة بعد خمس محاولات.' : 'تمت جدولة إعادة المحاولة.',
             'status' => $job->fresh()->status,
+            'idempotent' => false,
         ]);
     }
 

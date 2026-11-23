@@ -74,6 +74,9 @@ class PrintAgentService : Service() {
                     continue
                 }
 
+                // Finish any USB-success jobs whose complete ack was lost (idempotent on server).
+                flushPendingCompletes(server, printerCode, token)
+
                 updateNotification("متصل بالطابعة · في انتظار تذاكر المطبخ")
                 val job = claimJob(server, printerCode, token)
                 if (job == null) {
@@ -82,6 +85,17 @@ class PrintAgentService : Service() {
                 }
 
                 val jobId = job.optLong("id", -1)
+                if (jobId <= 0L) {
+                    delay(1800)
+                    continue
+                }
+
+                // Never reprint a job this device already sent to USB.
+                if (wasPrintedLocally(jobId)) {
+                    runCatching { completeJobWithRetry(server, printerCode, token, jobId) }
+                    continue
+                }
+
                 try {
                     val payload = job.optJSONObject("payload") ?: error("Print job payload is missing")
                     val bytes = when (job.optString("job_type")) {
@@ -89,15 +103,24 @@ class PrintAgentService : Service() {
                         else -> EscPosRenderer.kitchenTicket(payload)
                     }
                     usb.print(bytes)
-                    completeJob(server, printerCode, token, jobId)
+                    markPrintedLocally(jobId)
+                    completeJobWithRetry(server, printerCode, token, jobId)
+                    clearPendingComplete(jobId)
                     updateNotification("تمت طباعة الطلب ${payload.optString("order_number")}")
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
-                    runCatching {
-                        failJob(server, printerCode, token, jobId, error.message ?: "Unknown USB print error")
+                    // USB may have succeeded before a late exception; only fail when not printed.
+                    if (wasPrintedLocally(jobId)) {
+                        rememberPendingComplete(jobId)
+                        runCatching { completeJobWithRetry(server, printerCode, token, jobId) }
+                        updateNotification("الطباعة تمت؛ جارٍ تأكيد المهمة على الخادم")
+                    } else {
+                        runCatching {
+                            failJob(server, printerCode, token, jobId, error.message ?: "Unknown USB print error")
+                        }
+                        updateNotification("تعذر طباعة مهمة؛ ستتم إعادة المحاولة")
+                        delay(2500)
                     }
-                    updateNotification("تعذر طباعة مهمة؛ ستتم إعادة المحاولة")
-                    delay(2500)
                 }
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
@@ -107,11 +130,43 @@ class PrintAgentService : Service() {
         }
     }
 
+    private suspend fun flushPendingCompletes(server: String, code: String, token: String) {
+        for (jobId in pendingCompleteIds().toList()) {
+            runCatching {
+                completeJobWithRetry(server, code, token, jobId)
+                clearPendingComplete(jobId)
+            }
+        }
+    }
+
     private suspend fun claimJob(server: String, code: String, token: String): JSONObject? =
         withContext(Dispatchers.IO) {
             val response = post(server, "/api/print-agent/jobs/claim", code, token, JSONObject())
             response.optJSONObject("job")
         }
+
+    private suspend fun completeJobWithRetry(
+        server: String,
+        code: String,
+        token: String,
+        jobId: Long,
+        attempts: Int = 4,
+    ) {
+        var lastError: Exception? = null
+        repeat(attempts) { index ->
+            try {
+                completeJob(server, code, token, jobId)
+                clearPendingComplete(jobId)
+                return
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                lastError = error
+                rememberPendingComplete(jobId)
+                delay(800L * (index + 1))
+            }
+        }
+        throw lastError ?: IllegalStateException("complete failed for job $jobId")
+    }
 
     private suspend fun completeJob(server: String, code: String, token: String, jobId: Long) {
         post(server, "/api/print-agent/jobs/$jobId/complete", code, token, JSONObject())
@@ -145,6 +200,41 @@ class PrintAgentService : Service() {
             if (text.isBlank()) JSONObject() else JSONObject(text)
         }
     }
+
+    private fun printedPrefs() = getSharedPreferences("print-agent-jobs", MODE_PRIVATE)
+
+    private fun wasPrintedLocally(jobId: Long): Boolean =
+        printedPrefs().getStringSet(KEY_PRINTED, emptySet()).orEmpty().contains(jobId.toString())
+
+    private fun markPrintedLocally(jobId: Long) {
+        val prefs = printedPrefs()
+        val printed = prefs.getStringSet(KEY_PRINTED, emptySet()).orEmpty().toMutableSet()
+        printed += jobId.toString()
+        while (printed.size > 200) {
+            printed.remove(printed.minOrNull())
+        }
+        prefs.edit().putStringSet(KEY_PRINTED, printed).apply()
+        rememberPendingComplete(jobId)
+    }
+
+    private fun rememberPendingComplete(jobId: Long) {
+        val prefs = printedPrefs()
+        val pending = prefs.getStringSet(KEY_PENDING_COMPLETE, emptySet()).orEmpty().toMutableSet()
+        pending += jobId.toString()
+        prefs.edit().putStringSet(KEY_PENDING_COMPLETE, pending).apply()
+    }
+
+    private fun clearPendingComplete(jobId: Long) {
+        val prefs = printedPrefs()
+        val pending = prefs.getStringSet(KEY_PENDING_COMPLETE, emptySet()).orEmpty().toMutableSet()
+        pending.remove(jobId.toString())
+        prefs.edit().putStringSet(KEY_PENDING_COMPLETE, pending).apply()
+    }
+
+    private fun pendingCompleteIds(): List<Long> =
+        printedPrefs().getStringSet(KEY_PENDING_COMPLETE, emptySet()).orEmpty()
+            .mapNotNull { it.toLongOrNull() }
+            .sorted()
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -194,5 +284,7 @@ class PrintAgentService : Service() {
         const val ACTION_STOP = "com.fatoosh.printagent.STOP"
         private const val CHANNEL_ID = "fatoosh-print-agent"
         private const val NOTIFICATION_ID = 2401
+        private const val KEY_PRINTED = "printed_job_ids"
+        private const val KEY_PENDING_COMPLETE = "pending_complete_ids"
     }
 }

@@ -20,8 +20,8 @@ class CatalogSeeder extends Seeder
             ->get()
             ->keyBy('slug');
 
-        $placeholderSource = public_path('images/product-placeholder.jpg');
-        if (! is_file($placeholderSource)) {
+        $defaultPlaceholder = public_path('images/product-placeholder.jpg');
+        if (! is_file($defaultPlaceholder)) {
             throw new \RuntimeException('Missing product placeholder image at public/images/product-placeholder.jpg');
         }
 
@@ -30,6 +30,8 @@ class CatalogSeeder extends Seeder
             if ($category === null) {
                 continue;
             }
+
+            $placeholderSource = $this->placeholderPathForCategory($categorySlug, $defaultPlaceholder);
 
             foreach ($items as $index => $item) {
                 $slug = Str::slug($item['name']) ?: 'product-'.$categorySlug.'-'.$index;
@@ -57,7 +59,7 @@ class CatalogSeeder extends Seeder
                 Storage::disk('public')->put($relative, File::get($placeholderSource));
                 $product->images()->create([
                     'path' => $relative,
-                    'original_name' => 'placeholder.jpg',
+                    'original_name' => basename($placeholderSource),
                     'mime_type' => 'image/jpeg',
                     'size_bytes' => Storage::disk('public')->size($relative),
                     'is_primary' => true,
@@ -65,6 +67,25 @@ class CatalogSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+    private function placeholderPathForCategory(string $categorySlug, string $fallback): string
+    {
+        $map = [
+            'eftar-alkhaldiya' => 'eftar',
+            'juices' => 'drinks',
+            'grills' => 'grill',
+            'grill-trays' => 'grill',
+            'plates' => 'grill',
+            'light-sandwiches' => 'sandwiches',
+            'hot-cold-sandwiches' => 'sandwiches',
+            'saj-sandwiches' => 'saj',
+        ];
+
+        $key = $map[$categorySlug] ?? 'default';
+        $path = public_path('images/placeholders/'.$key.'.jpg');
+
+        return is_file($path) ? $path : $fallback;
     }
 
     /**
