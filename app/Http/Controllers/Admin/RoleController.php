@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class RoleController extends Controller
 {
@@ -25,9 +26,14 @@ class RoleController extends Controller
             });
         }
 
+        $permissions = Permission::query();
+        if (! $request->user()->hasRole('system_admin')) {
+            $permissions->where('slug', '!=', 'modules.manage');
+        }
+
         return response()->json([
             'roles' => $query->orderBy('name')->get(),
-            'permissions' => Permission::query()->orderBy('module')->orderBy('name')->get(),
+            'permissions' => $permissions->orderBy('module')->orderBy('name')->get(),
         ]);
     }
 
@@ -46,6 +52,12 @@ class RoleController extends Controller
             'permission_slugs' => ['sometimes', 'array'],
             'permission_slugs.*' => ['string', 'distinct', 'exists:permissions,slug'],
         ]);
+
+        if (! $request->user()->hasRole('system_admin') && in_array('modules.manage', $data['permission_slugs'] ?? [], true)) {
+            throw ValidationException::withMessages([
+                'permission_slugs' => ['صلاحية إدارة الوحدات مخصصة لمدير النظام فقط.'],
+            ]);
+        }
 
         $branchId = (int) $data['branch_id'];
         $branchAccess->assertCanAccess($request->user(), $branchId);
@@ -105,6 +117,12 @@ class RoleController extends Controller
             'permission_slugs' => ['sometimes', 'array'],
             'permission_slugs.*' => ['string', 'distinct', 'exists:permissions,slug'],
         ]);
+
+        if (! $request->user()->hasRole('system_admin') && in_array('modules.manage', $data['permission_slugs'] ?? [], true)) {
+            throw ValidationException::withMessages([
+                'permission_slugs' => ['صلاحية إدارة الوحدات مخصصة لمدير النظام فقط.'],
+            ]);
+        }
 
         $before = [
             'name' => $role->name,
