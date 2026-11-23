@@ -71,7 +71,7 @@ class DatabaseSeeder extends Seeder
         $templates = [
             'operations_manager' => [
                 'name' => 'مدير تشغيل',
-                'permissions' => ['dashboard.view', 'employees.manage', 'roles.manage', 'catalog.view', 'catalog.manage', 'orders.view', 'orders.accept', 'orders.cancel', 'cashier.use', 'printing.manage'],
+                'permissions' => ['dashboard.view', 'employees.manage', 'roles.manage', 'catalog.view', 'catalog.manage', 'delivery.manage', 'orders.view', 'orders.accept', 'orders.cancel', 'cashier.use', 'printing.manage'],
             ],
             'content_manager' => [
                 'name' => 'مدير محتوى',
