@@ -75,6 +75,7 @@
     <div class="actions"><button class="primary" id="submitOrder">تأكيد الطلب</button><button class="secondary" data-close="checkoutModal">رجوع</button></div>
 </div></div>
 <div class="modal" id="successModal"><div class="dialog"><h2>تم استلام طلبك بنجاح 🎉</h2><div id="successDetails" class="hint"></div><button class="primary" id="finishOrder">تمام</button></div></div>
+<div class="modal" id="productModal"><div class="dialog"><h2 id="detailName"></h2><img id="detailImage" alt="" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px"><div id="detailDescription" style="white-space:pre-line;line-height:1.8;font-size:14px;margin:14px 0"></div><div class="price" id="detailPrice"></div><div class="actions"><button class="primary" id="detailAdd">أضف للسلة</button><button class="secondary" data-close="productModal">إغلاق</button></div></div></div>
 
 <script>
 (() => {
@@ -110,9 +111,20 @@
         const products=state.products.filter(p=>(!state.category||String(p.category_id)===state.category)&&(!term||(p.name+' '+(p.description||'')).toLowerCase().includes(term)));
         el('products').innerHTML=products.length?products.map(p=>{
             const img=p.primary_image?.url||p.images?.[0]?.url||'';
-            return '<article class="product"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy"><div class="body">'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.description||p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><button class="add" data-add="'+p.id+'">＋ أضف للسلة</button></div></article>';
+            return '<article class="product"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy"><div class="body">'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><button class="secondary" data-details="'+p.id+'">تفاصيل الصنف</button><button class="add" data-add="'+p.id+'">＋ أضف للسلة</button></div></article>';
         }).join(''):'<div class="empty">لا توجد أصناف مطابقة لبحثك</div>';
         el('products').querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addProduct(Number(b.dataset.add))));
+        el('products').querySelectorAll('[data-details]').forEach(b=>b.addEventListener('click',()=>showProductDetails(Number(b.dataset.details))));
+    }
+    function showProductDetails(id){
+        const p=state.products.find(x=>x.id===id);if(!p)return;
+        el('detailName').textContent=p.name;
+        el('detailImage').src=p.primary_image?.url||p.images?.[0]?.url||'';
+        el('detailImage').alt=p.name;
+        el('detailDescription').textContent=p.description||'لا توجد تفاصيل إضافية لهذا الصنف.';
+        el('detailPrice').textContent=money(p.price)+' د.ك';
+        el('detailAdd').onclick=()=>{hide('productModal');addProduct(id);};
+        show('productModal');
     }
     function renderAreas(){
         el('deliveryArea').innerHTML='<option value="">اختر المنطقة</option>'+state.areas.map(a=>'<option value="'+a.id+'">'+esc(a.governorate+' - '+a.name)+'</option>').join('');
