@@ -18,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
-    public function store(Request $request, string $branchCode, PrintJobDispatcher $printJobDispatcher): JsonResponse
+    public function store(Request $request, PrintJobDispatcher $printJobDispatcher, string $branchCode): JsonResponse
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:150'],
