@@ -108,6 +108,40 @@ class Index extends Component
         });
     }
 
+    public function collectCash(int $orderId): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('cashier.use'), 403);
+
+        $order = Order::query()->findOrFail($orderId);
+        app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
+
+        $eligible = $order->fulfillment_type === 'pickup'
+            ? ['ready', 'completed']
+            : ['out_for_delivery', 'completed'];
+
+        abort_if($order->payment_status === 'paid' || ! in_array($order->status, $eligible, true), 422);
+
+        DB::transaction(function () use ($order, $user): void {
+            $order->update([
+                'payment_method' => 'cash',
+                'payment_status' => 'paid',
+                'paid_at' => now(),
+            ]);
+
+            AuditLog::query()->create([
+                'branch_id' => $order->branch_id,
+                'actor_id' => $user->id,
+                'action' => 'order.payment_collected',
+                'auditable_type' => Order::class,
+                'auditable_id' => $order->id,
+                'before_values' => ['payment_status' => 'unpaid'],
+                'after_values' => ['payment_status' => 'paid', 'payment_method' => 'cash'],
+                'created_at' => now(),
+            ]);
+        });
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -139,6 +173,7 @@ class Index extends Component
             'orders' => $query->paginate(20),
             'canAdvance' => $user->hasPermissionTo('orders.accept'),
             'canCancel' => $user->hasPermissionTo('orders.cancel'),
+            'canCollect' => $user->hasPermissionTo('cashier.use'),
         ])->layout('layouts.admin', ['heading' => 'إدارة الطلبات']);
     }
 }
