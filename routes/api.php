@@ -13,6 +13,7 @@ Route::get('/health', fn () => response()->json([
 
 Route::get('/delivery-areas/{branchCode}', [DeliveryAreaController::class, 'index'])->name('delivery-areas.index');
 Route::post('/orders/{branchCode}', [OrderController::class, 'store'])->middleware('throttle:10,1')->name('orders.store');
+Route::get('/orders/{branchCode}/{orderNumber}', [OrderController::class, 'track'])->middleware('throttle:30,1')->name('orders.track');
 
 Route::prefix('catalog/{branchCode}')->name('catalog.')->group(function (): void {
     Route::get('/categories', [CatalogController::class, 'categories'])->name('categories');
