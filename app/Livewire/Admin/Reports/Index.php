@@ -42,7 +42,7 @@ class Index extends Component
         ]);
 
         if ($user->hasRole('system_admin') && $this->branchId) {
-            abort_unless(in_array((int) $this->branchId, $branchIds, true), 403);
+            abort_unless($branchIds->contains((int) $this->branchId), 403);
             $branchIds = collect([(int) $this->branchId]);
         }
 
