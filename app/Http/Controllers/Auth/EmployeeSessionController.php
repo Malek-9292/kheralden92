@@ -85,7 +85,7 @@ class EmployeeSessionController extends Controller
     public function destroy(Request $request): JsonResponse
     {
         $user = $request->user();
-        $sessionHash = hash('sha256', $request->session()->getId());
+        $sessionToken = $request->session()->get('employee_session_token');\n        $sessionHash = is_string($sessionToken) ? hash('sha256', $sessionToken) : null;
 
         $user?->employeeSessions()
             ->where('session_hash', $sessionHash)
