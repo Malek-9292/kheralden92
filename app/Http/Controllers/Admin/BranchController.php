@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\AuditLog;
-use App\\Models\\Branch;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\Branch;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BranchController extends Controller
 {
