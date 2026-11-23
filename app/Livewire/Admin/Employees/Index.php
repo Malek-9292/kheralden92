@@ -85,11 +85,17 @@ class Index extends Component
 
         $allowedRoles = Role::query()
             ->whereIn('id', $data['roleIds'])
+            ->with('permissions')
             ->where(function ($query) use ($branchId): void {
                 $query->whereNull('branch_id')->orWhere('branch_id', $branchId);
             })
             ->where('slug', '!=', 'system_admin')
             ->get();
+
+        if ($user->hasRole('system_admin') === false && $allowedRoles->contains(fn (Role $role): bool => $role->permissions->contains('slug', 'modules.manage'))) {
+            $this->addError('roleIds', 'لا يمكن إسناد دور يحتوي على صلاحية إدارة الوحدات.');
+            return;
+        }
 
         if ($allowedRoles->count() !== count(array_unique($data['roleIds']))) {
             $this->addError('roleIds', 'الأدوار المختارة غير متاحة لهذا الفرع.');
