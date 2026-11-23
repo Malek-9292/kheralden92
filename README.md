@@ -30,3 +30,32 @@
 
 ## حالة الفرع
 الفرع `implementation/foundation-v1` مخصص للتأسيس والمراجعة، ولا يُدمج إلى `main` تلقائيًا. ملفات الوحدات الحالية هياكل Service Providers فقط وليست وظائف أعمال مكتملة. لا تستخدم بيانات إنتاج أو بيانات اعتماد حقيقية في بيئة التطوير.
+
+
+## تشغيل بيئة التطوير المحلية
+
+1. يتطلب PHP 8.2 أو أحدث وComposer وقاعدة MySQL 8.
+2. انسخ `.env.example` إلى `.env` واضبط بيانات قاعدة بيانات تطوير مستقلة.
+3. نفّذ:
+   ```bash
+   composer install
+   php artisan key:generate
+   php artisan migrate --seed
+   php artisan fatoosh:admin:create
+   php artisan serve
+   ```
+4. ينشئ الأمر `fatoosh:admin:create` أول مدير نظام تفاعليًا، ويطلب كلمة مرور لا تقل عن 12 حرفًا. لا يوجد حساب مدير افتراضي أو كلمة مرور مضمّنة في المستودع.
+5. لا تستخدم بيانات قاعدة الإنتاج في بيئة التطوير.
+
+## واجهات الهوية الحالية
+
+- `POST /admin/session` — تسجيل دخول الموظف برقم الهاتف وكلمة المرور.
+- `GET /admin/session` — بيانات جلسة الموظف الحالي.
+- `DELETE /admin/session` — تسجيل الخروج وإنهاء سجل الجلسة.
+- `GET /admin/employees` — قائمة الموظفين (صلاحية `employees.manage`).
+- `POST /admin/employees` — إنشاء موظف.
+- `PATCH /admin/employees/{employee}` — تعديل الموظف أو إيقافه.
+- `GET /admin/roles` — عرض الأدوار والصلاحيات (صلاحية `roles.manage`).
+- `POST /admin/roles` و`PATCH /admin/roles/{role}` — إنشاء الأدوار وتعديلها.
+
+كل مسارات الإدارة محمية بالمصادقة وفحص الجلسة الفعالة والصلاحية المناسبة. هذه واجهات تأسيسية؛ لا توجد حتى الآن واجهة رسومية مكتملة للوحة الإدارة.
