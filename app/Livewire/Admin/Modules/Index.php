@@ -40,7 +40,7 @@ class Index extends Component
         } else {
             $disabledDependencies = array_values(array_filter(
                 $manager->dependencies($module),
-                fn (string $dependency): bool => ! $manager->enabled($dependency),
+                fn (string $dependency): bool => $manager->enabled($dependency) === false,
             ));
 
             if ($disabledDependencies !== []) {
@@ -49,7 +49,7 @@ class Index extends Component
             }
         }
 
-        $next = ! $current;
+        $next = $current === false;
 
         DB::transaction(function () use ($module, $next, $user): void {
             $setting = ModuleSetting::query()->updateOrCreate(
@@ -63,7 +63,7 @@ class Index extends Component
                 'action' => $next ? 'module.enabled' : 'module.disabled',
                 'auditable_type' => ModuleSetting::class,
                 'auditable_id' => $setting->id,
-                'before_values' => ['is_enabled' => ! $next],
+                'before_values' => ['is_enabled' => $current],
                 'after_values' => ['is_enabled' => $next],
                 'created_at' => now(),
             ]);
