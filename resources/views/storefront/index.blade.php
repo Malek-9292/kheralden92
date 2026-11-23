@@ -110,7 +110,7 @@
                 else {state.cart[id].name=current.name;state.cart[id].price=Number(current.price);}
             });
             renderCartBar();
-            el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
+            if(!settingsRes.ok)el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
             renderCategories();renderProducts();renderAreas();
         }catch(e){el('products').innerHTML='<div class="empty">تعذر تحميل المنيو حاليًا. حدّث الصفحة وحاول مرة أخرى.</div>';}
     }
