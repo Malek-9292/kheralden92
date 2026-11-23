@@ -24,7 +24,7 @@ class EnsureActiveEmployeeSession
             abort(401, 'حساب الموظف غير نشط أو خارج فترة الصلاحية.');
         }
 
-        $sessionHash = hash('sha256', $request->session()->getId());
+        $sessionToken = $request->session()->get('employee_session_token');\n        $sessionHash = is_string($sessionToken) ? hash('sha256', $sessionToken) : null;
         $employeeSession = $user->employeeSessions()
             ->where('session_hash', $sessionHash)
             ->whereNull('logged_out_at')
