@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\DeliveryAreaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -38,6 +39,12 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
         Route::patch('/products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{product}/images/{image}', [ProductController::class, 'destroyImage'])->name('products.images.destroy');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:delivery.manage'])->group(function (): void {
+        Route::get('/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.index');
+        Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
+        Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
