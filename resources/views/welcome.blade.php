@@ -1,0 +1,4 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ config('app.name') }}</title>
+<style>:root{font-family:Tahoma,Arial,sans-serif;background:#f6faf6;color:#183b2a}body{min-height:100vh;margin:0;display:grid;place-items:center}main{max-width:620px;margin:24px;padding:42px;background:white;border:1px solid #dceadd;border-radius:22px;box-shadow:0 18px 60px #173b2412}h1{color:#38834c}p{line-height:1.9}code{background:#eff7ef;padding:4px 8px;border-radius:6px}</style></head>
+<body><main><h1>فتوش الخالدية</h1><p>تم إنشاء النواة البرمجية للنظام الجديد.</p><p>Modular Monolith — Laravel 12 — Livewire 3 — MySQL 8.</p><p>هذه بيئة تأسيسية وليست نسخة تشغيل إنتاجية بعد.</p><p><code>/up</code> فحص صحة التطبيق — <code>/api/health</code> فحص API.</p></main></body></html>
