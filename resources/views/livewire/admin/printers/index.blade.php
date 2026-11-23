@@ -55,7 +55,21 @@
                         <td data-label="الاستخدام">{{ $printer->purpose==='kitchen' ? 'المطبخ' : 'الكاشير' }}</td>
                         <td data-label="الاتصال">{{ strtoupper($printer->connection_type) }}</td>
                         <td data-label="المهام المعلقة">{{ $printer->pending_jobs_count }}</td>
-                        <td data-label="آخر اتصال">{{ $printer->last_seen_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') ?? 'لم تتصل بعد' }}</td>
+                        <td data-label="آخر اتصال">
+                            @php
+                                $seen = $printer->last_seen_at;
+                                $online = $seen && $seen->greaterThan(now()->subMinutes(2));
+                            @endphp
+                            @if(!$seen)
+                                <span style="color:#9a3412">لم تتصل بعد</span>
+                            @elseif($online)
+                                <span style="color:#166534">متصلة الآن</span>
+                                <div class="muted" style="font-size:11px">{{ $seen->timezone('Asia/Kuwait')->format('Y-m-d H:i:s') }}</div>
+                            @else
+                                <span style="color:#9a3412">انقطع الاتصال</span>
+                                <div class="muted" style="font-size:11px">آخر ظهور {{ $seen->timezone('Asia/Kuwait')->format('Y-m-d H:i') }}</div>
+                            @endif
+                        </td>
                         <td data-label="الحالة"><span class="status">{{ $printer->is_active ? 'نشطة' : 'متوقفة' }}</span></td>
                         <td data-label="إجراءات"><div style="display:flex;gap:6px;flex-wrap:wrap">
                             <button wire:click="rotateToken({{ $printer->id }})" wire:confirm="تغيير رمز الطابعة سيوقف الرمز القديم. متابعة؟" class="secondary" style="padding:7px 9px;font-size:11px">تغيير الرمز</button>
@@ -92,10 +106,11 @@
         <h2>إعداد Print Agent</h2>
         <p class="muted">يستخدم جهاز الطباعة الرمز السري وكود الجهاز للاتصال بهذه الواجهات:</p>
         <div dir="ltr" style="font-family:monospace;font-size:12px;line-height:2;overflow-wrap:anywhere">
+            POST /api/print-agent/heartbeat<br>
             POST /api/print-agent/jobs/claim<br>
             POST /api/print-agent/jobs/{jobId}/complete<br>
             POST /api/print-agent/jobs/{jobId}/fail
         </div>
-        <p class="muted">يتم إرسال التذكرة بصيغة JSON. ربط الطابعة الفعلية عبر USB على أندرويد يحتاج تثبيت Print Agent ومنحه صلاحية USB واختباره على طابعة Epson TM-T20.</p>
+        <p class="muted">النبض (heartbeat) يحدّث «آخر اتصال» دون سحب مهمة. السحب يتم فقط بعد جاهزية USB. التذكرة JSON؛ اختبر من زر «اختبار الاتصال» ثم «اختبار الطابعة» في التطبيق.</p>
     </div>
 </section>

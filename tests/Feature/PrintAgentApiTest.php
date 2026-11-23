@@ -188,4 +188,69 @@ class PrintAgentApiTest extends TestCase
             'X-Printer-Token' => 'wrong-token',
         ])->postJson('/api/print-agent/jobs/claim')->assertUnauthorized();
     }
+
+    public function test_heartbeat_updates_last_seen_without_claiming_jobs(): void
+    {
+        $branch = Branch::query()->create([
+            'code' => 'KHAL',
+            'name' => 'فتوش الخالدية',
+            'timezone' => 'Asia/Kuwait',
+            'is_active' => true,
+        ]);
+
+        $token = Str::random(64);
+        $printer = Printer::query()->create([
+            'branch_id' => $branch->id,
+            'code' => 'KITCHEN-01',
+            'name' => 'طابعة المطبخ',
+            'purpose' => 'kitchen',
+            'connection_type' => 'usb',
+            'device_token_hash' => hash('sha256', $token),
+            'is_active' => true,
+            'last_seen_at' => null,
+        ]);
+
+        $order = Order::query()->create([
+            'branch_id' => $branch->id,
+            'order_number' => 'KHAL-261123-000050',
+            'customer_name' => 'عميل',
+            'customer_phone' => '96560000050',
+            'fulfillment_type' => 'pickup',
+            'status' => 'pending',
+            'payment_method' => 'cash',
+            'payment_status' => 'unpaid',
+            'subtotal' => '3.000',
+            'delivery_fee' => '0.000',
+            'minimum_order_snapshot' => '0.000',
+            'total' => '3.000',
+            'tracking_token_hash' => hash('sha256', Str::random(64)),
+        ]);
+
+        PrintJob::query()->create([
+            'branch_id' => $branch->id,
+            'printer_id' => $printer->id,
+            'order_id' => $order->id,
+            'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
+            'payload' => ['order_number' => $order->order_number],
+            'available_at' => now(),
+        ]);
+
+        $this->withHeaders([
+            'X-Printer-Code' => 'KITCHEN-01',
+            'X-Printer-Token' => $token,
+        ])->postJson('/api/print-agent/heartbeat')
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('pending_jobs', 1)
+            ->assertJsonPath('printer.code', 'KITCHEN-01');
+
+        $printer->refresh();
+        $this->assertNotNull($printer->last_seen_at);
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $order->id,
+            'status' => 'pending',
+            'claimed_at' => null,
+        ]);
+    }
 }

@@ -18,30 +18,22 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 
 class PrintAgentService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var pollingJob: Job? = null
-    private val http = OkHttpClient.Builder()
-        .connectTimeout(12, TimeUnit.SECONDS)
-        .readTimeout(25, TimeUnit.SECONDS)
-        .callTimeout(30, TimeUnit.SECONDS)
-        .build()
+    private val api = PrintApiClient()
+    private lateinit var statusStore: AgentStatusStore
 
     override fun onCreate() {
         super.onCreate()
+        statusStore = AgentStatusStore(this)
         createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
+            statusStore.setStopped("تم إيقاف الخدمة")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -54,32 +46,49 @@ class PrintAgentService : Service() {
 
     private suspend fun pollingLoop() {
         val prefs = getSharedPreferences("print-agent", MODE_PRIVATE)
-        val server = prefs.getString("server_url", "").orEmpty().trimEnd('/')
-        val printerCode = prefs.getString("printer_code", "").orEmpty()
-        val token = SecureTokenStore(this).read().orEmpty()
+        val normalized = ServerUrl.normalize(prefs.getString("server_url", "").orEmpty())
+        val server = normalized.url.orEmpty()
+        val printerCode = prefs.getString("printer_code", "").orEmpty().trim().uppercase()
+        val token = SecureTokenStore(this).read().orEmpty().trim()
 
         if (server.isBlank() || printerCode.isBlank() || token.isBlank()) {
-            updateNotification("أكمل إعداد رابط الخادم ورمز الطابعة")
+            val msg = normalized.errorAr ?: "أكمل إعداد رابط الخادم وكود الطابعة ورمز الجهاز"
+            updateNotification(msg)
+            statusStore.setFailed(msg)
             stopSelf()
             return
         }
 
+        // Persist canonical URL (no trailing slash).
+        prefs.edit().putString("server_url", server).putString("printer_code", printerCode).apply()
+
         val usb = UsbThermalPrinter(this)
         while (serviceScope.isActive) {
             try {
+                // Always heartbeat so /admin/printers shows last-seen even before USB is ready.
+                val beat = api.heartbeat(server, printerCode, token)
+                val pending = beat.optInt("pending_jobs", 0)
+
                 if (!usb.isReady()) {
                     usb.requestPermissionIfNeeded()
-                    updateNotification("في انتظار توصيل طابعة USB والسماح بالوصول")
+                    val waitMsg = "متصل بالخادم · بانتظار USB والسماح بالوصول · مهام معلّقة: $pending"
+                    statusStore.setWaitingUsb(pending, waitMsg)
+                    updateNotification(waitMsg)
                     delay(3000)
                     continue
                 }
 
-                // Finish any USB-success jobs whose complete ack was lost (idempotent on server).
                 flushPendingCompletes(server, printerCode, token)
 
-                updateNotification("متصل بالطابعة · في انتظار تذاكر المطبخ")
-                val job = claimJob(server, printerCode, token)
+                val readyMsg = "متصل · USB جاهز · في انتظار تذاكر المطبخ · مهام معلّقة: $pending"
+                statusStore.setConnected(pending, readyMsg)
+                updateNotification(readyMsg)
+
+                val response = api.claim(server, printerCode, token)
+                val job = response.optJSONObject("job")
+                val pendingAfter = response.optInt("pending_jobs", pending)
                 if (job == null) {
+                    statusStore.setConnected(pendingAfter, readyMsg)
                     delay(1800)
                     continue
                 }
@@ -90,14 +99,13 @@ class PrintAgentService : Service() {
                     continue
                 }
 
-                // Never reprint a job this device already sent to USB.
                 if (wasPrintedLocally(jobId)) {
                     runCatching { completeJobWithRetry(server, printerCode, token, jobId) }
                     continue
                 }
 
                 try {
-                    val payload = job.optJSONObject("payload") ?: error("Print job payload is missing")
+                    val payload = job.optJSONObject("payload") ?: error("حمولة مهمة الطباعة ناقصة")
                     val bytes = when (job.optString("job_type")) {
                         "customer_receipt" -> EscPosRenderer.customerReceipt(payload)
                         else -> EscPosRenderer.kitchenTicket(payload)
@@ -106,25 +114,28 @@ class PrintAgentService : Service() {
                     markPrintedLocally(jobId)
                     completeJobWithRetry(server, printerCode, token, jobId)
                     clearPendingComplete(jobId)
-                    updateNotification("تمت طباعة الطلب ${payload.optString("order_number")}")
+                    val ok = "تمت طباعة الطلب ${payload.optString("order_number")}"
+                    updateNotification(ok)
+                    statusStore.setConnected(pendingAfter, ok)
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
-                    // USB may have succeeded before a late exception; only fail when not printed.
                     if (wasPrintedLocally(jobId)) {
                         rememberPendingComplete(jobId)
                         runCatching { completeJobWithRetry(server, printerCode, token, jobId) }
                         updateNotification("الطباعة تمت؛ جارٍ تأكيد المهمة على الخادم")
                     } else {
-                        runCatching {
-                            failJob(server, printerCode, token, jobId, error.message ?: "Unknown USB print error")
-                        }
+                        val failMsg = error.message ?: "خطأ USB غير معروف"
+                        runCatching { api.fail(server, printerCode, token, jobId, failMsg) }
+                        statusStore.setFailed(failMsg, pendingAfter)
                         updateNotification("تعذر طباعة مهمة؛ ستتم إعادة المحاولة")
                         delay(2500)
                     }
                 }
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                updateNotification("تعذر الاتصال بالخادم أو الطابعة")
+                val msg = error.message ?: "تعذر الاتصال بالخادم"
+                statusStore.setFailed(msg)
+                updateNotification("فشل الاتصال: ${msg.take(80)}")
                 delay(5000)
             }
         }
@@ -139,12 +150,6 @@ class PrintAgentService : Service() {
         }
     }
 
-    private suspend fun claimJob(server: String, code: String, token: String): JSONObject? =
-        withContext(Dispatchers.IO) {
-            val response = post(server, "/api/print-agent/jobs/claim", code, token, JSONObject())
-            response.optJSONObject("job")
-        }
-
     private suspend fun completeJobWithRetry(
         server: String,
         code: String,
@@ -155,7 +160,7 @@ class PrintAgentService : Service() {
         var lastError: Exception? = null
         repeat(attempts) { index ->
             try {
-                completeJob(server, code, token, jobId)
+                api.complete(server, code, token, jobId)
                 clearPendingComplete(jobId)
                 return
             } catch (error: Exception) {
@@ -165,40 +170,7 @@ class PrintAgentService : Service() {
                 delay(800L * (index + 1))
             }
         }
-        throw lastError ?: IllegalStateException("complete failed for job $jobId")
-    }
-
-    private suspend fun completeJob(server: String, code: String, token: String, jobId: Long) {
-        post(server, "/api/print-agent/jobs/$jobId/complete", code, token, JSONObject())
-    }
-
-    private suspend fun failJob(server: String, code: String, token: String, jobId: Long, message: String) {
-        val body = JSONObject().put("error", message.take(1900))
-        post(server, "/api/print-agent/jobs/$jobId/fail", code, token, body)
-    }
-
-    private suspend fun post(
-        server: String,
-        path: String,
-        code: String,
-        token: String,
-        body: JSONObject,
-    ): JSONObject = withContext(Dispatchers.IO) {
-        val request = Request.Builder()
-            .url(server + path)
-            .header("Accept", "application/json")
-            .header("X-Printer-Code", code)
-            .header("X-Printer-Token", token)
-            .post(body.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
-            .build()
-
-        http.newCall(request).execute().use { response ->
-            val text = response.body?.string().orEmpty()
-            if (!response.isSuccessful) {
-                error("Print server returned HTTP ${response.code}: ${text.take(300)}")
-            }
-            if (text.isBlank()) JSONObject() else JSONObject(text)
-        }
+        throw lastError ?: IllegalStateException("فشل تأكيد المهمة $jobId")
     }
 
     private fun printedPrefs() = getSharedPreferences("print-agent-jobs", MODE_PRIVATE)
