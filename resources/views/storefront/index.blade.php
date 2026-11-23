@@ -128,26 +128,41 @@
     const cartItems = () => Object.values(state.cart);
     const subtotal = () => cartItems().reduce((sum,item)=>sum+Number(item.price)*item.quantity,0);
     const selectedArea = () => state.areas.find(area=>String(area.id)===el('deliveryArea').value);
-    const statusLabel = s => ({pending:'قيد الانتظار',accepted:'مقبول',preparing:'قيد التحضير',ready:'جاهز',out_for_delivery:'خارج للتوصيل',completed:'مكتمل',cancelled:'ملغي'}[s]||s);
+    const statusLabel = s => ({pending:'قيد الانتظار',confirmed:'مؤكد',preparing:'قيد التجهيز',ready:'جاهز',out_for_delivery:'خارج للتوصيل',completed:'مكتمل',cancelled:'ملغي'}[s]||s);
     const newIdempotencyKey = () => {
         if(window.crypto?.randomUUID) return window.crypto.randomUUID()+'-'+Date.now();
         return 'ord-'+Date.now()+'-'+Math.random().toString(36).slice(2,12);
     };
+    async function fetchAllProducts(){
+        const collected=[];
+        let page=1, lastPage=1;
+        do{
+            const res=await fetch('/api/catalog/'+branch+'/products?per_page=100&page='+page);
+            if(!res.ok) throw new Error('تعذر تحميل بيانات المنيو');
+            const body=await res.json();
+            const chunk=body.products?.data||[];
+            collected.push(...chunk);
+            lastPage=Number(body.products?.last_page||1);
+            page+=1;
+        }while(page<=lastPage && page<=20);
+        return collected;
+    }
     async function loadMenu(){
         try{
             const [catRes,prodRes,areaRes,settingsRes]=await Promise.all([
-                fetch('/api/catalog/'+branch+'/categories'),fetch('/api/catalog/'+branch+'/products?per_page=60'),fetch('/api/delivery-areas/'+branch),fetch('/api/storefront/'+branch+'/settings')
+                fetch('/api/catalog/'+branch+'/categories'),fetchAllProducts(),fetch('/api/delivery-areas/'+branch),fetch('/api/storefront/'+branch+'/settings')
             ]);
-            if(!catRes.ok||!prodRes.ok||!areaRes.ok) throw new Error('تعذر تحميل بيانات المنيو');
-            const cats=await catRes.json(),prods=await prodRes.json(),areas=await areaRes.json();
+            if(!catRes.ok||!areaRes.ok) throw new Error('تعذر تحميل بيانات المنيو');
+            const cats=await catRes.json(),areas=await areaRes.json();
             if(settingsRes.ok){const settingsData=await settingsRes.json();applySettings(settingsData.settings||{});}
-            state.categories=cats.categories||[];state.products=prods.products?.data||[];state.areas=areas.delivery_areas||[];
+            state.categories=cats.categories||[];state.products=prodRes||[];state.areas=areas.delivery_areas||[];
             state.governorates=areas.governorates||[...new Set(state.areas.map(a=>a.governorate))];
             Object.keys(state.cart).forEach(id=>{
                 const current=state.products.find(p=>String(p.id)===String(id));
                 if(!current) delete state.cart[id];
                 else {state.cart[id].name=current.name;state.cart[id].price=Number(current.price);}
             });
+            try{localStorage.setItem('fatoosh-cart',JSON.stringify(state.cart));}catch{}
             renderCartBar();
             if(!settingsRes.ok)el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
             renderCategories();renderProducts();renderGovernorates();renderAreas();
@@ -155,7 +170,7 @@
     }
     function setOnlineState(){
         el('offlineBanner').hidden=navigator.onLine;
-        if(!navigator.onLine) el('submitOrder').disabled=true;
+        el('submitOrder').disabled=!navigator.onLine;
     }
     function applySettings(settings){
         const name=settings.restaurant_name||'فتوش الخالدية';

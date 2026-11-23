@@ -46,8 +46,8 @@
                     @foreach($recentOrders as $order)
                         @php($statusLabels = [
                             'pending' => 'جديد',
-                            'accepted' => 'مقبول',
-                            'preparing' => 'قيد التحضير',
+                            'confirmed' => 'مؤكد',
+                            'preparing' => 'قيد التجهيز',
                             'ready' => 'جاهز',
                             'completed' => 'مكتمل',
                             'cancelled' => 'ملغى',
