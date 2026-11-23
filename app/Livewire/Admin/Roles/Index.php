@@ -48,7 +48,7 @@ class Index extends Component
             abort_unless((int) $role->branch_id === $branchId, 403);
         }
 
-        if (! $user->hasRole('system_admin') && in_array('modules.manage', $this->permissionSlugs, true)) {
+        if ($user->hasRole('system_admin') === false && in_array('modules.manage', $this->permissionSlugs, true)) {
             $this->addError('permissionSlugs', 'صلاحية إدارة الوحدات مخصصة لمدير النظام فقط.');
             return;
         }
@@ -144,7 +144,7 @@ class Index extends Component
         return view('livewire.admin.roles.index', [
             'roles' => $roles,
             'permissionsByModule' => Permission::query()
-                ->when(! $user->hasRole('system_admin'), fn ($query) => $query->where('slug', '!=', 'modules.manage'))
+                ->when($user->hasRole('system_admin') === false, fn ($query) => $query->where('slug', '!=', 'modules.manage'))
                 ->orderBy('module')->orderBy('name')->get()->groupBy('module'),
             'branches' => $user->hasRole('system_admin') ? Branch::query()->orderBy('name')->get(['id', 'name']) : collect(),
             'isSystemAdmin' => $user->hasRole('system_admin'),
