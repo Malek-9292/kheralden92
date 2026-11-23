@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\MenuProductImageMatcher;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -24,6 +25,9 @@ class CatalogSeeder extends Seeder
         if (! is_file($defaultPlaceholder)) {
             throw new \RuntimeException('Missing product placeholder image at public/images/product-placeholder.jpg');
         }
+
+        $matcher = new MenuProductImageMatcher;
+        $menuImages = $matcher->catalogImages();
 
         foreach ($this->catalog() as $categorySlug => $items) {
             $category = $categories->get($categorySlug);
@@ -51,22 +55,54 @@ class CatalogSeeder extends Seeder
                     ],
                 );
 
+                $menuMatch = $matcher->bestMatch($product->name, $menuImages);
+                if ($menuMatch !== null) {
+                    $this->attachPrimaryImage($product, $menuMatch['path'], $menuMatch['filename'], 'menu.jpg', replace: true);
+
+                    continue;
+                }
+
                 if ($product->images()->exists()) {
                     continue;
                 }
 
-                $relative = 'products/'.$product->id.'/placeholder.jpg';
-                Storage::disk('public')->put($relative, File::get($placeholderSource));
-                $product->images()->create([
-                    'path' => $relative,
-                    'original_name' => basename($placeholderSource),
-                    'mime_type' => 'image/jpeg',
-                    'size_bytes' => Storage::disk('public')->size($relative),
-                    'is_primary' => true,
-                    'sort_order' => 0,
-                ]);
+                $this->attachPrimaryImage($product, $placeholderSource, basename($placeholderSource), 'placeholder.jpg', replace: false);
             }
         }
+    }
+
+    private function attachPrimaryImage(
+        Product $product,
+        string $absoluteSource,
+        string $originalName,
+        string $storedBasename,
+        bool $replace,
+    ): void {
+        if (! $replace && $product->images()->exists()) {
+            return;
+        }
+
+        $relative = 'products/'.$product->id.'/'.$storedBasename;
+
+        if ($replace) {
+            foreach ($product->images()->get() as $image) {
+                if ($image->path !== $relative) {
+                    Storage::disk('public')->delete($image->path);
+                }
+                $image->delete();
+            }
+        }
+
+        Storage::disk('public')->put($relative, File::get($absoluteSource));
+
+        $product->images()->create([
+            'path' => $relative,
+            'original_name' => $originalName,
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => Storage::disk('public')->size($relative),
+            'is_primary' => true,
+            'sort_order' => 0,
+        ]);
     }
 
     private function placeholderPathForCategory(string $categorySlug, string $fallback): string
