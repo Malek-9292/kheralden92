@@ -21,8 +21,8 @@ use App\Livewire\Admin\Employees\Index as EmployeesIndex;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Printers\Index as PrintersIndex;
 use App\Livewire\Admin\Roles\Index as RolesIndex;
-use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use App\Livewire\Admin\Reports\Index as ReportsIndex;
+use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'storefront.index')->name('storefront.home');
