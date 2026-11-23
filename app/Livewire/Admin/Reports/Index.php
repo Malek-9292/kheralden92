@@ -14,9 +14,12 @@ class Index extends Component
 {
     #[Url]
     public string $dateFrom = '';
+
     #[Url]
     public string $dateTo = '';
+
     public ?int $branchId = null;
+
     public string $fulfillmentFilter = '';
 
     public function mount(): void
