@@ -44,6 +44,7 @@ class Categories extends Component
         app(BranchAccess::class)->assertCanAccess($user, $branchId);
 
         $data = $this->validate([
+            'branchId' => ['required', 'integer', 'exists:branches,id'],
             'name' => ['required', 'string', 'max:150'],
             'parentId' => ['nullable', 'integer', 'exists:categories,id'],
             'sortOrder' => ['integer', 'min:0'],
@@ -53,7 +54,7 @@ class Categories extends Component
         if ($data['parentId']) {
             abort_unless(
                 Category::query()->whereKey($data['parentId'])->where('branch_id', $branchId)
-                    ->when($this->editingId, fn ($q) => $q->whereKeyNot($this->editingId))->exists(),
+                    ->when($this->editingId, fn ($q) => $q->where('id', '!=', $this->editingId))->exists(),
                 422,
                 'القسم الأب غير تابع للفرع المحدد.',
             );
@@ -169,7 +170,7 @@ class Categories extends Component
     {
         $user = auth()->user();
         $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
-        $query = Category::query()->whereIn('branch_id', $branchIds)->withCount('products')->orderBy('sort_order')->orderBy('name');
+        $query = Category::query()->whereIn('branch_id', $branchIds)->with(['parent:id,name'])->withCount('products')->orderBy('sort_order')->orderBy('name');
         if ($this->search !== '') {
             $query->where('name', 'like', '%'.trim($this->search).'%');
         }
