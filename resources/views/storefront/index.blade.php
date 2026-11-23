@@ -49,6 +49,7 @@
 </head>
 <body>
 <header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></header>
+<div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
 <section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
 <main class="wrap">
     <div class="tools"><input id="search" class="search" type="search" placeholder="ابحث عن صنف..."><span id="branchName" class="muted">فتوش الخالدية</span></div>
