@@ -61,10 +61,11 @@ class UsbThermalPrinter(private val context: Context) {
 
     private fun findPrinterDevice(): UsbDevice? {
         return usbManager.deviceList.values.firstOrNull { device ->
-            device.deviceClass == UsbConstants.USB_CLASS_PRINTER ||
+            val printerClass = device.deviceClass == UsbConstants.USB_CLASS_PRINTER ||
                 (0 until device.interfaceCount).any { index ->
                     device.getInterface(index).interfaceClass == UsbConstants.USB_CLASS_PRINTER
                 }
+            printerClass && findBulkOut(device) != null
         } ?: usbManager.deviceList.values.firstOrNull { device -> findBulkOut(device) != null }
     }
 
