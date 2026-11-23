@@ -1,0 +1,25 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: fatoosh_dev
+      MYSQL_USER: fatoosh
+      MYSQL_PASSWORD: local-only-change-me
+      MYSQL_ROOT_PASSWORD: local-root-only-change-me
+    ports: ["3306:3306"]
+    volumes: [fatoosh_mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","127.0.0.1","-uroot","-plocal-root-only-change-me"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    ports: ["6379:6379"]
+    volumes: [fatoosh_redis_data:/data]
+    command: ["redis-server","--appendonly","yes"]
+volumes:
+  fatoosh_mysql_data:
+  fatoosh_redis_data:
