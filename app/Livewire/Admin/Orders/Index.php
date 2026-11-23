@@ -96,6 +96,7 @@ class Index extends Component
 
         DB::transaction(function () use ($order, $before, $user): void {
             $order->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+            $order->printJobs()->where('status', 'pending')->update(['status' => 'cancelled']);
 
             AuditLog::query()->create([
                 'branch_id' => $order->branch_id,
