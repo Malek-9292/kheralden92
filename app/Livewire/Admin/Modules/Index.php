@@ -34,7 +34,9 @@ class Index extends Component
             try {
                 $manager->assertCanDisable($module);
             } catch (RuntimeException $exception) {
-                $this->moduleError = $exception->getMessage();
+                $this->moduleError = str_starts_with($exception->getMessage(), 'Core module')
+                    ? 'الوحدة الأساسية لا يمكن إيقافها.'
+                    : 'لا يمكن إيقاف هذه الوحدة لأنها مطلوبة لوحدة أخرى مفعلة.';
 
                 return;
             }
