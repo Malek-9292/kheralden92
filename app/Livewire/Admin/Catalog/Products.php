@@ -213,7 +213,18 @@ class Products extends Component
         abort_unless($user->hasPermissionTo('catalog.manage'), 403);
         $product = Product::query()->findOrFail($id);
         app(BranchAccess::class)->assertCanAccess($user, $product->branch_id);
-        $product->update(['is_best_seller' => ! $product->is_best_seller]);
+        $before = $product->is_best_seller;
+        $product->update(['is_best_seller' => ! $before]);
+        AuditLog::query()->create([
+            'branch_id' => $product->branch_id,
+            'actor_id' => $user->id,
+            'action' => 'product.best_seller_updated',
+            'auditable_type' => Product::class,
+            'auditable_id' => $product->id,
+            'before_values' => ['is_best_seller' => $before],
+            'after_values' => ['is_best_seller' => ! $before],
+            'created_at' => now(),
+        ]);
     }
 
     public function deleteImage(int $imageId): void
@@ -226,11 +237,25 @@ class Products extends Component
         abort_if($product->images()->count() <= 1, 409, 'لا يمكن حذف الصورة الوحيدة للصنف.');
         $wasPrimary = $image->is_primary;
         $path = $image->path;
-        $image->delete();
+
+        DB::transaction(function () use ($image, $product, $wasPrimary, $path, $user): void {
+            $image->delete();
+            if ($wasPrimary) {
+                $product->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
+            }
+
+            AuditLog::query()->create([
+                'branch_id' => $product->branch_id,
+                'actor_id' => $user->id,
+                'action' => 'product.image_deleted',
+                'auditable_type' => Product::class,
+                'auditable_id' => $product->id,
+                'before_values' => ['image_id' => $image->id, 'path' => $path, 'was_primary' => $wasPrimary],
+                'created_at' => now(),
+            ]);
+        });
+
         Storage::disk('public')->delete($path);
-        if ($wasPrimary) {
-            $product->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
-        }
     }
 
     public function resetForm(): void
