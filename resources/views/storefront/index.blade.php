@@ -85,6 +85,7 @@
 (() => {
     const branch = 'KHAL';
     const state = {products:[],categories:[],areas:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null};
+    try { state.cart = JSON.parse(localStorage.getItem('fatoosh-cart') || '{}'); } catch { state.cart = {}; }
     const money = n => (Number(n)||0).toFixed(3);
     const el = id => document.getElementById(id);
     const show = id => el(id).classList.add('open');
@@ -144,7 +145,7 @@
     function changeQty(id,delta){
         if(!state.cart[id])return;state.cart[id].quantity+=delta;if(state.cart[id].quantity<=0)delete state.cart[id];renderCartBar();renderCartItems();
     }
-    function renderCartBar(){const count=cartItems().reduce((n,i)=>n+i.quantity,0);el('cartCount').textContent='السلة ('+count+')';el('cartTotal').textContent=money(subtotal())+' د.ك';}
+    function renderCartBar(){localStorage.setItem('fatoosh-cart',JSON.stringify(state.cart));const count=cartItems().reduce((n,i)=>n+i.quantity,0);el('cartCount').textContent='السلة ('+count+')';el('cartTotal').textContent=money(subtotal())+' د.ك';}
     function renderCartItems(){
         const items=cartItems();
         el('cartItems').innerHTML=items.length?items.map(i=>'<div class="line"><div><strong>'+esc(i.name)+'</strong><div class="muted">'+money(i.price)+' د.ك</div></div><div class="qty"><button data-dec="'+i.id+'">−</button><strong>'+i.quantity+'</strong><button data-inc="'+i.id+'">＋</button></div></div>').join(''):'<div class="empty">السلة فارغة</div>';
