@@ -81,6 +81,12 @@ class CashierCollectionTest extends TestCase
 
         $this->assertNotNull($order->fresh()->paid_at);
 
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $order->id,
+            'job_type' => 'customer_receipt',
+            'status' => 'pending',
+        ]);
+
         $this->actingAs($cashier)
             ->withSession(['employee_session_token' => $token])
             ->postJson("/admin/cashier/orders/{$order->id}/collect-cash")
