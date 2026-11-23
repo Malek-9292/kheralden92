@@ -16,6 +16,18 @@ import kotlin.math.ceil
 object EscPosRenderer {
     private const val PAPER_WIDTH_DOTS = 576
 
+    fun testPage(): ByteArray {
+        return render(
+            "فتوش الخالدية\n" +
+                "اختبار طابعة المطبخ\n" +
+                "Epson TM-T20 · USB\n" +
+                "--------------------------------\n" +
+                "العربية تعمل بشكل صحيح؟\n" +
+                "طلب تجريبي 12345\n" +
+                "--------------------------------\n\n"
+        )
+    }
+
     fun kitchenTicket(payload: JSONObject): ByteArray {
         val lines = mutableListOf<String>()
         lines += payload.optString("branch", "فتوش الخالدية")
