@@ -12,27 +12,27 @@
     <link rel="manifest" href="/manifest.webmanifest">
     <title>فتوش الخالدية | الطلبات أونلاين</title>
     <style>
-        :root{font-family:Tahoma,Arial,sans-serif;color:#20392c;background:#f5f8f5;font-synthesis:none}
+        :root{--brand:#2f704b;--accent:#8fcf9b;font-family:Tahoma,Arial,sans-serif;color:#20392c;background:#f5f8f5;font-synthesis:none}
         *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}
-        .top{background:#205b3b;color:white;padding:18px max(16px,calc((100vw - 1180px)/2));display:flex;align-items:center;justify-content:space-between;gap:15px}
+        .top{background:var(--brand);color:white;padding:18px max(16px,calc((100vw - 1180px)/2));display:flex;align-items:center;justify-content:space-between;gap:15px}
         .logo{font-size:23px;font-weight:900}.logo small{display:block;font-size:12px;font-weight:400;color:#d3e8d8;margin-top:5px}
-        .hero{background:linear-gradient(120deg,#1d5136,#4d8a5e);color:white;padding:36px 20px;text-align:center}
+        .hero{background:linear-gradient(120deg,var(--brand),var(--accent));color:white;padding:36px 20px;text-align:center}
         .hero h1{font-size:clamp(25px,4vw,38px);margin:0 0 10px}.hero p{margin:0;color:#e0eee3;font-size:14px}
         .wrap{max-width:1180px;margin:auto;padding:22px 16px 100px}
         .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
         .search{flex:1;min-width:200px;padding:12px 14px;border:1px solid #dce7de;border-radius:12px;background:#fff}
         .categories{display:flex;gap:8px;overflow:auto;padding:3px 0 14px}
         .chip{white-space:nowrap;border:1px solid #d9e6dc;border-radius:22px;padding:9px 14px;background:#fff;color:#365b43}
-        .chip.active{background:#276b45;color:white;border-color:#276b45}
+        .chip.active{background:var(--brand);color:white;border-color:var(--brand)}
         .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
         .product{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px #163b2410;display:flex;flex-direction:column}
         .product img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#edf3ed}
         .product .body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
         .product h3{font-size:15px;margin:0}.desc{color:#75857a;font-size:12px;line-height:1.6;min-height:30px}
-        .price{font-weight:800;color:#225d3b}.add{border:0;border-radius:10px;background:#2d784d;color:white;padding:10px;font-weight:700}
+        .price{font-weight:800;color:#225d3b}.add{border:0;border-radius:10px;background:var(--brand);color:white;padding:10px;font-weight:700}
         .badge-best{font-size:10px;color:#8a6416;background:#fff2d3;border-radius:20px;padding:4px 7px;width:max-content}
         .cartbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dce7de;padding:12px max(16px,calc((100vw - 1180px)/2));display:flex;justify-content:space-between;align-items:center;gap:15px;z-index:5;box-shadow:0 -6px 20px #173d2610}
-        .primary{border:0;background:#205b3b;color:#fff;padding:12px 18px;border-radius:11px;font-weight:700}
+        .primary{border:0;background:var(--brand);color:#fff;padding:12px 18px;border-radius:11px;font-weight:700}
         .modal{position:fixed;inset:0;background:#12291db8;z-index:20;display:none;align-items:center;justify-content:center;padding:15px}
         .modal.open{display:flex}.dialog{background:#fff;border-radius:18px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:20px}
         .dialog h2{margin:0 0 14px;font-size:19px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -48,8 +48,8 @@
     </style>
 </head>
 <body>
-<header class="top"><div class="logo">فتوش الخالدية <small>طعم يجمعنا</small></div><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></header>
-<section class="hero"><h1>أهلاً بيك في فتوش الخالدية</h1><p>اختار طلبك واستمتع بأكلنا الطازة</p></section>
+<header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></header>
+<section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
 <main class="wrap">
     <div class="tools"><input id="search" class="search" type="search" placeholder="ابحث عن صنف..."><span id="branchName" class="muted">فتوش الخالدية</span></div>
     <nav class="categories" id="categories"><button class="chip active" data-category="">الكل</button></nav>
@@ -96,11 +96,12 @@
     const selectedArea = () => state.areas.find(area=>String(area.id)===el('deliveryArea').value);
     async function loadMenu(){
         try{
-            const [catRes,prodRes,areaRes]=await Promise.all([
-                fetch('/api/catalog/'+branch+'/categories'),fetch('/api/catalog/'+branch+'/products?per_page=60'),fetch('/api/delivery-areas/'+branch)
+            const [catRes,prodRes,areaRes,settingsRes]=await Promise.all([
+                fetch('/api/catalog/'+branch+'/categories'),fetch('/api/catalog/'+branch+'/products?per_page=60'),fetch('/api/delivery-areas/'+branch),fetch('/api/storefront/'+branch+'/settings')
             ]);
             if(!catRes.ok||!prodRes.ok||!areaRes.ok) throw new Error('تعذر تحميل بيانات المنيو');
             const cats=await catRes.json(),prods=await prodRes.json(),areas=await areaRes.json();
+            if(settingsRes.ok){const settingsData=await settingsRes.json();applySettings(settingsData.settings||{});}
             state.categories=cats.categories||[];state.products=prods.products?.data||[];state.areas=areas.delivery_areas||[];
             Object.keys(state.cart).forEach(id=>{
                 const current=state.products.find(p=>String(p.id)===String(id));
@@ -111,6 +112,31 @@
             el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
             renderCategories();renderProducts();renderAreas();
         }catch(e){el('products').innerHTML='<div class="empty">تعذر تحميل المنيو حاليًا. حدّث الصفحة وحاول مرة أخرى.</div>';}
+    }
+    function applySettings(settings){
+        const name=settings.restaurant_name||'فتوش الخالدية';
+        document.title=name+' | الطلبات أونلاين';
+        el('brandName').textContent=name;
+        el('brandTagline').textContent=settings.tagline||'طعم يجمعنا';
+        el('heroTitle').textContent='أهلاً بيك في '+name;
+        el('heroTagline').textContent=settings.tagline||'اختار طلبك واستمتع بأكلنا الطازة';
+        el('branchName').textContent=name;
+        if(settings.primary_color)document.documentElement.style.setProperty('--brand',settings.primary_color);
+        if(settings.accent_color)document.documentElement.style.setProperty('--accent',settings.accent_color);
+        if(settings.logo_url){el('brandLogo').src=settings.logo_url;el('brandLogo').hidden=false;}
+        if(settings.banner_text){
+            el('banner').textContent=settings.banner_text;
+            el('banner').style.color=settings.banner_text_color||'#ffffff';
+            el('banner').style.background=settings.banner_background||'#2f704b';
+            el('banner').hidden=false;
+        }
+        el('storeFooter').textContent=settings.footer_text||'';
+        if(settings.phone||settings.whatsapp){
+            const contact=document.createElement('div');
+            contact.className='muted';
+            contact.textContent=[settings.phone?'هاتف: '+settings.phone:'',settings.whatsapp?'واتساب: '+settings.whatsapp:''].filter(Boolean).join(' · ');
+            el('storeFooter').appendChild(contact);
+        }
     }
     function renderCategories(){
         el('categories').innerHTML='<button class="chip '+(!state.category?'active':'')+'" data-category="">الكل</button>'+
