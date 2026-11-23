@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Branch;
+use App\Models\BranchSetting;
 use App\Models\DeliveryArea;
 use App\Models\Order;
 use App\Models\Product;
@@ -42,6 +43,31 @@ class OrderController extends Controller
             ->where('code', strtoupper($branchCode))
             ->where('is_active', true)
             ->firstOrFail();
+
+        if ($data['fulfillment_type'] === 'delivery') {
+            $deliveryPaused = filter_var(
+                BranchSetting::query()
+                    ->where('branch_id', $branch->id)
+                    ->where('key', 'delivery_paused')
+                    ->value('value'),
+                FILTER_VALIDATE_BOOLEAN,
+            );
+
+            if ($deliveryPaused) {
+                $reason = BranchSetting::query()
+                    ->where('branch_id', $branch->id)
+                    ->where('key', 'delivery_pause_reason')
+                    ->value('value');
+
+                throw ValidationException::withMessages([
+                    'fulfillment_type' => [
+                        filled($reason)
+                            ? 'التوصيل متوقف مؤقتًا: '.$reason
+                            : 'التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.',
+                    ],
+                ]);
+            }
+        }
 
         $idempotencyKey = $data['idempotency_key']
             ?? (is_string($request->header('Idempotency-Key')) ? $request->header('Idempotency-Key') : null);

@@ -15,6 +15,8 @@ class SecureApplicationTest extends TestCase
         $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        $this->assertNotEmpty($response->headers->get('Content-Security-Policy-Report-Only'));
+        $this->assertStringContainsString("default-src 'self'", (string) $response->headers->get('Content-Security-Policy-Report-Only'));
     }
 
     public function test_force_https_redirects_when_enabled(): void

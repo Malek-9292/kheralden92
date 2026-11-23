@@ -23,6 +23,9 @@ class SettingsController extends Controller
 
         $logoPath = $settings->get('logo_path');
 
+        $deliveryPaused = filter_var($settings->get('delivery_paused', '0'), FILTER_VALIDATE_BOOLEAN);
+        $deliveryPauseReason = (string) $settings->get('delivery_pause_reason', '');
+
         return response()->json([
             'branch' => ['code' => $branch->code, 'name' => $branch->name],
             'settings' => [
@@ -38,6 +41,9 @@ class SettingsController extends Controller
                 'banner_font_size' => (int) $settings->get('banner_font_size', 18),
                 'footer_text' => $settings->get('footer_text', ''),
                 'logo_url' => $logoPath ? Storage::disk('public')->url($logoPath) : null,
+                'delivery_paused' => $deliveryPaused,
+                'delivery_pause_reason' => $deliveryPauseReason,
+                'is_accepting_delivery' => ! $deliveryPaused,
             ],
         ]);
     }

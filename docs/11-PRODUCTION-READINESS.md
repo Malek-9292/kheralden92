@@ -9,8 +9,9 @@
 | بند | الحالة في الكود |
 |---|---|
 | HTTPS في الإنتاج / staging | `SecureApplication` يفرض HTTPS عند `FORCE_HTTPS=true` أو `APP_ENV=production` مع `APP_URL` على https؛ يثق بالوكيل عبر `trustProxies` |
-| رؤوس أمان أساسية | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, و`HSTS` عند HTTPS |
-| جلسات الموظفين + مهلة خمول | موجودة (`config/security.php` + `.env` idle minutes) |
+| رؤوس أمان أساسية | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, و`HSTS` عند HTTPS؛ بالإضافة إلى `Content-Security-Policy-Report-Only` للمراقبة دون كسر الواجهة |
+| جلسات الموظفين + مهلة خمول | `ADMIN_SESSION_IDLE_MINUTES` و`CASHIER_SESSION_IDLE_MINUTES` في `.env` / `config/security.php` (افتراضي 30 دقيقة) — بعد الخمول تُنهى جلسة الموظف ويُطلب تسجيل الدخول مجددًا |
+| حد معدّل الطلبات العامة | كتالوج/إعدادات/مناطق: `throttle:60,1`؛ إنشاء طلب: `10/د`؛ تتبع طلب: `30/د`؛ Print Agent: `120/د`؛ تسجيل الدخول الإداري محدود أيضًا |
 | عدم تسريب رمز الطابعة / رمز التتبع | الرموز تُعرض مرة؛ التخزين hashed |
 | Idempotent checkout | مفتاح idempotency على الطلبات |
 | Idempotent print complete/fail | Print Agent API يتجاهل التأكيدات المكررة بأمان |
