@@ -61,7 +61,7 @@ class AdminSearchController extends Controller
             $results['orders'] = $orders->map(fn (Order $order) => [
                 'title' => $order->order_number,
                 'subtitle' => $order->customer_name.' · '.$order->customer_phone.' · '.$order->status,
-                'url' => '/admin/orders/'.$order->id,
+                'url' => '/admin/orders?search='.urlencode($order->order_number),
                 'type' => 'order',
             ])->values();
         }
