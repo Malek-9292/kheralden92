@@ -35,8 +35,28 @@ class EmployeeSessionController extends Controller
             ]);
         }
 
-        $request->session()->regenerate();
         $user = $request->user();
+        $now = now();
+
+        if (
+            ($user->valid_from && $now->lt($user->valid_from))
+            || ($user->valid_until && $now->gt($user->valid_until))
+        ) {
+            Auth::logout();
+            DB::table('employee_login_attempts')->insert([
+                'user_id' => $user->id,
+                'login_identifier' => $credentials['phone'],
+                'ip_address' => $request->ip(),
+                'was_successful' => false,
+                'attempted_at' => $now,
+            ]);
+
+            throw ValidationException::withMessages([
+                'phone' => ['حساب الموظف خارج فترة الصلاحية.'],
+            ]);
+        }
+
+        $request->session()->regenerate();
 
         $user->forceFill(['last_login_at' => now()])->save();
         DB::table('employee_login_attempts')->insert([
