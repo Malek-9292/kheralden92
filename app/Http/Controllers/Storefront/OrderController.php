@@ -163,6 +163,32 @@ class OrderController extends Controller
         ], 201);
     }
 
+    public function track(Request $request, string $branchCode, string $orderNumber): JsonResponse
+    {
+        $token = $request->header('X-Order-Tracking-Token');
+
+        if (! is_string($token) || $token === '') {
+            abort(401, 'رمز تتبع الطلب مطلوب.');
+        }
+
+        $branch = Branch::query()
+            ->where('code', strtoupper($branchCode))
+            ->firstOrFail();
+
+        $order = Order::query()
+            ->where('branch_id', $branch->id)
+            ->where('order_number', $orderNumber)
+            ->firstOrFail();
+
+        if (! hash_equals($order->tracking_token_hash, hash('sha256', $token))) {
+            abort(404);
+        }
+
+        return response()->json([
+            'order' => $order->load('items'),
+        ]);
+    }
+
     private function toFils(string $amount): int
     {
         [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '');
