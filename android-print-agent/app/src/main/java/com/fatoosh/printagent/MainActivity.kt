@@ -45,8 +45,7 @@ class MainActivity : Activity() {
         codeField = field("كود الطابعة مثل KITCHEN-01").apply {
             setText(prefs.getString("printer_code", ""))
         }
-        tokenField = field("رمز الجهاز السري").apply {
-            setText(prefs.getString("printer_token", ""))
+        tokenField = field("رمز الجهاز السري (اتركه فارغًا إذا تم حفظه مسبقًا)").apply {
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
 
@@ -68,11 +67,11 @@ class MainActivity : Activity() {
                 val code = codeField.text.toString().trim().uppercase()
                 val token = tokenField.text.toString().trim()
 
-                if (!server.startsWith("https://") && !server.startsWith("http://10.")) {
+                if (!server.startsWith("https://")) {
                     Toast.makeText(this@MainActivity, "استخدم رابط HTTPS للخادم.", Toast.LENGTH_LONG).show()
                     return@setOnClickListener
                 }
-                if (code.isBlank() || token.length < 32) {
+                if (code.isBlank() || (token.isNotBlank() && token.length < 32)) {
                     Toast.makeText(this@MainActivity, "أدخل كود الطابعة ورمز الجهاز الصحيح.", Toast.LENGTH_LONG).show()
                     return@setOnClickListener
                 }
