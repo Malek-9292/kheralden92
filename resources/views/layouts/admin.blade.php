@@ -8,7 +8,7 @@
     @livewireStyles
     <style>
         :root{font-family:Tahoma,Arial,sans-serif;color:#18352a;background:#f4f7f4;font-synthesis:none}
-        *{box-sizing:border-box}body{margin:0}a{color:inherit;text-decoration:none}
+        *{box-sizing:border-box}body{margin:0}[x-cloak]{display:none!important}a{color:inherit;text-decoration:none}
         .shell{min-height:100vh;display:grid;grid-template-columns:250px 1fr}
         .sidebar{background:#153f2d;color:#fff;padding:24px 18px;display:flex;flex-direction:column;gap:22px}
         .brand{font-size:20px;font-weight:800}.brand small{display:block;color:#b9d7c5;font-size:12px;margin-top:6px}
