@@ -1,4 +1,5 @@
 <section>
+    @if(session('status'))<div class="flash">{{ session('status') }}</div>@endif
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
         <input type="search" wire:model.live.debounce.300ms="search" placeholder="ابحث برقم الطلب أو اسم العميل أو الهاتف" style="flex:1;min-width:240px;padding:12px;border:1px solid #d8e3da;border-radius:10px;font:inherit">
         <select wire:model.live="statusFilter" style="padding:12px;border:1px solid #d8e3da;border-radius:10px;background:#fff;font:inherit">
