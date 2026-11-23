@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\BranchAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -94,6 +95,7 @@ class Index extends Component
 
         if ($user->hasRole('system_admin') === false && $allowedRoles->contains(fn (Role $role): bool => $role->permissions->contains('slug', 'modules.manage'))) {
             $this->addError('roleIds', 'لا يمكن إسناد دور يحتوي على صلاحية إدارة الوحدات.');
+
             return;
         }
 
@@ -181,6 +183,40 @@ class Index extends Component
         $this->validFrom = $employee->valid_from?->format('Y-m-d\TH:i') ?? '';
         $this->validUntil = $employee->valid_until?->format('Y-m-d\TH:i') ?? '';
         $this->roleIds = $employee->roles->pluck('id')->map(fn ($id) => (string) $id)->all();
+    }
+
+    public function toggleStatus(int $id): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('employees.manage'), 403);
+
+        $employee = User::query()->findOrFail($id);
+        abort_if($employee->hasRole('system_admin'), 403);
+        app(BranchAccess::class)->assertCanAccess($user, $employee->branch_id);
+
+        $before = $employee->only(['status']);
+        $employee->status = $employee->status === 'active' ? 'suspended' : 'active';
+        $employee->save();
+
+        AuditLog::query()->create([
+            'branch_id' => $employee->branch_id,
+            'actor_id' => $user->id,
+            'action' => 'employee.status_updated',
+            'auditable_type' => User::class,
+            'auditable_id' => $employee->id,
+            'before_values' => $before,
+            'after_values' => ['status' => $employee->status],
+            'created_at' => now(),
+        ]);
+
+        if ($employee->status !== 'active') {
+            $employee->employeeSessions()->whereNull('logged_out_at')->update([
+                'logged_out_at' => now(),
+                'ended_reason' => 'account_changed',
+            ]);
+        }
+
+        session()->flash('status', $employee->status === 'active' ? 'تم تفعيل حساب الموظف.' : 'تم إيقاف حساب الموظف.');
     }
 
     public function resetForm(): void

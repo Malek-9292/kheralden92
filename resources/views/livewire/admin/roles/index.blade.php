@@ -1,8 +1,8 @@
 <section>
-    @if(session('status'))<div style="padding:12px 15px;border-radius:10px;background:#e5f4e9;color:#205d3b;margin-bottom:14px">{{ session('status') }}</div>@endif
+    @if(session('status'))<div class="flash">{{ session('status') }}</div>@endif
     <div class="panel" style="margin-bottom:18px">
         <h2>{{ $editingId ? 'تعديل دور' : 'إنشاء دور جديد' }}</h2>
-        <form wire:submit="save" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <form wire:submit="save" class="form-grid">
             @if($isSystemAdmin)
                 <label class="field">الفرع
                     <select wire:model="branchId" required><option value="">اختر الفرع</option>@foreach($branches as $branch)<option value="{{ $branch->id }}">{{ $branch->name }}</option>@endforeach</select>

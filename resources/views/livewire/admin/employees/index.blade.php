@@ -1,8 +1,8 @@
 <section>
-    @if(session('status'))<div style="padding:12px 15px;border-radius:10px;background:#e5f4e9;color:#205d3b;margin-bottom:14px">{{ session('status') }}</div>@endif
+    @if(session('status'))<div class="flash">{{ session('status') }}</div>@endif
     <div class="panel" style="margin-bottom:18px">
         <h2>{{ $editingId ? 'تعديل حساب موظف' : 'إضافة موظف جديد' }}</h2>
-        <form wire:submit="save" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <form wire:submit="save" class="form-grid">
             @if($isSystemAdmin)
                 <label class="field">الفرع
                     <select wire:model="branchId" required><option value="">اختر الفرع</option>@foreach($branches as $branch)<option value="{{ $branch->id }}">{{ $branch->name }}</option>@endforeach</select>
@@ -10,7 +10,7 @@
                 </label>
             @endif
             <label class="field">اسم الموظف<input wire:model="name" required maxlength="150">@error('name')<small style="color:#b42318">{{ $message }}</small>@enderror</label>
-            <label class="field">رقم الهاتف<input wire:model="phone" required maxlength="30" type="tel">@error('phone')<small style="color:#b42318">{{ $message }}</small>@enderror</label>
+            <label class="field">رقم الهاتف<input wire:model="phone" required maxlength="30" type="tel" dir="ltr">@error('phone')<small style="color:#b42318">{{ $message }}</small>@enderror</label>
             <label class="field">كلمة المرور {{ $editingId ? '(اتركها فارغة دون تغيير)' : '(12 حرفًا على الأقل)' }}
                 <input wire:model="password" type="password" autocomplete="new-password" {{ $editingId ? '' : 'required' }}>
                 @error('password')<small style="color:#b42318">{{ $message }}</small>@enderror
@@ -55,9 +55,16 @@
                     <td><strong>{{ $employee->name }}</strong></td>
                     <td dir="ltr">{{ $employee->phone }}</td>
                     <td>{{ $employee->roles->pluck('name')->join('، ') }}</td>
-                    <td><span class="status">{{ ['active'=>'نشط','suspended'=>'موقوف','inactive'=>'غير نشط'][$employee->status] ?? $employee->status }}</span></td>
+                    <td><span class="status {{ $employee->status === 'active' ? '' : 'danger' }}">{{ ['active'=>'نشط','suspended'=>'موقوف','inactive'=>'غير نشط'][$employee->status] ?? $employee->status }}</span></td>
                     <td class="muted">{{ $employee->valid_from?->format('Y-m-d') ?? 'من الآن' }} — {{ $employee->valid_until?->format('Y-m-d') ?? 'مفتوحة' }}</td>
-                    <td><button wire:click="edit({{ $employee->id }})" class="secondary" style="padding:7px 10px;font-size:12px">تعديل</button></td>
+                    <td>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap">
+                            <button wire:click="edit({{ $employee->id }})" class="secondary" style="padding:7px 10px;font-size:12px">تعديل</button>
+                            <button wire:click="toggleStatus({{ $employee->id }})" wire:confirm="تأكيد تغيير حالة الموظف؟" class="secondary" style="padding:7px 10px;font-size:12px">
+                                {{ $employee->status === 'active' ? 'إيقاف' : 'تفعيل' }}
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             @empty<tr><td colspan="6"><div class="empty">لا يوجد موظفون مطابقون</div></td></tr>@endforelse
             </tbody>

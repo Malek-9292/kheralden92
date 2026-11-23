@@ -50,6 +50,7 @@ class Index extends Component
 
         if (in_array('modules.manage', $this->permissionSlugs, true)) {
             $this->addError('permissionSlugs', 'صلاحية إدارة الوحدات مخصصة لمدير النظام فقط.');
+
             return;
         }
 
@@ -139,7 +140,7 @@ class Index extends Component
             ->where(function ($query) use ($branchIds): void {
                 $query->whereNull('branch_id')->orWhereIn('branch_id', $branchIds);
             })
-            ->with('permissions')->orderBy('name')->get();
+            ->with(['permissions', 'branch'])->orderBy('name')->get();
 
         return view('livewire.admin.roles.index', [
             'roles' => $roles,
