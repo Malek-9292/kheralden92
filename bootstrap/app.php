@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureActiveEmployeeSession;
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\SetKuwaitTimezone;
 use App\Providers\AppServiceProvider;
 use App\Providers\ModuleRegistryServiceProvider;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => EnsurePermission::class,
             'employee.active' => EnsureActiveEmployeeSession::class,
+            'module.enabled' => EnsureModuleEnabled::class,
         ]);
     })
     ->withExceptions(fn (Exceptions $exceptions) => null)
