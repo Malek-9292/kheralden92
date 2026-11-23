@@ -76,6 +76,38 @@ class CatalogController extends Controller
         ]);
     }
 
+
+    public function show(string $branchCode, string $slug): JsonResponse
+    {
+        $branch = $this->activeBranch($branchCode);
+        $now = now($branch->timezone)->format('H:i:s');
+
+        $product = Product::query()
+            ->where('branch_id', $branch->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->whereHas('category', fn ($categories) => $categories->where('is_active', true))
+            ->where(function ($availability) use ($now): void {
+                $availability
+                    ->whereDoesntHave('availabilityWindows')
+                    ->orWhereHas('availabilityWindows', function ($windows) use ($now): void {
+                        $windows->where('is_active', true)
+                            ->where('start_time', '<=', $now)
+                            ->where('end_time', '>', $now);
+                    });
+            })
+            ->with([
+                'category:id,name,slug',
+                'images:id,product_id,path,original_name,mime_type,size_bytes,is_primary,sort_order',
+            ])
+            ->firstOrFail();
+
+        return response()->json([
+            'branch' => ['code' => $branch->code, 'name' => $branch->name],
+            'product' => $product,
+        ]);
+    }
+
     private function activeBranch(string $branchCode): Branch
     {
         return Branch::query()
