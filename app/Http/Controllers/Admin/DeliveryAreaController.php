@@ -44,7 +44,10 @@ class DeliveryAreaController extends Controller
         $data = $request->validate([
             'branch_id' => ['required', 'integer', 'exists:branches,id'],
             'governorate' => ['required', 'string', 'max:100'],
-            'name' => ['required', 'string', 'max:150'],
+            'name' => [
+                'required', 'string', 'max:150',
+                Rule::unique('delivery_areas', 'name')->where(fn ($query) => $query->where('branch_id', $branchId)->where('governorate', $request->input('governorate'))),
+            ],
             'delivery_fee' => ['required', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
             'minimum_order' => ['required', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
             'is_active' => ['sometimes', 'boolean'],
@@ -81,7 +84,12 @@ class DeliveryAreaController extends Controller
 
         $data = $request->validate([
             'governorate' => ['sometimes', 'required', 'string', 'max:100'],
-            'name' => ['sometimes', 'required', 'string', 'max:150'],
+            'name' => [
+                'sometimes', 'required', 'string', 'max:150',
+                Rule::unique('delivery_areas', 'name')
+                    ->where(fn ($query) => $query->where('branch_id', $deliveryArea->branch_id)->where('governorate', $request->input('governorate', $deliveryArea->governorate)))
+                    ->ignore($deliveryArea->id),
+            ],
             'delivery_fee' => ['sometimes', 'required', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
             'minimum_order' => ['sometimes', 'required', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
             'is_active' => ['sometimes', 'boolean'],
