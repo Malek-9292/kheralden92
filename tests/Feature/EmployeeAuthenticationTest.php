@@ -36,7 +36,8 @@ class EmployeeAuthenticationTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('user.id', $employee->id)
-            ->assertJsonPath('user.branch.id', $branch->id);
+            ->assertJsonPath('user.branch.id', $branch->id)
+            ->assertJsonPath('redirect_to', '/admin/dashboard');
 
         $this->assertDatabaseHas('employee_sessions', [
             'user_id' => $employee->id,

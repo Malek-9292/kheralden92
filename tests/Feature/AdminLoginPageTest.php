@@ -19,7 +19,9 @@ class AdminLoginPageTest extends TestCase
             ->assertOk()
             ->assertSee('تسجيل دخول الموظفين')
             ->assertSee('فتوش الخالدية')
-            ->assertSee('لا توجد كلمة مرور افتراضية', false);
+            ->assertSee('لا توجد كلمة مرور افتراضية', false)
+            ->assertSee('IBM+Plex+Sans+Arabic')
+            ->assertSee('redirect_to');
     }
 
     public function test_authenticated_employee_is_redirected_away_from_login(): void

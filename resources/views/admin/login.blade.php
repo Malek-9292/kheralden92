@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>تسجيل الدخول - فتوش الخالدية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;color:#173c2c}
         *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at top,#dceee2,#f7faf7 48%,#eef5f0);padding:20px}
@@ -62,7 +65,7 @@
                     error.textContent = data.message || data.errors?.phone?.[0] || 'تعذر تسجيل الدخول. راجع البيانات وحاول مرة أخرى.';
                     return;
                 }
-                window.location.assign('/admin/dashboard');
+                window.location.assign(data.redirect_to || '/admin/dashboard');
             } catch {
                 error.textContent = 'تعذر الاتصال بالخادم. حاول مرة أخرى.';
             } finally {

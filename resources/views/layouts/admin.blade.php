@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'لوحة إدارة فتوش الخالدية' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
     @livewireStyles
     <style>
         :root{
@@ -63,6 +66,8 @@
         .primary{border:0;background:var(--brand);color:#fff;font-weight:700}.primary:hover{background:var(--brand-mid)}
         .secondary{border:1px solid #d9e4db;background:#fff;color:#355b42}.secondary:hover{background:#f4f8f5}
         .primary:disabled,.secondary:disabled{opacity:.65;cursor:wait}
+        :focus-visible{outline:3px solid #8fcf9b;outline-offset:2px}
+        .search-loading{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted)}
         .quick-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
         .quick-nav a{display:block;padding:16px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:0 3px 12px #18352a08}
         .quick-nav a strong{display:block;font-size:14px;margin-bottom:4px}.quick-nav a span{color:var(--muted);font-size:12px}
@@ -93,7 +98,7 @@
     <div class="backdrop" @click="navOpen=false"></div>
     <aside class="sidebar">
         <div class="brand">فتوش الخالدية <small>نظام إدارة المطعم · الخالدية</small></div>
-        <nav class="nav" @click="navOpen=false">
+        <nav class="nav" id="admin-nav" aria-label="قائمة الإدارة" @click="navOpen=false">
             @if(auth()->user()->hasPermissionTo('dashboard.view')) <a class="{{ $currentPath === '/admin/dashboard' ? 'active' : '' }}" href="/admin/dashboard">الرئيسية</a> @endif
             @if(auth()->user()->hasPermissionTo('orders.view') && $moduleManager->enabled('Orders')) <a class="{{ str_starts_with($currentPath, '/admin/orders') ? 'active' : '' }}" href="/admin/orders">الطلبات</a> @endif
             @if(auth()->user()->hasPermissionTo('catalog.view') && $moduleManager->enabled('Catalog'))
@@ -110,28 +115,30 @@
             @if(auth()->user()->hasPermissionTo('reports.view') && $moduleManager->enabled('Reporting')) <a class="{{ str_starts_with($currentPath, '/admin/reports') ? 'active' : '' }}" href="/admin/reports">التقارير</a> @endif
             @if(auth()->user()->hasPermissionTo('modules.manage') && $moduleManager->enabled('SystemSettings')) <a class="{{ str_starts_with($currentPath, '/admin/modules') ? 'active' : '' }}" href="/admin/modules">مدير الوحدات</a> @endif
         </nav>
-        <div class="sidebar-user">{{ auth()->user()->name }}</div>
-        <button type="button" class="logout-btn" onclick="fetch('/admin/session',{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'},credentials:'same-origin'}).then(()=>location.href='/admin/login')">تسجيل الخروج</button>
+        <div class="sidebar-user" aria-label="المستخدم الحالي">{{ auth()->user()->name }}</div>
+        <button type="button" class="logout-btn" aria-label="تسجيل الخروج من لوحة الإدارة" onclick="fetch('/admin/session',{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json'},credentials:'same-origin'}).then(()=>location.href='/admin/login')">تسجيل الخروج</button>
     </aside>
-    <main class="main">
+    <main class="main" id="admin-main">
         <header class="topbar">
             <div style="display:flex;align-items:center;gap:10px">
-                <button type="button" class="menu-toggle" @click="navOpen=!navOpen" aria-label="فتح القائمة">القائمة</button>
+                <button type="button" class="menu-toggle" @click="navOpen=!navOpen" :aria-expanded="navOpen.toString()" aria-controls="admin-nav" aria-label="فتح قائمة التنقل">القائمة</button>
                 <div>
                     <h1>{{ $heading ?? 'لوحة التحكم' }}</h1>
                     <div class="muted">متابعة تشغيل فتوش الخالدية</div>
                 </div>
             </div>
             <div class="search" x-data="{q:'',groups:{},open:false,loading:false}">
-                <input type="search" placeholder="بحث سريع في الأقسام والطلبات والموظفين..." x-model="q"
+                <label for="admin-global-search" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">بحث سريع في لوحة الإدارة</label>
+                <input id="admin-global-search" type="search" placeholder="بحث سريع في الأقسام والطلبات والموظفين..." aria-label="بحث سريع في لوحة الإدارة" x-model="q"
                     @input.debounce.300ms="if(q.trim().length>=2){loading=true;fetch('/admin/search?q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}}).then(r=>r.json()).then(d=>{groups=d.results||{};open=true}).finally(()=>loading=false)}else{groups={};open=false}">
-                <div class="results" x-show="open" x-cloak @click.outside="open=false">
+                <span class="search-loading" x-show="loading" x-cloak role="status">جارٍ البحث...</span>
+                <div class="results" x-show="open" x-cloak @click.outside="open=false" role="listbox" aria-label="نتائج البحث">
                     <template x-for="(items,group) in groups" :key="group">
                         <template x-for="item in items" :key="item.type+'-'+item.title">
-                            <a :href="item.url"><strong x-text="item.title"></strong><small x-text="item.subtitle||'فتح القسم'"></small></a>
+                            <a :href="item.url" role="option"><strong x-text="item.title"></strong><small x-text="item.subtitle||'فتح القسم'"></small></a>
                         </template>
                     </template>
-                    <div class="empty" x-show="Object.values(groups).flat().length===0">لا توجد نتائج</div>
+                    <div class="empty" x-show="!loading && Object.values(groups).flat().length===0" role="status">لا توجد نتائج مطابقة لبحثك</div>
                 </div>
             </div>
         </header>

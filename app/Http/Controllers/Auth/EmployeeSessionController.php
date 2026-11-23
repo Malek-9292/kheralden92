@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\AdminHome;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,9 +83,12 @@ class EmployeeSessionController extends Controller
             'last_activity_at' => now(),
         ]);
 
+        $user->load(['branch', 'roles.permissions']);
+
         return response()->json([
             'message' => 'تم تسجيل الدخول بنجاح.',
-            'user' => $user->load(['branch', 'roles.permissions']),
+            'redirect_to' => AdminHome::pathFor($user),
+            'user' => $user,
         ]);
     }
 

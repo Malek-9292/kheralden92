@@ -19,7 +19,15 @@
                 @forelse($orders as $order)
                     <tr wire:key="order-{{ $order->id }}">
                         <td><strong>{{ $order->order_number }}</strong><div class="muted">{{ $order->created_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') }}</div></td>
-                        <td>{{ $order->customer_name }}<div class="muted">{{ $order->customer_phone }}</div></td>
+                        <td>
+                            {{ $order->customer_name }}
+                            <div class="muted">{{ $order->customer_phone }}</div>
+                            @if(filled($order->customer_notes))
+                                <div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:#f7faf7;border:1px solid #e5ece6;font-size:12px;line-height:1.6">
+                                    <strong>ملاحظات:</strong> {{ $order->customer_notes }}
+                                </div>
+                            @endif
+                        </td>
                         <td>
                             @foreach($order->items as $item)
                                 <div style="margin-bottom:4px">{{ $item->product_name }} × {{ $item->quantity }}</div>
