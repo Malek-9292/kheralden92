@@ -14,6 +14,7 @@ return [
  'Kitchen'=>['enabled'=>true,'provider'=>Modules\\Kitchen\\Providers\\KitchenServiceProvider::class],
  'Printing'=>['enabled'=>true,'provider'=>Modules\\Printing\\Providers\\PrintingServiceProvider::class],
  'Notifications'=>['enabled'=>true,'provider'=>Modules\\Notifications\\Providers\\NotificationsServiceProvider::class],
+ 'Reviews'=>['enabled'=>true,'provider'=>Modules\\Reviews\\Providers\\ReviewsServiceProvider::class],
  'Reporting'=>['enabled'=>true,'provider'=>Modules\\Reporting\\Providers\\ReportingServiceProvider::class],
  'Content'=>['enabled'=>true,'provider'=>Modules\\Content\\Providers\\ContentServiceProvider::class],
  'CustomerService'=>['enabled'=>true,'provider'=>Modules\\CustomerService\\Providers\\CustomerServiceServiceProvider::class],
