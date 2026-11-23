@@ -88,6 +88,7 @@
 </head>
 <body>
 <header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary" id="openLastOrder" hidden aria-label="تتبع آخر طلب">آخر طلب</button><button type="button" class="secondary" id="openTrack" aria-label="تتبع طلب">تتبع طلب</button><button type="button" class="secondary" id="installBtn" hidden aria-label="تثبيت التطبيق على الجهاز">تثبيت التطبيق</button></div></header>
+<div id="deliveryPauseBanner" class="offline" hidden role="status" style="background:#fff4e5;color:#8a4b08;border-bottom:1px solid #f0d7a8">التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.</div>
 <div id="offlineBanner" class="offline" hidden role="status">أنت غير متصل بالإنترنت. يمكنك تصفح آخر منيو محفوظ عند توفره، ولن يُرسل الطلب حتى يعود الاتصال.</div>
 <div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
 <section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
@@ -142,8 +143,9 @@
         <label class="field" for="trackOrderNumber">رقم الطلب<input id="trackOrderNumber" maxlength="40" placeholder="مثل KHAL-261123-000001" autocomplete="off"></label>
         <label class="field" for="trackToken">رمز التتبع<input id="trackToken" maxlength="128" placeholder="الرمز الذي وصلك بعد الطلب" autocomplete="off"></label>
     </div>
-    <div id="trackResult" class="hint" hidden role="status"></div>
+    <div id="trackResult" class="hint" hidden role="status" style="margin-top:14px;padding:12px;border:1px solid #e5ece6;border-radius:12px;background:#f7faf7;line-height:1.8;text-align:right"></div>
     <div id="trackError" class="error-box" hidden role="alert" style="margin-top:12px;padding:12px;text-align:right"></div>
+    <p class="muted" id="trackAutoHint" hidden style="margin:10px 0 0">يُحدَّث التتبع تلقائيًا كل 20 ثانية أثناء فتح هذه النافذة.</p>
     <div class="actions sticky-actions"><button type="button" class="primary" id="trackSubmit">عرض الحالة</button><button type="button" class="secondary" data-close="trackModal">إغلاق</button></div>
 </div></div>
 <div class="modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="detailName"><div class="dialog"><h2 id="detailName"></h2><img id="detailImage" alt=""><div class="detail-meta" id="detailMeta"></div><div id="detailDescription" style="white-space:pre-line;line-height:1.8;font-size:14px;margin:14px 0;overflow-wrap:anywhere"></div><div id="detailIngredients" class="ingredients" hidden></div><div class="price" id="detailPrice"></div><div class="actions sticky-actions"><button type="button" class="primary" id="detailAdd">أضف للسلة</button><button type="button" class="secondary" data-close="productModal">إغلاق</button></div></div></div>
@@ -151,7 +153,7 @@
 <script>
 (() => {
     const branch = 'KHAL';
-    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,lastOrder:null,idempotencyKey:null};
+    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,lastOrder:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:'',trackTimer:null};
     try { state.cart = JSON.parse(localStorage.getItem('fatoosh-cart') || '{}'); } catch { state.cart = {}; }
     try { state.lastOrder = JSON.parse(localStorage.getItem('fatoosh-last-order') || 'null'); } catch { state.lastOrder = null; }
     const money = n => (Number(n)||0).toFixed(3);
@@ -171,10 +173,16 @@
         const focusable=modal.querySelector('input, select, textarea, button, [href]');
         if(focusable) focusable.focus({preventScroll:true});
     };
-    const hide = id => { el(id).classList.remove('open'); syncBodyScroll(); };
+    const hide = id => {
+        el(id).classList.remove('open');
+        syncBodyScroll();
+        if(id==='trackModal' && state.trackTimer){clearInterval(state.trackTimer);state.trackTimer=null;el('trackAutoHint').hidden=true;}
+    };
     document.addEventListener('keydown',e=>{
         if(e.key!=='Escape')return;
+        const trackWasOpen=el('trackModal').classList.contains('open');
         ['productModal','cartModal','checkoutModal','trackModal','successModal'].forEach(id=>{if(el(id).classList.contains('open'))hide(id);});
+        if(trackWasOpen && typeof stopTrackPoll==='function') stopTrackPoll();
     });
     const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const cartItems = () => Object.values(state.cart);
@@ -248,6 +256,22 @@
             contact.className='muted';
             contact.textContent=[settings.phone?'هاتف: '+settings.phone:'',settings.whatsapp?'واتساب: '+settings.whatsapp:''].filter(Boolean).join(' · ');
             el('storeFooter').appendChild(contact);
+        }
+        state.deliveryPaused=!!settings.delivery_paused;
+        state.deliveryPauseReason=settings.delivery_pause_reason||'';
+        const pauseBanner=el('deliveryPauseBanner');
+        if(state.deliveryPaused){
+            pauseBanner.hidden=false;
+            pauseBanner.textContent=state.deliveryPauseReason
+                ?('التوصيل متوقف مؤقتًا: '+state.deliveryPauseReason+' · الاستلام من المطعم متاح.')
+                :'التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.';
+            const deliveryOpt=el('fulfillment').querySelector('option[value="delivery"]');
+            if(deliveryOpt) deliveryOpt.disabled=true;
+            if(el('fulfillment').value==='delivery'){el('fulfillment').value='pickup';updateFulfillment();}
+        }else{
+            pauseBanner.hidden=true;
+            const deliveryOpt=el('fulfillment').querySelector('option[value="delivery"]');
+            if(deliveryOpt) deliveryOpt.disabled=false;
         }
     }
     function renderCategories(){
@@ -340,22 +364,29 @@
     el('fulfillment').addEventListener('change',updateFulfillment);
     el('deliveryGovernorate').addEventListener('change',()=>{el('deliveryArea').value='';renderAreas();updateFulfillment();});
     el('deliveryArea').addEventListener('change',()=>{updateFulfillment();if(state.pendingProduct&&el('deliveryArea').value){const id=state.pendingProduct;state.pendingProduct=null;hide('checkoutModal');addProduct(id);}});
-    el('openCart').onclick=()=>{renderCartItems();show('cartModal');};
-    el('checkoutBtn').onclick=()=>{if(!cartItems().length)return;hide('cartModal');show('checkoutModal');updateFulfillment();el('customerName').focus({preventScroll:true});};
+    el('openCart').onclick=()=>{renderCartItems();el('checkoutBtn').disabled=!cartItems().length;show('cartModal');};
+    el('checkoutBtn').onclick=()=>{if(!cartItems().length){renderCartItems();return;}hide('cartModal');show('checkoutModal');updateFulfillment();el('customerName').focus({preventScroll:true});};
     const refreshLastOrderButton=()=>{el('openLastOrder').hidden=!(state.lastOrder&&state.lastOrder.order_number&&state.lastOrder.tracking_token);};
     refreshLastOrderButton();
+    const stopTrackPoll=()=>{if(state.trackTimer){clearInterval(state.trackTimer);state.trackTimer=null;}el('trackAutoHint').hidden=true;};
+    const startTrackPoll=()=>{
+        stopTrackPoll();
+        el('trackAutoHint').hidden=false;
+        state.trackTimer=setInterval(()=>{if(el('trackModal').classList.contains('open')) el('trackSubmit').click(); else stopTrackPoll();},20000);
+    };
     el('openTrack').onclick=()=>{
         if(state.lastOrder){el('trackOrderNumber').value=state.lastOrder.order_number||'';el('trackToken').value=state.lastOrder.tracking_token||'';}
-        el('trackResult').hidden=true;el('trackError').textContent='';show('trackModal');
+        el('trackResult').hidden=true;el('trackResult').innerHTML='';el('trackError').hidden=true;el('trackError').textContent='';show('trackModal');
     };
     el('openLastOrder').onclick=()=>{if(!state.lastOrder)return;el('openTrack').click();el('trackSubmit').click();};
-    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>hide(b.dataset.close));
+    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{hide(b.dataset.close);if(b.dataset.close==='trackModal')stopTrackPoll();});
     const setCheckoutError=msg=>{const box=el('checkoutError');if(!msg){box.hidden=true;box.textContent='';return;}box.hidden=false;box.textContent=msg;};
     el('submitOrder').onclick=async()=>{
         const delivery=el('fulfillment').value==='delivery',area=selectedArea();
         setCheckoutError('');
         if(!navigator.onLine){setCheckoutError('لا يوجد اتصال بالإنترنت. أعد المحاولة عند عودة الشبكة.');return;}
-        if(!cartItems().length){setCheckoutError('السلة فارغة.');return;}
+        if(!cartItems().length){setCheckoutError('السلة فارغة. أضف أصنافًا من المنيو أولًا.');return;}
+        if(delivery&&state.deliveryPaused){setCheckoutError(state.deliveryPauseReason?('التوصيل متوقف مؤقتًا: '+state.deliveryPauseReason):'التوصيل متوقف مؤقتًا. اختر الاستلام من المطعم.');return;}
         if(!el('customerName').value.trim()||!el('customerPhone').value.trim()){setCheckoutError('اكتب الاسم ورقم الهاتف.');return;}
         if(delivery&&(!el('deliveryGovernorate').value||!area||!el('block').value.trim()||!el('street').value.trim()||!el('house').value.trim())){setCheckoutError('أكمل المحافظة والمنطقة والقطعة والشارع ورقم المنزل.');return;}
         if(delivery&&subtotal()<Number(area.minimum_order)){setCheckoutError('الطلب أقل من الحد الأدنى لمنطقتك ('+money(area.minimum_order)+' د.ك).');return;}
@@ -378,17 +409,23 @@
     };
     el('trackFromSuccess').onclick=()=>{hide('successModal');el('openTrack').click();};
     el('trackSubmit').onclick=async()=>{
-        el('trackError').hidden=true;el('trackError').textContent='';el('trackResult').hidden=true;
+        el('trackError').hidden=true;el('trackError').textContent='';
         const orderNumber=el('trackOrderNumber').value.trim(),token=el('trackToken').value.trim();
-        if(!orderNumber||!token){el('trackError').hidden=false;el('trackError').textContent='أدخل رقم الطلب ورمز التتبع.';return;}
+        if(!orderNumber||!token){el('trackResult').hidden=true;el('trackError').hidden=false;el('trackError').textContent='أدخل رقم الطلب ورمز التتبع.';stopTrackPoll();return;}
         try{
             const res=await fetch('/api/orders/'+branch+'/'+encodeURIComponent(orderNumber),{headers:{'Accept':'application/json','X-Order-Tracking-Token':token}});
             const data=await res.json().catch(()=>({}));
             if(!res.ok) throw new Error(res.status===401?'رمز التتبع مطلوب.':res.status===404?'الطلب غير موجود أو الرمز غير صحيح.':'تعذر جلب حالة الطلب.');
             const o=data.order;
+            const items=(o.items||[]).map(i=>esc(i.product_name)+' ×'+i.quantity).join('، ')||'—';
             el('trackResult').hidden=false;
-            el('trackResult').textContent='الحالة: '+statusLabel(o.status)+' · النوع: '+(o.fulfillment_type==='pickup'?'استلام من المطعم':'توصيل')+' · الإجمالي: '+money(o.total)+' د.ك · الأصناف: '+(o.items||[]).map(i=>i.product_name+' ×'+i.quantity).join('، ');
-        }catch(e){el('trackError').hidden=false;el('trackError').textContent=e.message;}
+            el('trackResult').innerHTML='<div><strong>الحالة:</strong> '+esc(statusLabel(o.status))+'</div>'
+                +'<div><strong>النوع:</strong> '+(o.fulfillment_type==='pickup'?'استلام من المطعم':'توصيل')+'</div>'
+                +'<div><strong>الإجمالي:</strong> '+money(o.total)+' د.ك</div>'
+                +'<div><strong>الأصناف:</strong> '+items+'</div>'
+                +(o.status==='cancelled'?'<div style="margin-top:8px;color:#a33a31"><strong>هذا الطلب ملغي.</strong></div>':'');
+            startTrackPoll();
+        }catch(e){el('trackResult').hidden=true;el('trackError').hidden=false;el('trackError').textContent=e.message;stopTrackPoll();}
     };
     el('finishOrder').onclick=()=>{hide('successModal');el('customerName').value='';el('customerPhone').value='';el('notes').value='';};
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.deferredInstall=e;el('installBtn').hidden=false;});

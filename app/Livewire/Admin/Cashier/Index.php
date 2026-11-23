@@ -20,6 +20,17 @@ class Index extends Component
 
     public string $paymentFilter = 'unpaid';
 
+    public int $pendingCount = 0;
+
+    public int $lastSeenPendingCount = 0;
+
+    public bool $soundMuted = false;
+
+    public function mount(): void
+    {
+        $this->refreshPendingCount(initial: true);
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -33,6 +44,36 @@ class Index extends Component
     public function updatedPaymentFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function pollPending(): void
+    {
+        $this->refreshPendingCount();
+    }
+
+    public function toggleMute(): void
+    {
+        $this->soundMuted = ! $this->soundMuted;
+    }
+
+    public function acceptPending(int $orderId, OrderWorkflow $workflow): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('orders.accept'), 403);
+
+        $order = Order::query()->findOrFail($orderId);
+        app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
+
+        if ($order->status !== 'pending') {
+            session()->flash('status', 'الطلب لم يعد بانتظار القبول.');
+            $this->refreshPendingCount(initial: true);
+
+            return;
+        }
+
+        $workflow->advance($order, $user);
+        session()->flash('status', 'تم قبول الطلب '.$order->order_number);
+        $this->refreshPendingCount(initial: true);
     }
 
     public function collectCash(int $orderId, OrderWorkflow $workflow): void
@@ -73,8 +114,35 @@ class Index extends Component
             $query->where('payment_status', 'paid');
         }
 
+        $pendingOrders = Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->where('status', 'pending')
+            ->with('items')
+            ->latest()
+            ->limit(8)
+            ->get();
+
         return view('livewire.admin.cashier.index', [
             'orders' => $query->paginate(25),
+            'pendingOrders' => $pendingOrders,
+            'canAccept' => $user->hasPermissionTo('orders.accept'),
         ])->layout('layouts.admin', ['heading' => 'الكاشير والتحصيل']);
+    }
+
+    private function refreshPendingCount(bool $initial = false): void
+    {
+        $user = auth()->user();
+        $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
+        $count = Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->where('status', 'pending')
+            ->count();
+
+        if (! $initial && ! $this->soundMuted && $count > $this->lastSeenPendingCount) {
+            $this->dispatch('cashier-new-order-beep');
+        }
+
+        $this->pendingCount = $count;
+        $this->lastSeenPendingCount = $count;
     }
 }

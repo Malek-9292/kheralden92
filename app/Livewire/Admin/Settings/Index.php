@@ -37,6 +37,12 @@ class Index extends Component
 
     public string $footerText = '';
 
+    public int $bannerFontSize = 18;
+
+    public bool $deliveryPaused = false;
+
+    public string $deliveryPauseReason = '';
+
     public $logo = null;
 
     public ?string $currentLogoUrl = null;
@@ -74,7 +80,10 @@ class Index extends Component
         $this->bannerText = $settings->get('banner_text', '');
         $this->bannerTextColor = $settings->get('banner_text_color', '#ffffff');
         $this->bannerBackground = $settings->get('banner_background', '#2f704b');
+        $this->bannerFontSize = (int) $settings->get('banner_font_size', 18);
         $this->footerText = $settings->get('footer_text', '');
+        $this->deliveryPaused = filter_var($settings->get('delivery_paused', '0'), FILTER_VALIDATE_BOOLEAN);
+        $this->deliveryPauseReason = (string) $settings->get('delivery_pause_reason', '');
         $logoPath = $settings->get('logo_path');
         $this->currentLogoUrl = $logoPath ? Storage::disk('public')->url($logoPath) : null;
         $this->logo = null;
@@ -98,7 +107,10 @@ class Index extends Component
             'bannerText' => ['nullable', 'string', 'max:500'],
             'bannerTextColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'bannerBackground' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'bannerFontSize' => ['required', 'integer', 'min:12', 'max:48'],
             'footerText' => ['nullable', 'string', 'max:500'],
+            'deliveryPaused' => ['boolean'],
+            'deliveryPauseReason' => ['nullable', 'string', 'max:250'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
@@ -112,7 +124,10 @@ class Index extends Component
             'banner_text' => $data['bannerText'] ?? '',
             'banner_text_color' => $data['bannerTextColor'],
             'banner_background' => $data['bannerBackground'],
+            'banner_font_size' => (string) $data['bannerFontSize'],
             'footer_text' => $data['footerText'] ?? '',
+            'delivery_paused' => ! empty($data['deliveryPaused']) ? '1' : '0',
+            'delivery_pause_reason' => trim((string) ($data['deliveryPauseReason'] ?? '')),
         ];
 
         if ($data['logo']) {
@@ -123,9 +138,13 @@ class Index extends Component
             $before = BranchSetting::query()->where('branch_id', $branchId)->pluck('value', 'key')->all();
 
             foreach ($keys as $key => $value) {
+                $group = in_array($key, ['delivery_paused', 'delivery_pause_reason'], true)
+                    ? 'operations'
+                    : 'branding';
+
                 BranchSetting::query()->updateOrCreate(
                     ['branch_id' => $branchId, 'key' => $key],
-                    ['setting_group' => 'branding', 'value' => $value],
+                    ['setting_group' => $group, 'value' => $value],
                 );
             }
 
@@ -137,6 +156,9 @@ class Index extends Component
                 'auditable_id' => $branchId,
                 'before_values' => $before,
                 'after_values' => $keys,
+                'reason' => (($before['delivery_paused'] ?? '0') !== $keys['delivery_paused'])
+                    ? ($keys['delivery_paused'] === '1' ? 'تفعيل إيقاف التوصيل' : 'إلغاء إيقاف التوصيل')
+                    : null,
                 'created_at' => now(),
             ]);
         });

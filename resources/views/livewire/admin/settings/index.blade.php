@@ -57,6 +57,18 @@
             <label class="field full">نص التذييل
                 <textarea wire:model="footerText" rows="3" maxlength="500"></textarea>
             </label>
+            <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">
+                <strong>وضع الطوارئ — التوصيل</strong>
+                <p class="muted" style="margin:6px 0 0;line-height:1.7">عند التفعيل يُرفض طلب التوصيل من الواجهة والـ API، ويبقى الاستلام من المطعم متاحًا.</p>
+            </div>
+            <label class="field full" style="display:flex;align-items:flex-start;gap:10px">
+                <input wire:model.live="deliveryPaused" type="checkbox" style="margin-top:4px">
+                <span>إيقاف استقبال طلبات التوصيل مؤقتًا</span>
+            </label>
+            <label class="field full">سبب إيقاف التوصيل (يظهر للعميل)
+                <input wire:model="deliveryPauseReason" maxlength="250" placeholder="مثال: ضغط الطلبات، ظروف الطقس، نقص سائقين">
+                @error('deliveryPauseReason')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
             <div class="field full" style="display:flex;flex-direction:row;gap:10px;align-items:center">
                 <button type="submit" wire:loading.attr="disabled" class="primary">حفظ الإعدادات</button>
                 <span class="muted" wire:loading wire:target="logo">جارٍ رفع الشعار...</span>
