@@ -38,6 +38,7 @@ class AdminScreensTest extends TestCase
             'cashier.use',
             'printing.manage',
             'settings.manage',
+            'reports.view',
         ];
 
         $permissions = collect($permissionSlugs)->map(fn (string $slug) => Permission::query()->create([
@@ -83,6 +84,7 @@ class AdminScreensTest extends TestCase
             '/admin/cashier',
             '/admin/printers',
             '/admin/settings',
+            '/admin/reports',
             '/admin/employees',
             '/admin/roles',
             '/admin/branches',
