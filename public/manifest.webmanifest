@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "فتوش الخالدية",
+  "short_name": "فتوش",
+  "description": "منيو وطلبات فتوش الخالدية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f8f5",
+  "theme_color": "#205b3b",
+  "icons": [
+    {
+      "src": "/icons/fatoosh.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
