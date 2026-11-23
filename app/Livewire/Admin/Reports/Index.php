@@ -53,7 +53,15 @@ class Index extends Component
 
         $totalOrders = (clone $base)->count();
         $cancelledOrders = (clone $base)->where('status', 'cancelled')->count();
-        $paidOrders = (clone $base)->where('payment_status', 'paid');
+
+        $paidOrders = Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->where('payment_status', 'paid')
+            ->whereBetween('paid_at', [$from, $to]);
+        if ($this->fulfillmentFilter !== '') {
+            $paidOrders->where('fulfillment_type', $this->fulfillmentFilter);
+        }
+
         $paidCount = (clone $paidOrders)->count();
         $paidRevenue = (clone $paidOrders)->sum('total');
         $averageTicket = $paidCount > 0 ? (float) $paidRevenue / $paidCount : 0;
@@ -61,8 +69,8 @@ class Index extends Component
         $statusCounts = (clone $base)->select('status', DB::raw('COUNT(*) as total'))
             ->groupBy('status')->pluck('total', 'status');
 
-        $dailySales = (clone $base)->where('payment_status', 'paid')
-            ->selectRaw('DATE(DATE_ADD(created_at, INTERVAL 3 HOUR)) as day, SUM(total) as total')
+        $dailySales = (clone $paidOrders)
+            ->selectRaw('DATE(DATE_ADD(paid_at, INTERVAL 3 HOUR)) as day, SUM(total) as total')
             ->groupBy('day')->orderBy('day')->get();
 
         $topProducts = DB::table('order_items')
