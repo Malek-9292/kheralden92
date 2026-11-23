@@ -19,11 +19,12 @@
         *{box-sizing:border-box}html,body{margin:0;max-width:100%;overflow-x:clip}button,input,select,textarea{font:inherit}button{cursor:pointer}
         :focus-visible{outline:3px solid #8fcf9b;outline-offset:2px}
         body.modal-open{overflow:hidden;touch-action:none}
-        .sf-header{background:#fff;border-bottom:1px solid #e7eee8;padding:12px max(12px,env(safe-area-inset-right)) 12px max(12px,env(safe-area-inset-left));padding-top:max(12px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:100%}
+        .sf-header{background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);padding:12px max(12px,env(safe-area-inset-right)) 12px max(12px,env(safe-area-inset-left));padding-top:max(12px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:100%}
         .sf-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;min-width:0}
-        .sf-brand img{width:56px;height:56px;object-fit:contain;border-radius:14px;background:#f3f7f3;display:block}
-        .sf-brand .name{font-size:clamp(18px,5vw,24px);font-weight:900;color:#1d5b3d;line-height:1.3;overflow-wrap:anywhere}
-        .sf-brand .tag{font-size:12px;color:#6f8376;line-height:1.5}
+        .sf-brand img{width:56px;height:56px;object-fit:contain;border-radius:14px;background:var(--brand-logo-bg,#f3f7f3);display:block}
+        .sf-brand .name{font-size:clamp(18px,5vw,24px);font-weight:900;color:var(--brand-name-color,#1d5b3d);line-height:1.3;overflow-wrap:anywhere}
+        .sf-brand .tag{font-size:12px;color:var(--brand-tagline-color,#6f8376);line-height:1.5}
+        .cartbar.is-empty #openCart{display:none}
         .sf-fulfillment{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:420px;margin-inline:auto}
         .sf-fulfillment button{border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:999px;min-height:var(--tap);padding:10px 12px;font-weight:700;font-size:13px;width:100%;line-height:1.3}
         .sf-fulfillment button.active{background:var(--brand);color:#fff}
@@ -136,15 +137,17 @@
         </button>
     </div>
 </header>
-<div class="top-tools">
-    <button type="button" class="secondary" id="openLastOrder" hidden aria-label="تتبع آخر طلب">آخر طلب</button>
-    <button type="button" class="secondary" id="openTrack" aria-label="تتبع طلب">تتبع طلب</button>
-    <button type="button" class="secondary" id="installBtn" hidden aria-label="تثبيت التطبيق على الجهاز">تثبيت التطبيق</button>
+<div id="storefrontTopBlock" hidden>
+    <div class="top-tools">
+        <button type="button" class="secondary" id="openLastOrder" hidden aria-label="تتبع آخر طلب">آخر طلب</button>
+        <button type="button" class="secondary" id="openTrack" aria-label="تتبع طلب">تتبع طلب</button>
+        <button type="button" class="secondary" id="installBtn" hidden aria-label="تثبيت التطبيق على الجهاز">تثبيت التطبيق</button>
+    </div>
+    <div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
+    <section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
 </div>
 <div id="deliveryPauseBanner" class="offline" hidden role="status" style="background:#fff4e5;color:#8a4b08;border-bottom:1px solid #f0d7a8">التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.</div>
 <div id="offlineBanner" class="offline" hidden role="status">أنت غير متصل بالإنترنت. يمكنك تصفح آخر منيو محفوظ عند توفره، ولن يُرسل الطلب حتى يعود الاتصال.</div>
-<div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
-<section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
 <main class="wrap" id="menuMain">
     <div class="tools"><label class="sr-only" for="search" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">بحث في المنيو</label><input id="search" class="search" type="search" placeholder="ابحث عن صنف..." aria-label="بحث في المنيو" autocomplete="off"><span id="branchName" class="muted">فتوش الخالدية</span></div>
     <nav class="categories" id="categories" aria-label="أقسام المنيو"><button type="button" class="chip active" data-category="" aria-pressed="true">الكل</button></nav>
@@ -301,19 +304,30 @@
         document.title=name+' | الطلبات أونلاين';
         el('brandName').textContent=name;
         el('brandTagline').textContent=settings.tagline||'طعم يجمعنا';
+        el('brandLogo').alt='شعار '+name;
         el('heroTitle').textContent='أهلاً بيك في '+name;
         el('heroTagline').textContent=settings.tagline||'اختار طلبك واستمتع بأكلنا الطازة';
         el('branchName').textContent=name;
         if(settings.primary_color)document.documentElement.style.setProperty('--brand',settings.primary_color);
         if(settings.accent_color)document.documentElement.style.setProperty('--accent',settings.accent_color);
+        document.documentElement.style.setProperty('--brand-box-bg',settings.brand_box_background||'#ffffff');
+        document.documentElement.style.setProperty('--brand-box-border',settings.brand_box_border_color||'#e7eee8');
+        document.documentElement.style.setProperty('--brand-name-color',settings.brand_name_color||'#1d5b3d');
+        document.documentElement.style.setProperty('--brand-tagline-color',settings.brand_tagline_color||'#6f8376');
+        document.documentElement.style.setProperty('--brand-logo-bg',settings.brand_logo_background||'#f3f7f3');
         if(settings.logo_url){el('brandLogo').src=settings.logo_url;el('brandLogo').hidden=false;}
         else{el('brandLogo').src='/icons/fatoosh.svg';el('brandLogo').hidden=false;}
+        const topBlock=el('storefrontTopBlock');
+        const showTop=!!settings.show_storefront_top_block;
+        topBlock.hidden=!showTop;
         if(settings.banner_text){
             el('banner').textContent=settings.banner_text;
             el('banner').style.color=settings.banner_text_color||'#ffffff';
             el('banner').style.background=settings.banner_background||'#2f704b';
             el('banner').style.fontSize=(Number(settings.banner_font_size)||18)+'px';
             el('banner').hidden=false;
+        }else{
+            el('banner').hidden=true;
         }
         el('storeFooter').textContent=settings.footer_text||'';
         if(settings.phone||settings.whatsapp){
@@ -509,11 +523,14 @@
     function renderCartBar(){
         localStorage.setItem('fatoosh-cart',JSON.stringify(state.cart));
         const count=cartItems().reduce((n,i)=>n+i.quantity,0);
+        const bar=document.querySelector('.cartbar');
         el('cartCount').innerHTML=count
             ?('السلة <span class="cart-badge" id="cartBadge">'+count+'</span>')
             :'السلة فارغة';
         el('cartTotal').textContent=money(subtotal())+' د.ك';
-        el('openCart').textContent=count?('فتح السلة · '+count):'تصفح المنيو أولًا';
+        el('openCart').textContent=count?('فتح السلة · '+count):'فتح السلة';
+        el('openCart').hidden=!count;
+        if(bar) bar.classList.toggle('is-empty',!count);
         el('checkoutBtn').disabled=!count;
         updateCartAreaHint();
     }

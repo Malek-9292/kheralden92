@@ -88,6 +88,46 @@ class DeliveryPauseTest extends TestCase
         ]);
     }
 
+    public function test_settings_can_toggle_top_block_and_brand_box_colors(): void
+    {
+        [$user, $token, $branch] = $this->createSettingsUser();
+
+        $this->actingAs($user)->withSession(['employee_session_token' => $token]);
+
+        Livewire::test(SettingsIndex::class)
+            ->assertSet('showStorefrontTopBlock', false)
+            ->set('showStorefrontTopBlock', true)
+            ->set('brandBoxBackground', '#f7faf7')
+            ->set('brandNameColor', '#0f3d24')
+            ->set('brandTaglineColor', '#557766')
+            ->set('brandBoxBorderColor', '#ccdccc')
+            ->set('brandLogoBackground', '#eef5ef')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('branch_settings', [
+            'branch_id' => $branch->id,
+            'key' => 'show_storefront_top_block',
+            'value' => '1',
+        ]);
+        $this->assertDatabaseHas('branch_settings', [
+            'branch_id' => $branch->id,
+            'key' => 'brand_box_background',
+            'value' => '#f7faf7',
+        ]);
+        $this->assertDatabaseHas('branch_settings', [
+            'branch_id' => $branch->id,
+            'key' => 'brand_name_color',
+            'value' => '#0f3d24',
+        ]);
+
+        $this->getJson('/api/storefront/KHAL/settings')
+            ->assertOk()
+            ->assertJsonPath('settings.show_storefront_top_block', true)
+            ->assertJsonPath('settings.brand_box_background', '#f7faf7')
+            ->assertJsonPath('settings.brand_name_color', '#0f3d24');
+    }
+
     /**
      * @return array{0: Branch, 1: Product, 2: DeliveryArea}
      */
