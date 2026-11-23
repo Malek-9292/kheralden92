@@ -30,6 +30,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
         Route::patch('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}/images/{image}', [ProductController::class, 'destroyImage'])->name('products.images.destroy');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
