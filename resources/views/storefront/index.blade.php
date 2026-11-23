@@ -55,6 +55,7 @@
     <nav class="categories" id="categories"><button class="chip active" data-category="">الكل</button></nav>
     <div id="products" class="grid"><div class="empty">جارٍ تحميل المنيو...</div></div>
 </main>
+<footer id="storeFooter" class="muted" style="text-align:center;padding:18px 14px 105px"></footer>
 <div class="cartbar"><div><strong id="cartCount">السلة (0)</strong><div class="muted" id="cartTotal">0.000 د.ك</div></div><button class="primary" id="openCart">عرض السلة وإتمام الطلب</button></div>
 
 <div class="modal" id="cartModal"><div class="dialog"><h2>سلة الطلب</h2><div id="cartItems"></div><div id="cartSummary" class="hint"></div><div class="actions"><button class="primary" id="checkoutBtn">إتمام الطلب</button><button class="secondary" data-close="cartModal">متابعة التسوق</button></div></div></div>
