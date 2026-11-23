@@ -61,7 +61,7 @@ class Index extends Component
 
         $next = $current === false;
 
-        DB::transaction(function () use ($module, $next, $user): void {
+        DB::transaction(function () use ($module, $current, $next, $user): void {
             $setting = ModuleSetting::query()->updateOrCreate(
                 ['module_key' => $module],
                 ['is_enabled' => $next],

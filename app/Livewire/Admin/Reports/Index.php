@@ -72,8 +72,12 @@ class Index extends Component
         $statusCounts = (clone $base)->select('status', DB::raw('COUNT(*) as total'))
             ->groupBy('status')->pluck('total', 'status');
 
+        $dayExpression = DB::connection()->getDriverName() === 'sqlite'
+            ? "DATE(datetime(paid_at, '+3 hours'))"
+            : 'DATE(DATE_ADD(paid_at, INTERVAL 3 HOUR))';
+
         $dailySales = (clone $paidOrders)
-            ->selectRaw('DATE(DATE_ADD(paid_at, INTERVAL 3 HOUR)) as day, SUM(total) as total')
+            ->selectRaw("{$dayExpression} as day, SUM(total) as total")
             ->groupBy('day')->orderBy('day')->get();
 
         $topProducts = DB::table('order_items')

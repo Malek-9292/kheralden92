@@ -73,6 +73,7 @@ class RolePermissionGuardTest extends TestCase
 
         $this->assertDatabaseMissing('roles', ['slug' => 'module_admin']);
     }
+
     public function test_branch_manager_cannot_assign_existing_role_with_module_permission(): void
     {
         $branch = Branch::query()->create([
@@ -140,5 +141,4 @@ class RolePermissionGuardTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['phone' => '96560001111']);
     }
-
 }

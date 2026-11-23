@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Models\Branch;
-use App\Models\ModuleSetting;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -27,7 +26,7 @@ class ModuleManagerScreenTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('module_settings', [
-            'module_key' => 'Promotions',
+            'module_key' => 'Printing',
             'is_enabled' => false,
         ]);
 

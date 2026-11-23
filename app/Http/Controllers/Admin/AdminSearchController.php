@@ -83,9 +83,19 @@ class AdminSearchController extends Controller
                 ->limit(5)
                 ->get(['id', 'order_number', 'customer_name', 'customer_phone', 'status']);
 
+            $statusLabels = [
+                'pending' => 'جديد',
+                'accepted' => 'مقبول',
+                'preparing' => 'قيد التحضير',
+                'ready' => 'جاهز',
+                'completed' => 'مكتمل',
+                'cancelled' => 'ملغى',
+                'rejected' => 'مرفوض',
+            ];
+
             $results['orders'] = $orders->map(fn (Order $order) => [
                 'title' => $order->order_number,
-                'subtitle' => $order->customer_name.' · '.$order->customer_phone.' · '.$order->status,
+                'subtitle' => $order->customer_name.' · '.$order->customer_phone.' · '.($statusLabels[$order->status] ?? $order->status),
                 'url' => '/admin/orders?search='.urlencode($order->order_number),
                 'type' => 'order',
             ])->values();
@@ -129,12 +139,20 @@ class AdminSearchController extends Controller
                 ->orderBy('name')
                 ->limit(5)
                 ->get(['id', 'name', 'phone', 'status'])
-                ->map(fn (User $employee) => [
-                    'title' => $employee->name,
-                    'subtitle' => $employee->phone.' · '.$employee->status,
-                    'url' => '/admin/employees?search='.urlencode($employee->name),
-                    'type' => 'employee',
-                ])->values();
+                ->map(function (User $employee) {
+                    $statusLabels = [
+                        'active' => 'نشط',
+                        'suspended' => 'موقوف',
+                        'inactive' => 'غير نشط',
+                    ];
+
+                    return [
+                        'title' => $employee->name,
+                        'subtitle' => $employee->phone.' · '.($statusLabels[$employee->status] ?? $employee->status),
+                        'url' => '/admin/employees?search='.urlencode($employee->name),
+                        'type' => 'employee',
+                    ];
+                })->values();
         }
 
         if (($user->hasPermissionTo('delivery.manage') || $user->hasRole('system_admin')) && $moduleManager->enabled('Delivery')) {
