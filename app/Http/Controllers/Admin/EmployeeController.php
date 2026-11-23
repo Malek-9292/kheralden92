@@ -50,19 +50,38 @@ class EmployeeController extends Controller
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
         ]);
 
-        $branchAccess->assertCanAccess($request->user(), (int) $data['branch_id']);
+        $branchId = (int) $data['branch_id'];
+        $branchAccess->assertCanAccess($request->user(), $branchId);
         $roleIds = $data['role_ids'] ?? [];
-        $this->assertRolesAllowed($roleIds, (int) $data['branch_id'], $request->user()->hasRole('system_admin'));
+        $this->assertRolesAllowed($roleIds, $branchId, $request->user()->hasRole('system_admin'));
 
-        $employee = DB::transaction(function () use ($data, $roleIds, $request): User {
+        $employee = DB::transaction(function () use ($data, $roleIds, $branchId, $request): User {
             $employee = User::query()->create([
                 'name' => $data['name'],
                 'phone' => $data['phone'],
                 'password' => Hash::make($data['password']),
-                'branch_id' => $data['branch_id'],
+                'branch_id' => $branchId,
                 'status' => $data['status'] ?? 'active',
             ]);
             $employee->roles()->sync($roleIds);
+
+            AuditLog::query()->create([
+                'branch_id' => $branchId,
+                'actor_id' => $request->user()->id,
+                'action' => 'employee.created',
+                'auditable_type' => User::class,
+                'auditable_id' => $employee->id,
+                'after_values' => [
+                    'name' => $employee->name,
+                    'phone' => $employee->phone,
+                    'branch_id' => $branchId,
+                    'status' => $employee->status,
+                    'role_ids' => $roleIds,
+                ],
+                'ip_address' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 500),
+                'created_at' => now(),
+            ]);
 
             return $employee;
         });
@@ -76,6 +95,7 @@ class EmployeeController extends Controller
     public function update(Request $request, User $employee, BranchAccess $branchAccess): JsonResponse
     {
         abort_if($employee->hasRole('system_admin'), 403, 'لا يمكن تعديل حساب مدير النظام الرئيسي من إدارة الموظفين.');
+
         $oldBranchId = (int) $employee->branch_id;
         $branchAccess->assertCanAccess($request->user(), $oldBranchId);
 
@@ -90,18 +110,32 @@ class EmployeeController extends Controller
         ]);
 
         $newBranchId = (int) ($data['branch_id'] ?? $oldBranchId);
+
         if ($newBranchId !== $oldBranchId && ! array_key_exists('role_ids', $data)) {
             throw ValidationException::withMessages([
                 'role_ids' => ['حدد صلاحيات الموظف مرة أخرى عند نقله إلى فرع مختلف.'],
             ]);
         }
+
         $branchAccess->assertCanAccess($request->user(), $newBranchId);
         $roleIds = $data['role_ids'] ?? $employee->roles()->pluck('roles.id')->all();
         $this->assertRolesAllowed($roleIds, $newBranchId, $request->user()->hasRole('system_admin'));
 
-        $mustRevokeSessions = (array_key_exists('status', $data) && $data['status'] !== 'active') || $newBranchId !== $oldBranchId;
+        $mustRevokeSessions = (array_key_exists('status', $data) && $data['status'] !== 'active')
+            || $newBranchId !== $oldBranchId;
 
-        DB::transaction(function () use ($employee, $data, $roleIds, $newBranchId, $mustRevokeSessions): void {
+        $beforeValues = $employee->only(['name', 'phone', 'branch_id', 'status']);
+        $beforeValues['role_ids'] = $employee->roles()->pluck('roles.id')->all();
+
+        DB::transaction(function () use (
+            $employee,
+            $data,
+            $roleIds,
+            $newBranchId,
+            $mustRevokeSessions,
+            $beforeValues,
+            $request
+        ): void {
             $employee->fill(collect($data)->only(['name', 'phone', 'status'])->all());
             $employee->branch_id = $newBranchId;
 
