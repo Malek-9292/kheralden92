@@ -46,6 +46,7 @@
             @if(auth()->user()->hasPermissionTo('branches.manage')) <a href="/admin/branches">الفروع</a> @endif
             @if(auth()->user()->hasPermissionTo('roles.manage')) <a href="/admin/roles">الأدوار والصلاحيات</a> @endif
             @if(auth()->user()->hasPermissionTo('cashier.use')) <a href="/admin/cashier">الكاشير</a> @endif
+            @if(auth()->user()->hasPermissionTo('printing.manage')) <a href="/admin/printers">الطابعات</a> @endif
         </nav>
         <div class="muted" style="color:#b9d7c5;margin-top:auto">{{ auth()->user()->name }}</div>
         <form method="POST" action="/admin/session" onsubmit="return false">
