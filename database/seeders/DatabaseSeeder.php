@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Manage catalog', 'slug' => 'catalog.manage', 'module' => 'Catalog'],
             ['name' => 'Manage delivery areas', 'slug' => 'delivery.manage', 'module' => 'Delivery'],
             ['name' => 'Manage restaurant settings', 'slug' => 'settings.manage', 'module' => 'Settings'],
+            ['name' => 'View reports', 'slug' => 'reports.view', 'module' => 'Reports'],
             ['name' => 'View orders', 'slug' => 'orders.view', 'module' => 'Orders'],
             ['name' => 'Accept orders', 'slug' => 'orders.accept', 'module' => 'Orders'],
             ['name' => 'Cancel orders', 'slug' => 'orders.cancel', 'module' => 'Orders'],
@@ -72,7 +73,7 @@ class DatabaseSeeder extends Seeder
         $templates = [
             'operations_manager' => [
                 'name' => 'مدير تشغيل',
-                'permissions' => ['dashboard.view', 'employees.manage', 'roles.manage', 'catalog.view', 'catalog.manage', 'delivery.manage', 'settings.manage', 'orders.view', 'orders.accept', 'orders.cancel', 'cashier.use', 'printing.manage'],
+                'permissions' => ['dashboard.view', 'employees.manage', 'roles.manage', 'catalog.view', 'catalog.manage', 'delivery.manage', 'settings.manage', 'reports.view', 'orders.view', 'orders.accept', 'orders.cancel', 'cashier.use', 'printing.manage'],
             ],
             'content_manager' => [
                 'name' => 'مدير محتوى',
