@@ -35,5 +35,20 @@ class CatalogSeederTest extends TestCase
         $this->assertFileExists(public_path('images/placeholders/sandwiches.jpg'));
         $this->assertFileExists(public_path('images/placeholders/saj.jpg'));
         $this->assertFileExists(public_path('images/placeholders/grill.jpg'));
+        $this->assertFileExists(public_path('images/menu/شاورما لحم.jpg'));
+
+        $shawarma = Product::query()->where('name', 'شاورما لحم')->with('images')->first();
+        $this->assertNotNull($shawarma);
+        $this->assertTrue($shawarma->images->isNotEmpty());
+        $this->assertSame('شاورما لحم.jpg', $shawarma->images->first()->original_name);
+        $this->assertFileExists(storage_path('app/public/'.$shawarma->images->first()->path));
+
+        $saj = Product::query()->where('name', 'شاورما لحم صاج')->with('images')->first();
+        $this->assertNotNull($saj);
+        $this->assertSame('شاورما لحم.jpg', $saj->images->first()->original_name);
+
+        $unmatched = Product::query()->where('name', 'فتوش')->with('images')->first();
+        $this->assertNotNull($unmatched);
+        $this->assertNotSame('شاورما لحم.jpg', $unmatched->images->first()?->original_name);
     }
 }
