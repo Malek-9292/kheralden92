@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -167,6 +168,10 @@ class ProductController extends Controller
             throw ValidationException::withMessages(['reason' => ['سبب تعديل السعر مطلوب.']]);
         }
 
+        if (isset($data['primary_image_id']) && array_key_exists('primary_image_index', $data)) {
+            throw ValidationException::withMessages(['primary_image_id' => ['اختر صورة أساسية واحدة فقط.']]);
+        }
+
         if (isset($data['primary_image_id'])) {
             $selectedImage = $product->images()->whereKey($data['primary_image_id'])->first();
             if (! $selectedImage) {
@@ -266,6 +271,44 @@ class ProductController extends Controller
             'message' => 'تم تحديث الصنف.',
             'product' => $product->fresh()->load(['category', 'images', 'availabilityWindows', 'priceHistory']),
         ]);
+    }
+
+
+    public function destroyImage(Request $request, Product $product, ProductImage $image, BranchAccess $branchAccess): JsonResponse
+    {
+        $branchAccess->assertCanAccess($request->user(), $product->branch_id);
+
+        abort_unless($product->images()->whereKey($image->id)->exists(), 404);
+
+        if ($product->images()->count() <= 1) {
+            return response()->json(['message' => 'لا يمكن حذف الصورة الوحيدة للصنف.'], 409);
+        }
+
+        DB::transaction(function () use ($product, $image, $request): void {
+            $wasPrimary = $image->is_primary;
+            $path = $image->path;
+            $image->delete();
+
+            if ($wasPrimary) {
+                $product->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
+            }
+
+            AuditLog::query()->create([
+                'branch_id' => $product->branch_id,
+                'actor_id' => $request->user()->id,
+                'action' => 'product.image_deleted',
+                'auditable_type' => Product::class,
+                'auditable_id' => $product->id,
+                'before_values' => ['image_id' => $image->id, 'path' => $path, 'was_primary' => $wasPrimary],
+                'ip_address' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 500),
+                'created_at' => now(),
+            ]);
+
+            Storage::disk('public')->delete($path);
+        });
+
+        return response()->json(['message' => 'تم حذف الصورة.']);
     }
 
     private function assertCategoryBelongsToBranch(int $categoryId, int $branchId): void
