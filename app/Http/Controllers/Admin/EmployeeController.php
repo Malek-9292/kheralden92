@@ -49,13 +49,15 @@ class EmployeeController extends Controller
             'status' => ['sometimes', Rule::in(['active', 'suspended', 'inactive'])],
             'valid_from' => ['nullable', 'date'],
             'valid_until' => ['nullable', 'date', 'after_or_equal:valid_from'],
-            'role_ids' => ['required', 'array', 'min:1'],
-            'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
         ]);
 
         $branchId = (int) $data['branch_id'];
         $branchAccess->assertCanAccess($request->user(), $branchId);
-        $roleIds = $data['role_ids'] ?? [];
+        $roleData = $request->validate([
+            'role_ids' => ['required', 'array', 'min:1'],
+            'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
+        ]);
+        $roleIds = $roleData['role_ids'];
         $this->assertRolesAllowed($roleIds, $branchId, $request->user()->hasRole('system_admin'));
 
         $employee = DB::transaction(function () use ($data, $roleIds, $branchId, $request): User {
