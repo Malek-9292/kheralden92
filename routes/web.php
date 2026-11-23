@@ -1,11 +1,12 @@
 <?php
 
-use App\Http\Controllers\Auth\EmployeeSessionController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\ProductController;
-use Illuminate\Support\Facades\Route;
+use App\\Http\\Controllers\\Auth\\EmployeeSessionController;
+use App\\Http\\Controllers\\Admin\\BranchController;
+use App\\Http\\Controllers\\Admin\\EmployeeController;
+use App\\Http\\Controllers\\Admin\\RoleController;
+use App\\Http\\Controllers\\Admin\\CategoryController;
+use App\\Http\\Controllers\\Admin\\ProductController;
+use Illuminate\\Support\\Facades\\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
 
@@ -13,6 +14,12 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::post('/session', [EmployeeSessionController::class, 'store'])
         ->middleware('throttle:5,1')
         ->name('session.store');
+
+    Route::middleware(['auth', 'employee.active', 'permission:branches.manage'])->group(function (): void {
+        Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
+        Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+        Route::patch('/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
+    });
 
     Route::middleware(['auth', 'employee.active', 'permission:employees.manage'])->group(function (): void {
         Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
