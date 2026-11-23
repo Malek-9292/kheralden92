@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureActiveEmployeeSession;
-use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureModuleEnabled;
+use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\SetKuwaitTimezone;
 use App\Providers\AppServiceProvider;
 use App\Providers\ModuleRegistryServiceProvider;
