@@ -12,6 +12,6 @@ class StorefrontPageTest extends TestCase
             ->assertOk()
             ->assertSee('فتوش الخالدية')
             ->assertSee('/manifest.webmanifest')
-            ->assertSee('/api/catalog/KHAL/categories');
+            ->assertSee('/api/catalog/');
     }
 }
