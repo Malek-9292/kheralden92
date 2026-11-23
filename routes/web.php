@@ -22,6 +22,7 @@ use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Printers\Index as PrintersIndex;
 use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Reports\Index as ReportsIndex;
+use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use Illuminate\Support\Facades\Route;
 
@@ -71,6 +72,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/api/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.api.index');
         Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
         Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:modules.manage'])->group(function (): void {
+        Route::get('/modules', ModulesIndex::class)->name('modules.index');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:reports.view'])->group(function (): void {
