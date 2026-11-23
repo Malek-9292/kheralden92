@@ -284,9 +284,10 @@ class ProductController extends Controller
             return response()->json(['message' => 'لا يمكن حذف الصورة الوحيدة للصنف.'], 409);
         }
 
+        $path = $image->path;
+
         DB::transaction(function () use ($product, $image, $request): void {
             $wasPrimary = $image->is_primary;
-            $path = $image->path;
             $image->delete();
 
             if ($wasPrimary) {
@@ -299,14 +300,14 @@ class ProductController extends Controller
                 'action' => 'product.image_deleted',
                 'auditable_type' => Product::class,
                 'auditable_id' => $product->id,
-                'before_values' => ['image_id' => $image->id, 'path' => $path, 'was_primary' => $wasPrimary],
+                'before_values' => ['image_id' => $image->id, 'path' => $image->path, 'was_primary' => $wasPrimary],
                 'ip_address' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 500),
                 'created_at' => now(),
             ]);
-
-            Storage::disk('public')->delete($path);
         });
+
+        Storage::disk('public')->delete($path);
 
         return response()->json(['message' => 'تم حذف الصورة.']);
     }
