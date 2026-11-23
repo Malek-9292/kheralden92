@@ -9,6 +9,7 @@ use App\Models\DeliveryArea;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\PrintJobDispatcher;
+use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -63,8 +64,8 @@ class OrderController extends Controller
                     ]);
                 }
 
-                $deliveryFee = $this->toFils((string) $area->delivery_fee);
-                $minimumOrder = $this->toFils((string) $area->minimum_order);
+                $deliveryFee = Money::toFils((string) $area->delivery_fee);
+                $minimumOrder = Money::toFils((string) $area->minimum_order);
             }
 
             $quantities = collect($data['items'])->keyBy('product_id');
@@ -101,7 +102,10 @@ class OrderController extends Controller
                     ]);
                 }
 
-                $subtotal += $this->toFils((string) $product->price) * (int) $item['quantity'];
+                $subtotal += Money::multiplyFils(
+                    Money::toFils((string) $product->price),
+                    (int) $item['quantity'],
+                );
             }
 
             if ($data['fulfillment_type'] === 'delivery' && $subtotal < $minimumOrder) {
@@ -129,10 +133,10 @@ class OrderController extends Controller
                 'floor' => $data['fulfillment_type'] === 'delivery' ? ($data['floor'] ?? null) : null,
                 'apartment' => $data['fulfillment_type'] === 'delivery' ? ($data['apartment'] ?? null) : null,
                 'customer_notes' => $data['customer_notes'] ?? null,
-                'subtotal' => $this->fromFils($subtotal),
-                'delivery_fee' => $this->fromFils($deliveryFee),
-                'minimum_order_snapshot' => $this->fromFils($minimumOrder),
-                'total' => $this->fromFils($subtotal + $deliveryFee),
+                'subtotal' => Money::fromFils($subtotal),
+                'delivery_fee' => Money::fromFils($deliveryFee),
+                'minimum_order_snapshot' => Money::fromFils($minimumOrder),
+                'total' => Money::fromFils(Money::addFils($subtotal, $deliveryFee)),
                 'tracking_token_hash' => hash('sha256', $trackingToken),
             ]);
 
@@ -143,15 +147,15 @@ class OrderController extends Controller
             foreach ($quantities as $productId => $item) {
                 $product = $products->get($productId);
                 $quantity = (int) $item['quantity'];
-                $unitPrice = $this->toFils((string) $product->price);
+                $unitPrice = Money::toFils((string) $product->price);
 
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'category_name' => $product->category->name,
-                    'unit_price' => $this->fromFils($unitPrice),
+                    'unit_price' => Money::fromFils($unitPrice),
                     'quantity' => $quantity,
-                    'line_total' => $this->fromFils($unitPrice * $quantity),
+                    'line_total' => Money::fromFils(Money::multiplyFils($unitPrice, $quantity)),
                 ]);
             }
 
@@ -209,17 +213,5 @@ class OrderController extends Controller
         return response()->json([
             'order' => $order->load('items'),
         ]);
-    }
-
-    private function toFils(string $amount): int
-    {
-        [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '');
-
-        return ((int) $whole * 1000) + (int) str_pad(substr($fraction, 0, 3), 3, '0');
-    }
-
-    private function fromFils(int $amount): string
-    {
-        return intdiv($amount, 1000).'.'.str_pad((string) ($amount % 1000), 3, '0', STR_PAD_LEFT);
     }
 }
