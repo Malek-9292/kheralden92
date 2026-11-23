@@ -97,6 +97,10 @@ class PrinterController extends Controller
         $before = $printer->only(['name', 'is_active', 'connection_type']);
         $printer->update($data);
 
+        if (array_key_exists('is_active', $data) && ! $data['is_active']) {
+            $printer->jobs()->whereIn('status', ['pending', 'processing'])->update(['printer_id' => null, 'status' => 'pending', 'claimed_at' => null]);
+        }
+
         AuditLog::query()->create([
             'branch_id' => $printer->branch_id,
             'actor_id' => $request->user()->id,
