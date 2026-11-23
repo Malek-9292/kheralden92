@@ -12,10 +12,13 @@ import android.hardware.usb.UsbManager
 
 class UsbThermalPrinter(private val context: Context) {
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+    private var lastPermissionRequestAt = 0L
 
     fun requestPermissionIfNeeded(): Boolean {
         val device = findPrinterDevice() ?: return false
         if (usbManager.hasPermission(device)) return true
+        if (System.currentTimeMillis() - lastPermissionRequestAt < 10000) return false
+        lastPermissionRequestAt = System.currentTimeMillis()
 
         val permissionIntent = PendingIntent.getBroadcast(
             context,
@@ -57,7 +60,12 @@ class UsbThermalPrinter(private val context: Context) {
     }
 
     private fun findPrinterDevice(): UsbDevice? {
-        return usbManager.deviceList.values.firstOrNull { device -> findBulkOut(device) != null }
+        return usbManager.deviceList.values.firstOrNull { device ->
+            device.deviceClass == UsbConstants.USB_CLASS_PRINTER ||
+                (0 until device.interfaceCount).any { index ->
+                    device.getInterface(index).interfaceClass == UsbConstants.USB_CLASS_PRINTER
+                }
+        } ?: usbManager.deviceList.values.firstOrNull { device -> findBulkOut(device) != null }
     }
 
     private fun findBulkOut(device: UsbDevice): Pair<UsbInterface, UsbEndpoint>? {
