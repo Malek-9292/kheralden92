@@ -18,7 +18,7 @@ use App\Livewire\Admin\Catalog\Products as ProductsIndex;
 use App\Livewire\Admin\Cashier\Index as CashierIndex;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('welcome'))->name('home');
+Route::view('/', 'storefront.index')->name('storefront.home');
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/login', 'admin.login')->name('login');
