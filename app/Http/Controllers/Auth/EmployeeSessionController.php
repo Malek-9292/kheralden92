@@ -23,6 +23,13 @@ class EmployeeSessionController extends Controller
             'password' => $credentials['password'],
             'status' => 'active',
         ])) {
+            DB::table('employee_login_attempts')->insert([
+                'login_identifier' => $credentials['phone'],
+                'ip_address' => $request->ip(),
+                'was_successful' => false,
+                'attempted_at' => now(),
+            ]);
+
             throw ValidationException::withMessages([
                 'phone' => ['رقم الهاتف أو كلمة المرور غير صحيحة، أو أن الحساب غير نشط.'],
             ]);
