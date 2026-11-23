@@ -35,7 +35,13 @@ class RoleController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'slug' => ['required', 'string', 'max:100', 'regex:/^[a-z][a-z0-9_]*$/'],
+            'slug' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[a-z][a-z0-9_]*$/',
+                Rule::unique('roles', 'slug')->where(fn ($query) => $query->where('branch_id', $request->input('branch_id'))),
+            ],
             'branch_id' => ['required', 'integer', 'exists:branches,id'],
             'permission_slugs' => ['sometimes', 'array'],
             'permission_slugs.*' => ['string', 'distinct', 'exists:permissions,slug'],
