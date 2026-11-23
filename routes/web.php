@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CashierController;
 use App\Http\Controllers\Admin\AdminSearchController;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
+use App\Livewire\Admin\DeliveryAreas\Index as DeliveryAreasIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -49,9 +50,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:delivery.manage'])->group(function (): void {
-        Route::get('/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.index');
-        Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
-        Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
+        Route::get('/delivery-areas', DeliveryAreasIndex::class)->name('delivery-areas.index');
+        Route::get('/api/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.api.index');
+        Route::post('/api/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.api.store');
+        Route::patch('/api/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.api.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:cashier.use'])->group(function (): void {
