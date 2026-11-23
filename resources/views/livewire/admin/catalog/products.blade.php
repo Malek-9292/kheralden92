@@ -67,7 +67,6 @@
             <div wire:loading wire:target="images" style="font-size:12px;color:#60786a">جارٍ رفع الصور...</div>
         </form>
         @if($editingId)
-            @php($editingProduct = \App\Models\Product::with('images')->find($editingId))
             @if($editingProduct)
                 <div style="margin-top:18px;border-top:1px solid #edf1ed;padding-top:14px">
                     <strong style="font-size:13px">الصور الحالية</strong>
