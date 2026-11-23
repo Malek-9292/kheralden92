@@ -19,6 +19,10 @@ jobs:
           curl -sS https://getcomposer.org/installer -o composer-setup.php
           php composer-setup.php --install-dir=/usr/local/bin --filename=composer
           rm composer-setup.php
+      - name: Prepare Laravel writable directories
+        run: |
+          mkdir -p bootstrap/cache storage/app/private storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/testing storage/framework/views storage/logs
+          chmod -R ug+rwX bootstrap/cache storage
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Validate Composer configuration
