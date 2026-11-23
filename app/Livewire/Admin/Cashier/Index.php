@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Cashier;
 use App\Models\AuditLog;
 use App\Models\Order;
 use App\Services\BranchAccess;
+use App\Services\PrintJobDispatcher;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -40,6 +41,8 @@ class Index extends Component
                 'payment_status' => 'paid',
                 'paid_at' => now(),
             ]);
+
+            app(PrintJobDispatcher::class)->enqueueCustomerReceipt($order->fresh()->load('items'));
 
             AuditLog::query()->create([
                 'branch_id' => $order->branch_id,
