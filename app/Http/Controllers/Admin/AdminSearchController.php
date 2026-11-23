@@ -32,6 +32,7 @@ class AdminSearchController extends Controller
             ['permission' => 'branches.manage', 'label' => 'الفروع', 'url' => '/admin/branches'],
             ['permission' => 'roles.manage', 'label' => 'الأدوار والصلاحيات', 'url' => '/admin/roles'],
             ['permission' => 'cashier.use', 'label' => 'الكاشير', 'url' => '/admin/cashier'],
+            ['permission' => 'printing.manage', 'label' => 'الطابعات', 'url' => '/admin/printers'],
         ];
 
         foreach ($navigation as $item) {
