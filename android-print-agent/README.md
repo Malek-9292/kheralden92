@@ -11,7 +11,7 @@
 5. ملف APK الناتج يظهر في:
    app/build/outputs/apk/debug/app-debug.apk
 
-يوجد GitHub Actions workflow لبناء APK عند تعديل ملفات هذا المجلد. لا يوجد APK منشور أو مثبت تلقائيًا على جهاز المطعم.
+يوجد GitHub Actions workflow لبناء APK عند تعديل ملفات هذا المجلد، ويرفع ملف debug APK كـ Artifact باسم fatoosh-print-agent-debug-apk لمدة 14 يومًا. افتح تشغيل Android Print Agent الناجح في تبويب Actions ثم نزّل الـ Artifact. هذا APK للتجربة فقط، وليس إصدارًا موقّعًا للنشر. لا يوجد APK مثبت تلقائيًا على جهاز المطعم.
 
 ## الإعداد
 1. من لوحة إدارة فتوش افتح /admin/printers.
