@@ -54,8 +54,11 @@ class Index extends Component
         app(BranchAccess::class)->assertCanAccess($user, $branchId);
 
         $uniqueName = Rule::unique('delivery_areas', 'name')
-            ->where(fn ($query) => $query->where('branch_id', $branchId)->where('governorate', $this->governorate))
-            ->ignore($this->editingId);
+            ->where(fn ($query) => $query->where('branch_id', $branchId)->where('governorate', $this->governorate));
+
+        if ($this->editingId !== null) {
+            $uniqueName->ignore($this->editingId);
+        }
 
         $data = $this->validate([
             'governorate' => ['required', 'string', 'max:100'],
