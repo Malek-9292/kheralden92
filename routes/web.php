@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\DeliveryAreaController;
+use App\Http\Controllers\Admin\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -45,6 +46,19 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.index');
         Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
         Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:orders.view'])->group(function (): void {
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:orders.accept'])->group(function (): void {
+        Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:orders.cancel'])->group(function (): void {
+        Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
