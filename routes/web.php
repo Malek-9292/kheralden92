@@ -35,15 +35,15 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::middleware(['auth', 'employee.active', 'permission:branches.manage'])->group(function (): void {
         Route::get('/branches', BranchesIndex::class)->name('branches.index');
         Route::get('/api/branches', [BranchController::class, 'index'])->name('branches.api.index');
-        Route::post('/api/branches', [BranchController::class, 'store'])->name('branches.api.store');
-        Route::patch('/api/branches/{branch}', [BranchController::class, 'update'])->name('branches.api.update');
+        Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+        Route::patch('/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:employees.manage'])->group(function (): void {
         Route::get('/employees', EmployeesIndex::class)->name('employees.index');
         Route::get('/api/employees', [EmployeeController::class, 'index'])->name('employees.api.index');
-        Route::post('/api/employees', [EmployeeController::class, 'store'])->name('employees.api.store');
-        Route::patch('/api/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.api.update');
+        Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+        Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:catalog.view'])->group(function (): void {
@@ -67,8 +67,8 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::middleware(['auth', 'employee.active', 'permission:delivery.manage'])->group(function (): void {
         Route::get('/delivery-areas', DeliveryAreasIndex::class)->name('delivery-areas.index');
         Route::get('/api/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.api.index');
-        Route::post('/api/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.api.store');
-        Route::patch('/api/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.api.update');
+        Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
+        Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:printing.manage'])->group(function (): void {
@@ -90,7 +90,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::middleware(['auth', 'employee.active', 'permission:orders.view'])->group(function (): void {
         Route::get('/orders', OrdersIndex::class)->name('orders.index');
         Route::get('/api/orders', [OrderController::class, 'index'])->name('orders.api.index');
-        Route::get('/api/orders/{order}', [OrderController::class, 'show'])->name('orders.api.show');
+        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:orders.accept'])->group(function (): void {
@@ -104,8 +104,8 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
         Route::get('/roles', RolesIndex::class)->name('roles.index');
         Route::get('/api/roles', [RoleController::class, 'index'])->name('roles.api.index');
-        Route::post('/api/roles', [RoleController::class, 'store'])->name('roles.api.store');
-        Route::patch('/api/roles/{role}', [RoleController::class, 'update'])->name('roles.api.update');
+        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::patch('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
     });
 
     Route::middleware(['auth', 'employee.active'])->group(function (): void {
