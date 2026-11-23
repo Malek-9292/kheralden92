@@ -62,7 +62,7 @@ class Index extends Component
             ->groupBy('status')->pluck('total', 'status');
 
         $dailySales = (clone $base)->where('payment_status', 'paid')
-            ->selectRaw('DATE(created_at) as day, SUM(total) as total')
+            ->selectRaw('DATE(DATE_ADD(created_at, INTERVAL 3 HOUR)) as day, SUM(total) as total')
             ->groupBy('day')->orderBy('day')->get();
 
         $topProducts = DB::table('order_items')
