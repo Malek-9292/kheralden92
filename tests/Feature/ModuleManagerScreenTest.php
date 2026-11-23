@@ -23,7 +23,7 @@ class ModuleManagerScreenTest extends TestCase
         $this->actingAs($user);
 
         Livewire::test(ModulesIndex::class)
-            ->call('toggle', 'Promotions')
+            ->call('toggle', 'Printing')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('module_settings', [
