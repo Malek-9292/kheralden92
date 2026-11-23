@@ -16,7 +16,7 @@ class CatalogApiTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        \\Illuminate\\Support\\Carbon::setTestNow();
+        Carbon::setTestNow();
     }
 
     public function test_public_catalog_only_returns_active_categories_for_an_active_branch(): void
@@ -54,8 +54,8 @@ class CatalogApiTest extends TestCase
 
     public function test_public_products_respect_category_status_and_availability_windows(): void
     {
-        \\Illuminate\\Support\\Carbon::setTestNow(
-            \\Illuminate\\Support\\Carbon::parse('2026-11-23 12:00:00', 'Asia/Kuwait'),
+        Carbon::setTestNow(
+            Carbon::parse('2026-11-23 12:00:00', 'Asia/Kuwait'),
         );
 
         $branch = Branch::query()->create([
