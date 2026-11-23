@@ -3,6 +3,7 @@
 use App\Http\Controllers\Storefront\CatalogController;
 use App\Http\Controllers\Storefront\DeliveryAreaController;
 use App\Http\Controllers\Storefront\OrderController;
+use App\Http\Controllers\Storefront\SettingsController;
 use App\Http\Controllers\PrintAgentController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,7 @@ Route::get('/health', fn () => response()->json([
     'timezone' => config('app.timezone'),
 ]))->name('api.health');
 
+Route::get('/storefront/{branchCode}/settings', [SettingsController::class, 'show'])->name('storefront.settings');
 Route::get('/delivery-areas/{branchCode}', [DeliveryAreaController::class, 'index'])->name('delivery-areas.index');
 Route::post('/orders/{branchCode}', [OrderController::class, 'store'])->middleware('throttle:10,1')->name('orders.store');
 Route::get('/orders/{branchCode}/{orderNumber}', [OrderController::class, 'track'])->middleware('throttle:30,1')->name('orders.track');
