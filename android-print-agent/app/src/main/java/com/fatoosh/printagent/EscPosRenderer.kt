@@ -62,6 +62,37 @@ object EscPosRenderer {
         return render(lines.joinToString("\n"))
     }
 
+    fun customerReceipt(payload: JSONObject): ByteArray {
+        val lines = mutableListOf<String>()
+        lines += payload.optString("branch", "فتوش الخالدية")
+        lines += "فاتورة العميل"
+        lines += "رقم الطلب: ${payload.optString("order_number")}"
+        lines += payload.optString("created_at")
+        lines += "--------------------------------"
+        lines += "العميل: ${payload.optString("customer_name")}"
+        lines += "الهاتف: ${payload.optString("customer_phone")}"
+        lines += if (payload.optString("fulfillment_type") == "delivery") "توصيل" else "استلام من المطعم"
+        lines += "--------------------------------"
+        val items = payload.optJSONArray("items")
+        if (items != null) {
+            for (index in 0 until items.length()) {
+                val item = items.optJSONObject(index) ?: continue
+                lines += item.optString("name")
+                lines += "${item.optInt("quantity")} × ${item.optString("unit_price")} = ${item.optString("line_total")} د.ك"
+            }
+        }
+        lines += "--------------------------------"
+        lines += "المجموع: ${payload.optString("subtotal")} د.ك"
+        if (payload.optString("fulfillment_type") == "delivery") {
+            lines += "التوصيل: ${payload.optString("delivery_fee")} د.ك"
+        }
+        lines += "الإجمالي: ${payload.optString("total")} د.ك"
+        lines += "شكرًا لزيارتكم فتوش الخالدية"
+        lines += ""
+        lines += ""
+        return render(lines.joinToString("\n"))
+    }
+
     private fun render(text: String): ByteArray {
         val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
