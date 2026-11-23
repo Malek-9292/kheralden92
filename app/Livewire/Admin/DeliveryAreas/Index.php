@@ -18,14 +18,23 @@ class Index extends Component
 
     #[Url]
     public string $search = '';
+
     public string $governorateFilter = '';
+
     public ?int $branchId = null;
+
     public ?int $editingId = null;
+
     public string $governorate = 'محافظة العاصمة';
+
     public string $name = '';
+
     public string $deliveryFee = '0.000';
+
     public string $minimumOrder = '0.000';
+
     public bool $isActive = true;
+
     public int $sortOrder = 0;
 
     public function mount(): void

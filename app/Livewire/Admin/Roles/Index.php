@@ -17,9 +17,13 @@ class Index extends Component
     use WithPagination;
 
     public ?int $branchId = null;
+
     public ?int $editingId = null;
+
     public string $name = '';
+
     public string $slug = '';
+
     public array $permissionSlugs = [];
 
     public function mount(): void

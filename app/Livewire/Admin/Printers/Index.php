@@ -16,10 +16,15 @@ class Index extends Component
     use WithPagination;
 
     public ?int $branchId = null;
+
     public string $code = '';
+
     public string $name = '';
+
     public string $purpose = 'kitchen';
+
     public string $connectionType = 'usb';
+
     public ?string $newDeviceToken = null;
 
     public function mount(): void
@@ -155,6 +160,7 @@ class Index extends Component
     {
         $user = auth()->user();
         $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
+
         return view('livewire.admin.printers.index', [
             'failedJobs' => PrintJob::query()->whereIn('branch_id', $branchIds)->where('status', 'failed')->with('order:id,order_number')->latest()->limit(10)->get(),
             'printers' => Printer::query()->whereIn('branch_id', $branchIds)->withCount([

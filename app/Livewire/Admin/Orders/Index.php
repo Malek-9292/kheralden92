@@ -17,7 +17,9 @@ class Index extends Component
 
     #[Url]
     public string $search = '';
+
     public string $statusFilter = '';
+
     public string $fulfillmentFilter = '';
 
     public function updatedSearch(): void

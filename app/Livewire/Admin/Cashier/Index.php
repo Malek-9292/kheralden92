@@ -17,10 +17,18 @@ class Index extends Component
 
     #[Url]
     public string $search = '';
+
     public string $fulfillmentFilter = '';
 
-    public function updatedSearch(): void { $this->resetPage(); }
-    public function updatedFulfillmentFilter(): void { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFulfillmentFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function collectCash(int $orderId): void
     {

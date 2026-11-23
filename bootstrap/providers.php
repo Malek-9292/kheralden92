@@ -1,2 +1,6 @@
 <?php
-return [App\Providers\AppServiceProvider::class, App\Providers\ModuleRegistryServiceProvider::class];
+
+use App\Providers\AppServiceProvider;
+use App\Providers\ModuleRegistryServiceProvider;
+
+return [AppServiceProvider::class, ModuleRegistryServiceProvider::class];

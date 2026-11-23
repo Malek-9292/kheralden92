@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Order;
-use App\Models\PrintJob;
 use App\Models\Printer;
+use App\Models\PrintJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;

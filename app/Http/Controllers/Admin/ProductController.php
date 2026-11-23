@@ -273,7 +273,6 @@ class ProductController extends Controller
         ]);
     }
 
-
     public function destroyImage(Request $request, Product $product, ProductImage $image, BranchAccess $branchAccess): JsonResponse
     {
         $branchAccess->assertCanAccess($request->user(), $product->branch_id);

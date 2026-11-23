@@ -23,20 +23,35 @@ class Products extends Component
 
     #[Url]
     public string $search = '';
+
     public string $categoryFilter = '';
+
     public string $statusFilter = '';
+
     public ?int $branchId = null;
+
     public ?int $editingId = null;
+
     public ?int $categoryId = null;
+
     public string $name = '';
+
     public string $description = '';
+
     public string $price = '';
+
     public string $compareAtPrice = '';
+
     public string $reason = '';
+
     public bool $isActive = true;
+
     public bool $isBestSeller = false;
+
     public int $sortOrder = 0;
+
     public array $images = [];
+
     public int $primaryImageIndex = 0;
 
     public function mount(): void
@@ -47,9 +62,20 @@ class Products extends Component
             : $user->branch_id;
     }
 
-    public function updatedSearch(): void { $this->resetPage(); }
-    public function updatedCategoryFilter(): void { $this->resetPage(); }
-    public function updatedStatusFilter(): void { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function save(): void
     {
@@ -277,6 +303,7 @@ class Products extends Component
     private function normalizePrice(string $price): string
     {
         [$whole, $fraction] = array_pad(explode('.', $price, 2), 2, '');
+
         return (ltrim($whole, '0') ?: '0').'.'.str_pad(substr($fraction, 0, 3), 3, '0');
     }
 
@@ -288,6 +315,7 @@ class Products extends Component
         while (Product::withTrashed()->where('branch_id', $branchId)->where('slug', $slug)->exists()) {
             $slug = $base.'-'.$suffix++;
         }
+
         return $slug;
     }
 

@@ -14,10 +14,15 @@ class Index extends Component
     use WithPagination;
 
     public ?int $editingId = null;
+
     public string $code = '';
+
     public string $name = '';
+
     public string $timezone = 'Asia/Kuwait';
+
     public bool $isActive = true;
+
     #[Url]
     public string $search = '';
 
@@ -26,7 +31,10 @@ class Index extends Component
         abort_unless(auth()->user()->hasPermissionTo('branches.manage'), 403);
     }
 
-    public function updatedSearch(): void { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
 
     public function save(): void
     {
@@ -46,7 +54,7 @@ class Index extends Component
                 $branch = Branch::query()->findOrFail($this->editingId);
                 $before = $branch->only(['code', 'name', 'timezone', 'is_active']);
             } else {
-                $branch = new Branch();
+                $branch = new Branch;
             }
 
             $branch->fill([

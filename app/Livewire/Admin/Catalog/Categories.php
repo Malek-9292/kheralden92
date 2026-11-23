@@ -17,11 +17,17 @@ class Categories extends Component
 
     #[Url]
     public string $search = '';
+
     public ?int $branchId = null;
+
     public ?int $editingId = null;
+
     public string $name = '';
+
     public ?int $parentId = null;
+
     public int $sortOrder = 0;
+
     public bool $isActive = true;
 
     public function mount(): void
@@ -164,6 +170,7 @@ class Categories extends Component
         while (Category::withTrashed()->where('branch_id', $branchId)->where('slug', $slug)->exists()) {
             $slug = $base.'-'.$suffix++;
         }
+
         return $slug;
     }
 

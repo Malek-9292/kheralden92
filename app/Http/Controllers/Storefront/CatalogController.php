@@ -76,7 +76,6 @@ class CatalogController extends Controller
         ]);
     }
 
-
     public function show(string $branchCode, string $slug): JsonResponse
     {
         $branch = $this->activeBranch($branchCode);

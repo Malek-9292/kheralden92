@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Order;
-use App\Models\PrintJob;
 use App\Models\Printer;
+use App\Models\PrintJob;
 
 final class PrintJobDispatcher
 {
