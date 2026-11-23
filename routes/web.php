@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\DeliveryAreaController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\CashierController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -46,6 +47,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.index');
         Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
         Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:cashier.use'])->group(function (): void {
+        Route::post('/cashier/orders/{order}/collect-cash', [CashierController::class, 'markPaid'])->name('cashier.orders.collect-cash');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:orders.view'])->group(function (): void {
