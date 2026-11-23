@@ -50,6 +50,8 @@
         .dialog h2{margin:0 0 14px;font-size:clamp(17px,4.5vw,19px)}.dialog-section{font-size:13px;font-weight:700;color:#355b42;margin:16px 0 8px}
         .formgrid{display:grid;grid-template-columns:1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:6px;font-size:12px;min-width:0}.field input,.field select,.field textarea{border:1px solid #d9e4db;border-radius:9px;padding:12px;min-width:0;min-height:var(--tap);width:100%}
+        /* Keep HTML hidden effective when .field/.hint set display:flex/block */
+        .field[hidden],.hint[hidden],[hidden]{display:none!important}
         .field.full{grid-column:1/-1}.hint{background:#eef6ef;color:#2d6241;border-radius:10px;padding:11px;font-size:12px;line-height:1.6;margin:10px 0;overflow-wrap:anywhere}
         .line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #edf1ed;font-size:13px;flex-wrap:wrap}
         .line .line-total{font-weight:700;color:#225d3b;white-space:nowrap}
