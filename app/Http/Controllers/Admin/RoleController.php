@@ -27,9 +27,7 @@ class RoleController extends Controller
         }
 
         $permissions = Permission::query();
-        if (! $request->user()->hasRole('system_admin')) {
-            $permissions->where('slug', '!=', 'modules.manage');
-        }
+        $permissions->where('slug', '!=', 'modules.manage');
 
         return response()->json([
             'roles' => $query->orderBy('name')->get(),
@@ -53,7 +51,7 @@ class RoleController extends Controller
             'permission_slugs.*' => ['string', 'distinct', 'exists:permissions,slug'],
         ]);
 
-        if ($request->user()->hasRole('system_admin') === false && in_array('modules.manage', $data['permission_slugs'] ?? [], true)) {
+        if (in_array('modules.manage', $data['permission_slugs'] ?? [], true)) {
             throw ValidationException::withMessages([
                 'permission_slugs' => ['صلاحية إدارة الوحدات مخصصة لمدير النظام فقط.'],
             ]);
