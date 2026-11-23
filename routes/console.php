@@ -1,19 +1,28 @@
 <?php
+
+use App\Models\Role;
+use App\Models\User;
+use App\Support\Modules\ModuleManager;
 use Illuminate\Support\Facades\Artisan;
+
 Artisan::command('modules:list', function (): void {
- foreach (app(App\Support\Modules\ModuleManager::class)->enabledModules() as $module) $this->line($module);
+    foreach (app(ModuleManager::class)->enabledModules() as $module) {
+        $this->line($module);
+    }
 })->purpose('List enabled application modules');
 
 Artisan::command('fatoosh:admin:create', function (): void {
-    $adminRole = App\Models\Role::query()->where('slug', 'system_admin')->whereNull('branch_id')->first();
+    $adminRole = Role::query()->where('slug', 'system_admin')->whereNull('branch_id')->first();
 
     if (! $adminRole) {
         $this->error('شغّل migrations ثم db:seed أولًا.');
+
         return;
     }
 
-    if (App\Models\User::query()->whereHas('roles', fn ($query) => $query->where('slug', 'system_admin'))->exists()) {
+    if (User::query()->whereHas('roles', fn ($query) => $query->where('slug', 'system_admin'))->exists()) {
         $this->error('يوجد مدير نظام رئيسي بالفعل. لن يتم إنشاء حساب إضافي بهذا الأمر.');
+
         return;
     }
 
@@ -24,13 +33,15 @@ Artisan::command('fatoosh:admin:create', function (): void {
 
     if (! $name || ! $phone || strlen((string) $password) < 12 || $password !== $confirmation) {
         $this->error('البيانات غير مكتملة، أو كلمة المرور أقل من 12 حرفًا، أو التأكيد غير مطابق.');
+
         return;
     }
 
-    $user = App\Models\User::query()->create([
+    // Plain password — User model casts password with "hashed".
+    $user = User::query()->create([
         'name' => $name,
         'phone' => $phone,
-        'password' => Illuminate\Support\Facades\Hash::make($password),
+        'password' => $password,
         'status' => 'active',
         'branch_id' => null,
     ]);

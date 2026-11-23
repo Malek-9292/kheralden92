@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -61,10 +60,11 @@ class EmployeeController extends Controller
         $this->assertRolesAllowed($roleIds, $branchId, $request->user()->hasRole('system_admin'));
 
         $employee = DB::transaction(function () use ($data, $roleIds, $branchId, $request): User {
+            // Plain password — User model casts password with "hashed".
             $employee = User::query()->create([
                 'name' => $data['name'],
                 'phone' => $data['phone'],
-                'password' => Hash::make($data['password']),
+                'password' => $data['password'],
                 'branch_id' => $branchId,
                 'status' => $data['status'] ?? 'active',
                 'valid_from' => $data['valid_from'] ?? null,
@@ -140,7 +140,8 @@ class EmployeeController extends Controller
         $mustRevokeSessions = (array_key_exists('status', $data) && $data['status'] !== 'active')
             || $newBranchId !== $oldBranchId
             || array_key_exists('valid_from', $data)
-            || array_key_exists('valid_until', $data);
+            || array_key_exists('valid_until', $data)
+            || array_key_exists('password', $data);
 
         $beforeValues = $employee->only(['name', 'phone', 'branch_id', 'status', 'valid_from', 'valid_until']);
         $beforeValues['role_ids'] = $employee->roles()->pluck('roles.id')->all();
@@ -158,7 +159,8 @@ class EmployeeController extends Controller
             $employee->branch_id = $newBranchId;
 
             if (isset($data['password'])) {
-                $employee->password = Hash::make($data['password']);
+                // Plain password — User model casts password with "hashed".
+                $employee->password = $data['password'];
             }
 
             $employee->save();

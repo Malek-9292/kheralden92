@@ -8,7 +8,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\BranchAccess;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -19,15 +18,25 @@ class Index extends Component
 
     #[Url]
     public string $search = '';
+
     public string $statusFilter = '';
+
     public ?int $branchId = null;
+
     public ?int $editingId = null;
+
     public string $name = '';
+
     public string $phone = '';
+
     public string $password = '';
+
     public string $status = 'active';
+
     public string $validFrom = '';
+
     public string $validUntil = '';
+
     public array $roleIds = [];
 
     public function mount(): void
@@ -38,8 +47,15 @@ class Index extends Component
             : $user->branch_id;
     }
 
-    public function updatedSearch(): void { $this->resetPage(); }
-    public function updatedStatusFilter(): void { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function save(): void
     {
@@ -77,6 +93,7 @@ class Index extends Component
 
         if ($allowedRoles->count() !== count(array_unique($data['roleIds']))) {
             $this->addError('roleIds', 'الأدوار المختارة غير متاحة لهذا الفرع.');
+
             return;
         }
 
@@ -85,7 +102,7 @@ class Index extends Component
             $beforeRoles = $employee?->roles()->pluck('roles.id')->all() ?? [];
 
             if (! $employee) {
-                $employee = new User();
+                $employee = new User;
             }
 
             $employee->fill([
@@ -98,7 +115,8 @@ class Index extends Component
             ]);
 
             if (filled($data['password'])) {
-                $employee->password = Hash::make($data['password']);
+                // Plain password — User model casts password with "hashed".
+                $employee->password = $data['password'];
             }
 
             $employee->save();

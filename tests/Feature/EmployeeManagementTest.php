@@ -114,4 +114,146 @@ class EmployeeManagementTest extends TestCase
             'branch_id' => $otherBranch->id,
         ])->assertForbidden();
     }
+
+    public function test_created_employee_can_sign_in_with_assigned_password(): void
+    {
+        $branch = Branch::create([
+            'code' => 'KHAL',
+            'name' => 'فتوش الخالدية',
+            'timezone' => 'Asia/Kuwait',
+            'is_active' => true,
+        ]);
+
+        $permission = Permission::create([
+            'name' => 'Manage employees',
+            'slug' => 'employees.manage',
+            'module' => 'Identity',
+        ]);
+
+        $managerRole = Role::create([
+            'branch_id' => $branch->id,
+            'name' => 'Branch Manager',
+            'slug' => 'branch_manager',
+            'is_system' => true,
+        ]);
+        $managerRole->permissions()->attach($permission->id);
+
+        $cashierRole = Role::create([
+            'branch_id' => $branch->id,
+            'name' => 'Cashier',
+            'slug' => 'cashier',
+            'is_system' => true,
+        ]);
+
+        $manager = User::create([
+            'branch_id' => $branch->id,
+            'name' => 'Branch Manager',
+            'phone' => '96560000010',
+            'password' => 'manager-password-123',
+            'status' => 'active',
+        ]);
+        $manager->roles()->attach($managerRole->id);
+
+        $this->postJson('/admin/session', [
+            'phone' => '96560000010',
+            'password' => 'manager-password-123',
+        ])->assertOk();
+
+        $this->postJson('/admin/employees', [
+            'name' => 'Login Cashier',
+            'phone' => '96560000011',
+            'password' => 'cashier-password-123',
+            'branch_id' => $branch->id,
+            'role_ids' => [$cashierRole->id],
+        ])->assertCreated();
+
+        $this->deleteJson('/admin/session')->assertOk();
+
+        $this->postJson('/admin/session', [
+            'phone' => '96560000011',
+            'password' => 'cashier-password-123',
+        ])->assertOk()->assertJsonPath('user.phone', '96560000011');
+    }
+
+    public function test_password_change_revokes_existing_employee_sessions(): void
+    {
+        $branch = Branch::create([
+            'code' => 'KHAL',
+            'name' => 'فتوش الخالدية',
+            'timezone' => 'Asia/Kuwait',
+            'is_active' => true,
+        ]);
+
+        $permission = Permission::create([
+            'name' => 'Manage employees',
+            'slug' => 'employees.manage',
+            'module' => 'Identity',
+        ]);
+
+        $managerRole = Role::create([
+            'branch_id' => $branch->id,
+            'name' => 'Branch Manager',
+            'slug' => 'branch_manager',
+            'is_system' => true,
+        ]);
+        $managerRole->permissions()->attach($permission->id);
+
+        $cashierRole = Role::create([
+            'branch_id' => $branch->id,
+            'name' => 'Cashier',
+            'slug' => 'cashier',
+            'is_system' => true,
+        ]);
+
+        $manager = User::create([
+            'branch_id' => $branch->id,
+            'name' => 'Branch Manager',
+            'phone' => '96560000020',
+            'password' => 'manager-password-123',
+            'status' => 'active',
+        ]);
+        $manager->roles()->attach($managerRole->id);
+
+        $cashier = User::create([
+            'branch_id' => $branch->id,
+            'name' => 'Cashier',
+            'phone' => '96560000021',
+            'password' => 'cashier-password-123',
+            'status' => 'active',
+        ]);
+        $cashier->roles()->attach($cashierRole->id);
+
+        $this->postJson('/admin/session', [
+            'phone' => '96560000021',
+            'password' => 'cashier-password-123',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('employee_sessions', [
+            'user_id' => $cashier->id,
+            'logged_out_at' => null,
+        ]);
+
+        $this->deleteJson('/admin/session')->assertOk();
+
+        $this->postJson('/admin/session', [
+            'phone' => '96560000020',
+            'password' => 'manager-password-123',
+        ])->assertOk();
+
+        $this->patchJson('/admin/employees/'.$cashier->id, [
+            'password' => 'cashier-password-999',
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('employee_sessions', [
+            'user_id' => $cashier->id,
+            'logged_out_at' => null,
+        ]);
+
+        $this->deleteJson('/admin/session')->assertOk();
+
+        $this->postJson('/admin/session', [
+            'phone' => '96560000021',
+            'password' => 'cashier-password-999',
+        ])->assertOk();
+    }
 }
