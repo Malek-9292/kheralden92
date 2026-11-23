@@ -13,7 +13,6 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -163,7 +162,7 @@ class ProductController extends Controller
         $this->validateAvailabilityWindows($data['availability_windows'] ?? []);
 
         $oldPrice = (string) $product->price;
-        $priceChanged = array_key_exists('price', $data) && bccomp($oldPrice, (string) $data['price'], 3) !== 0;
+        $priceChanged = array_key_exists('price', $data) && $this->normalizePrice($oldPrice) !== $this->normalizePrice((string) $data['price']);
         if ($priceChanged && empty($data['reason'])) {
             throw ValidationException::withMessages(['reason' => ['سبب تعديل السعر مطلوب.']]);
         }
@@ -176,6 +175,7 @@ class ProductController extends Controller
         }
 
         $newImages = $data['images'] ?? [];
+        $hadPrimaryImage = $product->images()->where('is_primary', true)->exists();
         $primaryIndex = (int) ($data['primary_image_index'] ?? 0);
         if ($newImages !== [] && $primaryIndex >= count($newImages)) {
             throw ValidationException::withMessages(['primary_image_index' => ['اختيار الصورة الأساسية غير صالح.']]);
@@ -195,6 +195,7 @@ class ProductController extends Controller
             $oldPrice,
             $newImages,
             $primaryIndex,
+            $hadPrimaryImage,
             $before,
             $request
         ): void {
@@ -218,7 +219,12 @@ class ProductController extends Controller
 
             if ($newImages !== []) {
                 foreach ($newImages as $index => $image) {
-                    $this->storeImage($product, $image, $index === $primaryIndex && ! isset($data['primary_image_id']), $product->images()->count() + $index);
+                    $this->storeImage(
+                        $product,
+                        $image,
+                        ! isset($data['primary_image_id']) && (array_key_exists('primary_image_index', $data) ? $index === $primaryIndex : (! $hadPrimaryImage && $index === 0)),
+                        $product->images()->count(),
+                    );
                 }
             }
 
@@ -282,6 +288,15 @@ class ProductController extends Controller
                 ]);
             }
         }
+    }
+
+    private function normalizePrice(string $price): string
+    {
+        [$whole, $fraction] = array_pad(explode('.', $price, 2), 2, '');
+        $whole = ltrim($whole, '0');
+        $whole = $whole !== '' ? $whole : '0';
+
+        return $whole.'.'.str_pad(substr($fraction, 0, 3), 3, '0');
     }
 
     private function uniqueSlug(string $name, int $branchId): string
