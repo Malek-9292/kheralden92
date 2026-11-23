@@ -119,7 +119,7 @@ class Index extends Component
                 'branch_id' => $branchId,
                 'actor_id' => $user->id,
                 'action' => 'branch.settings.updated',
-                'auditable_type' => BranchSetting::class,
+                'auditable_type' => Branch::class,
                 'auditable_id' => $branchId,
                 'before_values' => $before,
                 'after_values' => $keys,
