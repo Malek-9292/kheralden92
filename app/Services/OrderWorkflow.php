@@ -14,6 +14,49 @@ class OrderWorkflow
         private readonly PrintJobDispatcher $printJobDispatcher,
     ) {}
 
+    /**
+     * Cash (and already-paid online) orders are accepted at placement so the kitchen
+     * ticket prints immediately without a staff click. Unpaid online methods stay
+     * pending until payment confirmation calls this again after marking paid.
+     *
+     * Must run inside the caller's DB transaction (same pattern as collectCash /
+     * transitionTo). Print enqueue is idempotent via firstOrCreate.
+     */
+    public function acceptOnPlacement(Order $order): Order
+    {
+        if (! $this->shouldAcceptOnPlacement($order)) {
+            return $order->fresh()->load('items');
+        }
+
+        /** @var Order $locked */
+        $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+        if ($locked->status === 'pending') {
+            $locked->status = 'confirmed';
+            $locked->confirmed_at = now();
+            $locked->save();
+        }
+
+        if (in_array($locked->status, ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed'], true)) {
+            $this->printJobDispatcher->enqueueKitchenTicket($locked->fresh()->load('items'));
+        }
+
+        return $locked->fresh()->load('items');
+    }
+
+    /**
+     * Cash is COD/pickup-pay — safe to kitchen-print immediately.
+     * Online (knet / payment_link): only after payment_status=paid.
+     */
+    public function shouldAcceptOnPlacement(Order $order): bool
+    {
+        if ($order->payment_method === 'cash') {
+            return true;
+        }
+
+        return $order->payment_status === 'paid';
+    }
+
     public function nextStatus(Order $order): ?string
     {
         return match (true) {
@@ -98,7 +141,8 @@ class OrderWorkflow
                 'status' => $next,
             ], $ip, $userAgent);
 
-            // DEC-095: kitchen ticket prints when the order is accepted (confirmed), not on create.
+            // Idempotent: storefront cash placement already enqueued; staff confirm of
+            // leftover pending (or future unpaid→paid online accept) still covers gaps.
             if ($next === 'confirmed') {
                 $this->printJobDispatcher->enqueueKitchenTicket($locked->fresh()->load('items'));
             }

@@ -5,8 +5,12 @@ namespace Tests\Feature\Storefront;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\DeliveryArea;
+use App\Models\Order;
+use App\Models\PrintJob;
 use App\Models\Product;
+use App\Services\OrderWorkflow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class OrderCheckoutTest extends TestCase
@@ -26,21 +30,26 @@ class OrderCheckoutTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('order.fulfillment_type', 'pickup')
+            ->assertJsonPath('order.status', 'confirmed')
             ->assertJsonPath('order.delivery_fee', '0.000')
             ->assertJsonPath('order.total', '2.500')
             ->assertJsonPath('order.block', null)
             ->assertJsonPath('order.street', null);
 
+        $orderId = $response->json('order.id');
+
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'order.created',
-            'auditable_id' => $response->json('order.id'),
+            'auditable_id' => $orderId,
         ]);
 
-        // DEC-095: kitchen ticket is deferred until cashier accepts (confirmed).
-        $this->assertDatabaseMissing('print_jobs', [
-            'order_id' => $response->json('order.id'),
+        // Cash checkout auto-confirms and enqueues kitchen ticket immediately (no staff click).
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $orderId,
             'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
         ]);
+        $this->assertNotNull(Order::query()->find($orderId)?->confirmed_at);
 
         $orderNumber = $response->json('order.order_number');
         $trackingToken = $response->json('tracking_token');
@@ -81,13 +90,71 @@ class OrderCheckoutTest extends TestCase
 
         $payload['items'][0]['quantity'] = 2;
 
-        $this->postJson('/api/orders/KHAL', $payload)
+        $created = $this->postJson('/api/orders/KHAL', $payload)
             ->assertCreated()
             ->assertJsonPath('order.fulfillment_type', 'delivery')
+            ->assertJsonPath('order.status', 'confirmed')
             ->assertJsonPath('order.delivery_fee', '1.000')
             ->assertJsonPath('order.subtotal', '5.000')
             ->assertJsonPath('order.total', '6.000')
             ->assertJsonPath('order.delivery_area_name', 'الخالدية');
+
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $created->json('order.id'),
+            'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_unpaid_online_order_stays_pending_without_kitchen_ticket_until_paid(): void
+    {
+        [$branch] = $this->createBranchAndProduct();
+
+        $order = Order::query()->create([
+            'branch_id' => $branch->id,
+            'order_number' => 'KHAL-261123-000301',
+            'customer_name' => 'عميل كي نت',
+            'customer_phone' => '96560000099',
+            'fulfillment_type' => 'pickup',
+            'status' => 'pending',
+            'payment_method' => 'knet',
+            'payment_status' => 'unpaid',
+            'subtotal' => '2.500',
+            'delivery_fee' => '0.000',
+            'minimum_order_snapshot' => '0.000',
+            'total' => '2.500',
+            'tracking_token_hash' => hash('sha256', Str::random(64)),
+        ]);
+
+        $workflow = app(OrderWorkflow::class);
+        $this->assertFalse($workflow->shouldAcceptOnPlacement($order));
+
+        $workflow->acceptOnPlacement($order);
+
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertDatabaseMissing('print_jobs', [
+            'order_id' => $order->id,
+            'job_type' => 'kitchen_ticket',
+        ]);
+
+        $order->update(['payment_status' => 'paid']);
+        $this->assertTrue($workflow->shouldAcceptOnPlacement($order->fresh()));
+
+        $workflow->acceptOnPlacement($order->fresh());
+
+        $this->assertSame('confirmed', $order->fresh()->status);
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $order->id,
+            'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
+        ]);
+
+        // Idempotent: second placement accept does not duplicate the kitchen job.
+        $workflow->acceptOnPlacement($order->fresh());
+        $this->assertSame(1, PrintJob::query()
+            ->where('order_id', $order->id)
+            ->where('job_type', 'kitchen_ticket')
+            ->count());
     }
 
     private function createBranchAndProduct(): array
