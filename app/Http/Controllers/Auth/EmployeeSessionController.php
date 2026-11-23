@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class EmployeeSessionController extends Controller
@@ -31,7 +31,7 @@ class EmployeeSessionController extends Controller
         $request->session()->regenerate();
         $user = $request->user();
 
-        $user->forceFill(['last_login_at' => now()])->save();
+        $user->forceFill(['last_login_at' => now()])->save();\n        DB::table('employee_login_attempts')->insert([\n            'user_id' => $user->id,\n            'login_identifier' => $credentials['phone'],\n            'ip_address' => $request->ip(),\n            'was_successful' => true,\n            'attempted_at' => now(),\n        ]);
 
         $user->employeeSessions()->create([
             'branch_id' => $user->branch_id,
