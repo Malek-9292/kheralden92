@@ -18,6 +18,7 @@ class Index extends Component
     public string $name = '';
     public string $timezone = 'Asia/Kuwait';
     public bool $isActive = true;
+    #[Url]
     public string $search = '';
 
     public function mount(): void
