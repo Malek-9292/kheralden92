@@ -47,5 +47,34 @@ class DatabaseSeeder extends Seeder
         $branchManager->permissions()->sync(
             Permission::query()->where('slug', '!=', 'branches.manage')->pluck('id'),
         );
+
+        $templates = [
+            'operations_manager' => [
+                'name' => 'مدير تشغيل',
+                'permissions' => ['dashboard.view', 'employees.manage', 'roles.manage', 'catalog.view', 'catalog.manage', 'orders.view', 'orders.accept', 'orders.cancel', 'cashier.use', 'printing.manage'],
+            ],
+            'content_manager' => [
+                'name' => 'مدير محتوى',
+                'permissions' => ['dashboard.view', 'catalog.view', 'catalog.manage'],
+            ],
+            'cashier' => [
+                'name' => 'كاشير',
+                'permissions' => ['catalog.view', 'orders.view', 'orders.accept', 'orders.cancel', 'cashier.use'],
+            ],
+            'shift_supervisor' => [
+                'name' => 'مشرف وردية',
+                'permissions' => ['dashboard.view', 'employees.manage', 'catalog.view', 'orders.view', 'orders.accept', 'orders.cancel', 'cashier.use'],
+            ],
+        ];
+
+        foreach ($templates as $slug => $template) {
+            $role = Role::query()->firstOrCreate(
+                ['branch_id' => $branch->id, 'slug' => $slug],
+                ['name' => $template['name'], 'guard_name' => 'web', 'is_system' => true],
+            );
+            $role->permissions()->sync(
+                Permission::query()->whereIn('slug', $template['permissions'])->pluck('id'),
+            );
+        }
     }
 }
