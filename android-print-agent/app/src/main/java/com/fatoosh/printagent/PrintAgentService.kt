@@ -84,7 +84,10 @@ class PrintAgentService : Service() {
                 val jobId = job.optLong("id", -1)
                 try {
                     val payload = job.optJSONObject("payload") ?: error("Print job payload is missing")
-                    val bytes = EscPosRenderer.kitchenTicket(payload)
+                    val bytes = when (job.optString("job_type")) {
+                        "customer_receipt" -> EscPosRenderer.customerReceipt(payload)
+                        else -> EscPosRenderer.kitchenTicket(payload)
+                    }
                     usb.print(bytes)
                     completeJob(server, printerCode, token, jobId)
                     updateNotification("تمت طباعة الطلب ${payload.optString("order_number")}")
