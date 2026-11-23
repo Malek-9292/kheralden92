@@ -1,0 +1,20 @@
+name: CI
+on:
+  push:
+    branches: ["main", "implementation/**"]
+  pull_request:
+    branches: ["main"]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathai/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, fileinfo, pdo_mysql, sqlite3, pdo_sqlite
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - run: composer validate --no-check-publish
+      - run: vendor/bin/pint --test
+      - run: php artisan test
