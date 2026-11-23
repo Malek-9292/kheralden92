@@ -46,7 +46,9 @@ class EmployeeController extends Controller
             'password' => ['required', 'string', 'min:12', 'max:200'],
             'branch_id' => ['required', 'integer', 'exists:branches,id'],
             'status' => ['sometimes', Rule::in(['active', 'suspended', 'inactive'])],
-            'role_ids' => ['sometimes', 'array'],
+            'valid_from' => ['nullable', 'date'],
+            'valid_until' => ['nullable', 'date', 'after_or_equal:valid_from'],
+            'role_ids' => ['required', 'array', 'min:1'],
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
         ]);
 
@@ -62,6 +64,8 @@ class EmployeeController extends Controller
                 'password' => Hash::make($data['password']),
                 'branch_id' => $branchId,
                 'status' => $data['status'] ?? 'active',
+                'valid_from' => $data['valid_from'] ?? null,
+                'valid_until' => $data['valid_until'] ?? null,
             ]);
             $employee->roles()->sync($roleIds);
 
@@ -76,6 +80,8 @@ class EmployeeController extends Controller
                     'phone' => $employee->phone,
                     'branch_id' => $branchId,
                     'status' => $employee->status,
+                    'valid_from' => $employee->valid_from,
+                    'valid_until' => $employee->valid_until,
                     'role_ids' => $roleIds,
                 ],
                 'ip_address' => $request->ip(),
@@ -105,11 +111,18 @@ class EmployeeController extends Controller
             'password' => ['sometimes', 'required', 'string', 'min:12', 'max:200'],
             'branch_id' => ['sometimes', 'required', 'integer', 'exists:branches,id'],
             'status' => ['sometimes', 'required', Rule::in(['active', 'suspended', 'inactive'])],
+            'valid_from' => ['sometimes', 'nullable', 'date'],
+            'valid_until' => ['sometimes', 'nullable', 'date'],
             'role_ids' => ['sometimes', 'array'],
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
         ]);
 
         $newBranchId = (int) ($data['branch_id'] ?? $oldBranchId);
+        $effectiveValidFrom = array_key_exists('valid_from', $data) ? $data['valid_from'] : $employee->valid_from;
+        $effectiveValidUntil = array_key_exists('valid_until', $data) ? $data['valid_until'] : $employee->valid_until;
+        if ($effectiveValidFrom && $effectiveValidUntil && now()->parse($effectiveValidUntil)->lt(now()->parse($effectiveValidFrom))) {
+            throw ValidationException::withMessages(['valid_until' => ['يجب أن يكون تاريخ نهاية الصلاحية بعد تاريخ بدايتها.']]);
+        }
 
         if ($newBranchId !== $oldBranchId && ! array_key_exists('role_ids', $data)) {
             throw ValidationException::withMessages([
@@ -122,7 +135,9 @@ class EmployeeController extends Controller
         $this->assertRolesAllowed($roleIds, $newBranchId, $request->user()->hasRole('system_admin'));
 
         $mustRevokeSessions = (array_key_exists('status', $data) && $data['status'] !== 'active')
-            || $newBranchId !== $oldBranchId;
+            || $newBranchId !== $oldBranchId
+            || array_key_exists('valid_from', $data)
+            || array_key_exists('valid_until', $data);
 
         $beforeValues = $employee->only(['name', 'phone', 'branch_id', 'status']);
         $beforeValues['role_ids'] = $employee->roles()->pluck('roles.id')->all();
@@ -136,7 +151,7 @@ class EmployeeController extends Controller
             $beforeValues,
             $request
         ): void {
-            $employee->fill(collect($data)->only(['name', 'phone', 'status'])->all());
+            $employee->fill(collect($data)->only(['name', 'phone', 'status', 'valid_from', 'valid_until'])->all());
             $employee->branch_id = $newBranchId;
 
             if (isset($data['password'])) {
@@ -158,6 +173,8 @@ class EmployeeController extends Controller
                     'phone' => $employee->phone,
                     'branch_id' => $employee->branch_id,
                     'status' => $employee->status,
+                    'valid_from' => $employee->valid_from,
+                    'valid_until' => $employee->valid_until,
                     'role_ids' => $roleIds,
                 ],
                 'ip_address' => $request->ip(),
