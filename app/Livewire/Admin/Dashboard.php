@@ -11,10 +11,10 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
-    public function render(BranchAccess $branchAccess)
+    public function render()
     {
         $user = auth()->user();
-        $branchIds = $branchAccess->visibleBranchIds($user);
+        $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
 
         $stats = [
             'pending_orders' => Order::query()->whereIn('branch_id', $branchIds)->where('status', 'pending')->count(),
