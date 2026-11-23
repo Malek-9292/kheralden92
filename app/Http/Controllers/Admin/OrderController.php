@@ -116,6 +116,7 @@ class OrderController extends Controller
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
             ]);
+            $order->printJobs()->where('status', 'pending')->update(['status' => 'cancelled']);
 
             $this->audit($request, $order, 'order.cancelled', [
                 'status' => $before,
