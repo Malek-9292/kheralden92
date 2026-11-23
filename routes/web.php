@@ -18,11 +18,11 @@ use App\Livewire\Admin\Catalog\Products as ProductsIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\DeliveryAreas\Index as DeliveryAreasIndex;
 use App\Livewire\Admin\Employees\Index as EmployeesIndex;
+use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Printers\Index as PrintersIndex;
-use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Reports\Index as ReportsIndex;
-use App\Livewire\Admin\Modules\Index as ModulesIndex;
+use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use Illuminate\Support\Facades\Route;
 
