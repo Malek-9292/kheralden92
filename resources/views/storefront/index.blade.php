@@ -102,6 +102,12 @@
             if(!catRes.ok||!prodRes.ok||!areaRes.ok) throw new Error('تعذر تحميل بيانات المنيو');
             const cats=await catRes.json(),prods=await prodRes.json(),areas=await areaRes.json();
             state.categories=cats.categories||[];state.products=prods.products?.data||[];state.areas=areas.delivery_areas||[];
+            Object.keys(state.cart).forEach(id=>{
+                const current=state.products.find(p=>String(p.id)===String(id));
+                if(!current) delete state.cart[id];
+                else {state.cart[id].name=current.name;state.cart[id].price=Number(current.price);}
+            });
+            renderCartBar();
             el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
             renderCategories();renderProducts();renderAreas();
         }catch(e){el('products').innerHTML='<div class="empty">تعذر تحميل المنيو حاليًا. حدّث الصفحة وحاول مرة أخرى.</div>';}
