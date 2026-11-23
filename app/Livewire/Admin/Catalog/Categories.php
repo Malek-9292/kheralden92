@@ -15,6 +15,7 @@ class Categories extends Component
 {
     use WithPagination;
 
+    #[Url]
     public string $search = '';
     public ?int $branchId = null;
     public ?int $editingId = null;
