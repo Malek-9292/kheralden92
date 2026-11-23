@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\CashierController;
 use App\Http\Controllers\Admin\AdminSearchController;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -58,8 +59,9 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:orders.view'])->group(function (): void {
-        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders', OrdersIndex::class)->name('orders.index');
+        Route::get('/api/orders', [OrderController::class, 'index'])->name('orders.api.index');
+        Route::get('/api/orders/{order}', [OrderController::class, 'show'])->name('orders.api.show');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:orders.accept'])->group(function (): void {
