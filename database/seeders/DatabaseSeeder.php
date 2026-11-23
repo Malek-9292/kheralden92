@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Manage roles', 'slug' => 'roles.manage', 'module' => 'AccessControl'],
             ['name' => 'View catalog', 'slug' => 'catalog.view', 'module' => 'Catalog'],
             ['name' => 'Manage catalog', 'slug' => 'catalog.manage', 'module' => 'Catalog'],
+            ['name' => 'Manage delivery areas', 'slug' => 'delivery.manage', 'module' => 'Delivery'],
             ['name' => 'View orders', 'slug' => 'orders.view', 'module' => 'Orders'],
             ['name' => 'Accept orders', 'slug' => 'orders.accept', 'module' => 'Orders'],
             ['name' => 'Cancel orders', 'slug' => 'orders.cancel', 'module' => 'Orders'],
