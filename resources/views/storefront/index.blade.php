@@ -83,6 +83,13 @@
         .error-box{background:#fdecec;color:#b42318;border-radius:12px;padding:16px;text-align:center;overflow-wrap:anywhere}
         .actions{display:flex;gap:8px;justify-content:flex-start;margin-top:16px;flex-wrap:wrap}
         .secondary{border:1px solid #d9e4db;background:#fff;color:#355b42;border-radius:10px;padding:10px 14px;min-height:var(--tap)}
+        .cart-area-hint{font-size:12px;color:#2f5a3f;margin-top:2px;line-height:1.45;overflow-wrap:anywhere}
+        .area-pick{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:min(48vh,360px);overflow:auto;-webkit-overflow-scrolling:touch}
+        .area-pick button{width:100%;text-align:right;border:1.5px solid #d9e4db;background:#fff;border-radius:14px;padding:12px 14px;min-height:var(--tap);display:flex;flex-direction:column;gap:4px;color:#1d5b3d}
+        .area-pick button:hover,.area-pick button:focus-visible{border-color:var(--brand);background:#f3f7f3}
+        .area-pick .area-name{font-weight:800;font-size:14px;line-height:1.4}
+        .area-pick .area-meta{font-size:12px;color:#5f7466;line-height:1.5}
+        .area-pick .area-min{color:#1d5b3d;font-weight:700}
         #detailImage{width:100%;max-height:min(42vh,280px);object-fit:contain;background:#edf3ed;border-radius:12px}
         /* ≥360: two columns on small phones */
         @media(min-width:360px){.grid,.skeleton{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.search{flex:1 1 200px}}
@@ -151,7 +158,7 @@
     </div>
 </main>
 <footer id="storeFooter" class="muted" style="text-align:center;padding:18px 14px 120px"></footer>
-<div class="cartbar" role="region" aria-label="ملخص السلة"><div class="cart-meta"><strong id="cartCount">السلة <span class="cart-badge" id="cartBadge">0</span></strong><div class="muted" id="cartTotal">0.000 د.ك</div></div><button type="button" class="primary" id="openCart" aria-haspopup="dialog">فتح السلة</button></div>
+<div class="cartbar" role="region" aria-label="ملخص السلة"><div class="cart-meta"><strong id="cartCount">السلة <span class="cart-badge" id="cartBadge">0</span></strong><div class="muted" id="cartTotal">0.000 د.ك</div><div class="cart-area-hint" id="cartAreaHint" hidden role="status"></div></div><button type="button" class="primary" id="openCart" aria-haspopup="dialog">فتح السلة</button></div>
 
 <div class="modal" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartTitle"><div class="dialog">
     <h2 id="cartTitle">سلة الطلب</h2>
@@ -195,6 +202,16 @@
     <div class="actions sticky-actions"><button type="button" class="primary" id="trackSubmit">عرض الحالة</button><button type="button" class="secondary" data-close="trackModal">إغلاق</button></div>
 </div></div>
 <div class="modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="detailName"><div class="dialog"><h2 id="detailName"></h2><img id="detailImage" alt=""><div class="detail-meta" id="detailMeta"></div><div id="detailDescription" style="white-space:pre-line;line-height:1.8;font-size:14px;margin:14px 0;overflow-wrap:anywhere"></div><div id="detailIngredients" class="ingredients" hidden></div><div class="price" id="detailPrice"></div><div class="actions sticky-actions"><button type="button" class="primary" id="detailAdd">أضف للسلة</button><button type="button" class="secondary" data-close="productModal">إغلاق</button></div></div></div>
+<div class="modal" id="areaGateModal" role="dialog" aria-modal="true" aria-labelledby="areaGateTitle"><div class="dialog">
+    <h2 id="areaGateTitle">اختر منطقة التوصيل</h2>
+    <p class="muted" style="margin:0 0 12px;line-height:1.7">قبل إضافة الأصناف، اختر منطقتك لعرض <strong>الحد الأدنى للتوصيل</strong> ورسوم التوصيل.</p>
+    <label class="field full" for="gateGovernorate">المحافظة
+        <select id="gateGovernorate" aria-label="المحافظة"><option value="">اختر المحافظة</option></select>
+    </label>
+    <div id="gateAreaList" class="area-pick" role="listbox" aria-label="مناطق التوصيل"></div>
+    <div id="gateAreaEmpty" class="hint" hidden>اختر المحافظة لعرض المناطق والحد الأدنى لكل منطقة.</div>
+    <div class="actions sticky-actions"><button type="button" class="secondary" data-close="areaGateModal" id="areaGateCancel">إلغاء</button></div>
+</div></div>
 
 <script>
 (() => {
@@ -202,6 +219,7 @@
     const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,lastOrder:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:'',trackTimer:null};
     try { state.cart = JSON.parse(localStorage.getItem('fatoosh-cart') || '{}'); } catch { state.cart = {}; }
     try { state.lastOrder = JSON.parse(localStorage.getItem('fatoosh-last-order') || 'null'); } catch { state.lastOrder = null; }
+    try { state.savedDelivery = JSON.parse(localStorage.getItem('fatoosh-delivery') || 'null'); } catch { state.savedDelivery = null; }
     const money = n => (Number(n)||0).toFixed(3);
     const el = id => document.getElementById(id);
     if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone){el('iosInstallHint').hidden=false;}
@@ -227,7 +245,7 @@
     document.addEventListener('keydown',e=>{
         if(e.key!=='Escape')return;
         const trackWasOpen=el('trackModal').classList.contains('open');
-        ['productModal','cartModal','checkoutModal','trackModal','successModal'].forEach(id=>{if(el(id).classList.contains('open'))hide(id);});
+        ['areaGateModal','productModal','cartModal','checkoutModal','trackModal','successModal'].forEach(id=>{if(el(id).classList.contains('open'))hide(id);});
         if(trackWasOpen && typeof stopTrackPoll==='function') stopTrackPoll();
     });
     const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -271,7 +289,7 @@
             try{localStorage.setItem('fatoosh-cart',JSON.stringify(state.cart));}catch{}
             renderCartBar();
             if(!settingsRes.ok)el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
-            renderCategories();renderProducts();renderGovernorates();renderAreas();
+            renderCategories();renderProducts();renderGovernorates();renderAreas();restoreSavedDelivery();
         }catch(e){el('products').innerHTML='<div class="error-box" role="alert"><div style="margin-bottom:10px">تعذر تحميل المنيو حاليًا. تحقق من الاتصال ثم أعد المحاولة.</div><button type="button" class="primary" id="retryMenu">إعادة المحاولة</button></div>';el('retryMenu').onclick=()=>{el('products').innerHTML='<div class="skeleton" role="status" aria-label="جارٍ تحميل المنيو"><div class="card"><div class="ph"></div><div class="line"></div></div><div class="card"><div class="ph"></div><div class="line"></div></div></div>';loadMenu();};}
     }
     function setOnlineState(){
@@ -382,23 +400,111 @@
     }
     function renderGovernorates(){
         const available=state.governorates.filter(g=>state.areas.some(a=>a.governorate===g));
-        el('deliveryGovernorate').innerHTML='<option value="">اختر المحافظة</option>'+available.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
+        const opts='<option value="">اختر المحافظة</option>'+available.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
+        el('deliveryGovernorate').innerHTML=opts;
+        el('gateGovernorate').innerHTML=opts;
+    }
+    function areaOptionLabel(a){
+        return esc(a.name)+' — حد أدنى '+money(a.minimum_order)+' — رسوم '+money(a.delivery_fee);
     }
     function renderAreas(){
         const gov=el('deliveryGovernorate').value;
         const list=state.areas.filter(a=>!gov||a.governorate===gov);
-        el('deliveryArea').innerHTML='<option value="">اختر المنطقة</option>'+list.map(a=>'<option value="'+a.id+'">'+esc(a.name)+' — رسوم '+money(a.delivery_fee)+'</option>').join('');
+        const prev=el('deliveryArea').value;
+        el('deliveryArea').innerHTML='<option value="">اختر المنطقة</option>'+list.map(a=>'<option value="'+a.id+'">'+areaOptionLabel(a)+'</option>').join('');
+        if(prev&&list.some(a=>String(a.id)===String(prev))) el('deliveryArea').value=prev;
+    }
+    function persistDeliverySelection(){
+        const gov=el('deliveryGovernorate').value;
+        const areaId=el('deliveryArea').value;
+        state.savedDelivery=areaId?{governorate:gov,areaId:String(areaId)}:null;
+        try{
+            if(state.savedDelivery) localStorage.setItem('fatoosh-delivery',JSON.stringify(state.savedDelivery));
+            else localStorage.removeItem('fatoosh-delivery');
+        }catch{}
+    }
+    function restoreSavedDelivery(){
+        const saved=state.savedDelivery;
+        if(!saved||!saved.areaId){updateCartAreaHint();return;}
+        const area=state.areas.find(a=>String(a.id)===String(saved.areaId));
+        if(!area){state.savedDelivery=null;try{localStorage.removeItem('fatoosh-delivery');}catch{};updateCartAreaHint();return;}
+        el('deliveryGovernorate').value=area.governorate||saved.governorate||'';
+        renderAreas();
+        el('deliveryArea').value=String(area.id);
+        el('gateGovernorate').value=el('deliveryGovernorate').value;
+        updateFulfillment();
+        updateCartAreaHint();
+    }
+    function needsDeliveryArea(){
+        return el('fulfillment').value==='delivery'&&!el('deliveryArea').value;
+    }
+    function openAreaGate(pendingId){
+        state.pendingProduct=pendingId??null;
+        hide('productModal');
+        hide('cartModal');
+        hide('checkoutModal');
+        el('gateGovernorate').value=el('deliveryGovernorate').value||'';
+        renderGateAreas();
+        show('areaGateModal');
+    }
+    function renderGateAreas(){
+        const gov=el('gateGovernorate').value;
+        const list=state.areas.filter(a=>!gov||a.governorate===gov);
+        const empty=el('gateAreaEmpty');
+        const box=el('gateAreaList');
+        if(!gov){
+            box.innerHTML='';
+            empty.hidden=false;
+            empty.textContent='اختر المحافظة لعرض المناطق والحد الأدنى لكل منطقة.';
+            return;
+        }
+        if(!list.length){
+            box.innerHTML='';
+            empty.hidden=false;
+            empty.textContent='لا توجد مناطق توصيل لهذه المحافظة حاليًا.';
+            return;
+        }
+        empty.hidden=true;
+        box.innerHTML=list.map(a=>'<button type="button" role="option" data-area-id="'+a.id+'"><span class="area-name">'+esc(a.name)+'</span><span class="area-meta"><span class="area-min">الحد الأدنى للتوصيل: '+money(a.minimum_order)+' د.ك</span> · رسوم التوصيل: '+money(a.delivery_fee)+' د.ك</span></button>').join('');
+        box.querySelectorAll('[data-area-id]').forEach(btn=>btn.onclick=()=>selectDeliveryArea(Number(btn.dataset.areaId)));
+    }
+    function selectDeliveryArea(areaId){
+        const area=state.areas.find(a=>Number(a.id)===Number(areaId));
+        if(!area)return;
+        el('deliveryGovernorate').value=area.governorate||'';
+        renderAreas();
+        el('deliveryArea').value=String(area.id);
+        el('gateGovernorate').value=el('deliveryGovernorate').value;
+        persistDeliverySelection();
+        updateFulfillment();
+        updateCartAreaHint();
+        hide('areaGateModal');
+        const pending=state.pendingProduct;
+        state.pendingProduct=null;
+        if(pending!=null) addProduct(pending);
+    }
+    function updateCartAreaHint(){
+        const hint=el('cartAreaHint');
+        const delivery=el('fulfillment').value==='delivery';
+        const area=selectedArea();
+        if(!delivery){hint.hidden=true;hint.textContent='';return;}
+        hint.hidden=false;
+        if(area){
+            hint.textContent=area.name+' · حد أدنى '+money(area.minimum_order)+' د.ك · رسوم '+money(area.delivery_fee)+' د.ك';
+        }else{
+            hint.textContent='اختر منطقة التوصيل لعرض الحد الأدنى قبل إضافة الأصناف';
+        }
     }
     function addProduct(id){
         const p=state.products.find(x=>x.id===id);if(!p)return;
-        if(el('fulfillment').value==='delivery'&&!el('deliveryArea').value){
-            state.pendingProduct=id;show('checkoutModal');updateFulfillment();el('deliveryArea').focus();return;
-        }
+        if(needsDeliveryArea()){openAreaGate(id);return;}
         if(state.cart[id])state.cart[id].quantity++;else state.cart[id]={id:p.id,name:p.name,price:Number(p.price),quantity:1};
         renderCartBar();
     }
     function changeQty(id,delta){
-        if(!state.cart[id])return;state.cart[id].quantity+=delta;if(state.cart[id].quantity<=0)delete state.cart[id];renderCartBar();renderCartItems();
+        if(!state.cart[id])return;
+        if(delta>0&&needsDeliveryArea()){openAreaGate(null);return;}
+        state.cart[id].quantity+=delta;if(state.cart[id].quantity<=0)delete state.cart[id];renderCartBar();renderCartItems();
     }
     function renderCartBar(){
         localStorage.setItem('fatoosh-cart',JSON.stringify(state.cart));
@@ -409,6 +515,7 @@
         el('cartTotal').textContent=money(subtotal())+' د.ك';
         el('openCart').textContent=count?('فتح السلة · '+count):'تصفح المنيو أولًا';
         el('checkoutBtn').disabled=!count;
+        updateCartAreaHint();
     }
     function renderCartItems(){
         const items=cartItems();
@@ -425,8 +532,9 @@
         const delivery=el('fulfillment').value==='delivery';
         ['governorateWrap','areaWrap','deliveryInfo','blockWrap','streetWrap','avenueWrap','houseWrap','floorWrap','apartmentWrap'].forEach(id=>el(id).hidden=!delivery);
         const area=selectedArea();
-        el('deliveryInfo').textContent=area?'رسوم التوصيل: '+money(area.delivery_fee)+' د.ك — الحد الأدنى للطلب: '+money(area.minimum_order)+' د.ك':'اختار المحافظة ثم المنطقة لعرض رسوم التوصيل.';
+        el('deliveryInfo').textContent=area?'رسوم التوصيل: '+money(area.delivery_fee)+' د.ك — الحد الأدنى للطلب: '+money(area.minimum_order)+' د.ك':'اختار المحافظة ثم المنطقة لعرض رسوم التوصيل والحد الأدنى.';
         if(delivery&&area&&subtotal()>0&&subtotal()<Number(area.minimum_order))el('deliveryInfo').textContent+=' · باقي '+money(Number(area.minimum_order)-subtotal())+' د.ك للوصول للحد الأدنى.';
+        updateCartAreaHint();
         renderCartItems();
     }
     el('search').addEventListener('input',e=>{state.search=e.target.value;renderProducts();});
@@ -444,10 +552,34 @@
         el('headerLangBtn').setAttribute('aria-label',next==='ar'?'Switch to English':'التبديل إلى العربية');
     };
     syncFulfillmentButtons();
-    el('deliveryGovernorate').addEventListener('change',()=>{el('deliveryArea').value='';renderAreas();updateFulfillment();});
-    el('deliveryArea').addEventListener('change',()=>{updateFulfillment();if(state.pendingProduct&&el('deliveryArea').value){const id=state.pendingProduct;state.pendingProduct=null;hide('checkoutModal');addProduct(id);}});
+    el('gateGovernorate').addEventListener('change',()=>{
+        el('deliveryGovernorate').value=el('gateGovernorate').value;
+        el('deliveryArea').value='';
+        persistDeliverySelection();
+        renderAreas();
+        renderGateAreas();
+        updateFulfillment();
+    });
+    el('deliveryGovernorate').addEventListener('change',()=>{
+        el('deliveryArea').value='';
+        el('gateGovernorate').value=el('deliveryGovernorate').value;
+        persistDeliverySelection();
+        renderAreas();
+        updateFulfillment();
+    });
+    el('deliveryArea').addEventListener('change',()=>{
+        persistDeliverySelection();
+        updateFulfillment();
+        if(state.pendingProduct&&el('deliveryArea').value){
+            const id=state.pendingProduct;state.pendingProduct=null;hide('checkoutModal');hide('areaGateModal');addProduct(id);
+        }
+    });
     el('openCart').onclick=()=>{renderCartItems();el('checkoutBtn').disabled=!cartItems().length;show('cartModal');};
-    el('checkoutBtn').onclick=()=>{if(!cartItems().length){renderCartItems();return;}hide('cartModal');show('checkoutModal');updateFulfillment();el('customerName').focus({preventScroll:true});};
+    el('checkoutBtn').onclick=()=>{
+        if(!cartItems().length){renderCartItems();return;}
+        if(needsDeliveryArea()){hide('cartModal');openAreaGate(null);return;}
+        hide('cartModal');show('checkoutModal');updateFulfillment();el('customerName').focus({preventScroll:true});
+    };
     const refreshLastOrderButton=()=>{el('openLastOrder').hidden=!(state.lastOrder&&state.lastOrder.order_number&&state.lastOrder.tracking_token);};
     refreshLastOrderButton();
     const stopTrackPoll=()=>{if(state.trackTimer){clearInterval(state.trackTimer);state.trackTimer=null;}el('trackAutoHint').hidden=true;};
@@ -461,7 +593,11 @@
         el('trackResult').hidden=true;el('trackResult').innerHTML='';el('trackError').hidden=true;el('trackError').textContent='';show('trackModal');
     };
     el('openLastOrder').onclick=()=>{if(!state.lastOrder)return;el('openTrack').click();el('trackSubmit').click();};
-    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{hide(b.dataset.close);if(b.dataset.close==='trackModal')stopTrackPoll();});
+    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{
+        if(b.dataset.close==='areaGateModal') state.pendingProduct=null;
+        hide(b.dataset.close);
+        if(b.dataset.close==='trackModal')stopTrackPoll();
+    });
     const setCheckoutError=msg=>{const box=el('checkoutError');if(!msg){box.hidden=true;box.textContent='';return;}box.hidden=false;box.textContent=msg;};
     el('submitOrder').onclick=async()=>{
         const delivery=el('fulfillment').value==='delivery',area=selectedArea();
