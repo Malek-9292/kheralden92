@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\EmployeeSessionController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\RoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -15,6 +16,12 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
         Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
         Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::patch('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
     });
 
     Route::middleware(['auth', 'employee.active'])->group(function (): void {
