@@ -30,6 +30,12 @@ class Index extends Component
 
         $current = $manager->enabled($module);
 
+        if ($current === false && ($definition['implemented'] ?? true) === false) {
+            $this->moduleError = 'هذه الوحدة قيد التطوير ولم تُنفذ بعد.';
+
+            return;
+        }
+
         if ($current) {
             try {
                 $manager->assertCanDisable($module);
@@ -87,6 +93,7 @@ class Index extends Component
                 'name' => $name,
                 'enabled' => $manager->enabled($name),
                 'core' => $manager->isCore($name),
+                'implemented' => $definition['implemented'] ?? true,
                 'dependencies' => $manager->dependencies($name),
                 'provider' => $definition['provider'] ?? '',
             ];
