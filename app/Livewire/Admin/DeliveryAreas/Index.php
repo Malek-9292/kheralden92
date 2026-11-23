@@ -8,6 +8,7 @@ use App\Models\DeliveryArea;
 use App\Services\BranchAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,6 +16,7 @@ class Index extends Component
 {
     use WithPagination;
 
+    #[Url]
     public string $search = '';
     public string $governorateFilter = '';
     public ?int $branchId = null;
