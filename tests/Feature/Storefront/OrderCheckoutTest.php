@@ -36,10 +36,10 @@ class OrderCheckoutTest extends TestCase
             'auditable_id' => $response->json('order.id'),
         ]);
 
-        $this->assertDatabaseHas('print_jobs', [
+        // DEC-095: kitchen ticket is deferred until cashier accepts (confirmed).
+        $this->assertDatabaseMissing('print_jobs', [
             'order_id' => $response->json('order.id'),
             'job_type' => 'kitchen_ticket',
-            'status' => 'pending',
         ]);
 
         $orderNumber = $response->json('order.order_number');

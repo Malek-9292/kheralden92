@@ -98,6 +98,11 @@ class OrderWorkflow
                 'status' => $next,
             ], $ip, $userAgent);
 
+            // DEC-095: kitchen ticket prints when the order is accepted (confirmed), not on create.
+            if ($next === 'confirmed') {
+                $this->printJobDispatcher->enqueueKitchenTicket($locked->fresh()->load('items'));
+            }
+
             return $locked->fresh()->load('items');
         });
     }
