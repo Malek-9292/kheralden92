@@ -25,6 +25,7 @@ class Index extends Component
     public string $bannerText = '';
     public string $bannerTextColor = '#ffffff';
     public string $bannerBackground = '#2f704b';
+    public int $bannerFontSize = 18;
     public string $footerText = '';
     public $logo = null;
     public ?string $currentLogoUrl = null;
@@ -60,6 +61,7 @@ class Index extends Component
         $this->bannerText = $settings->get('banner_text', '');
         $this->bannerTextColor = $settings->get('banner_text_color', '#ffffff');
         $this->bannerBackground = $settings->get('banner_background', '#2f704b');
+        $this->bannerFontSize = (int) $settings->get('banner_font_size', 18);
         $this->footerText = $settings->get('footer_text', '');
         $logoPath = $settings->get('logo_path');
         $this->currentLogoUrl = $logoPath ? Storage::disk('public')->url($logoPath) : null;
@@ -84,6 +86,7 @@ class Index extends Component
             'bannerText' => ['nullable', 'string', 'max:500'],
             'bannerTextColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'bannerBackground' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'bannerFontSize' => ['required', 'integer', 'min:12', 'max:48'],
             'footerText' => ['nullable', 'string', 'max:500'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
@@ -98,6 +101,7 @@ class Index extends Component
             'banner_text' => $data['bannerText'] ?? '',
             'banner_text_color' => $data['bannerTextColor'],
             'banner_background' => $data['bannerBackground'],
+            'banner_font_size' => (string) $data['bannerFontSize'],
             'footer_text' => $data['footerText'] ?? '',
         ];
 
