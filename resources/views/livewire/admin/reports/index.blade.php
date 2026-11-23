@@ -22,7 +22,7 @@
         <div class="stat"><span>المبيعات المحصلة</span><strong>{{ number_format((float)$paidRevenue,3) }} د.ك</strong></div>
         <div class="stat"><span>متوسط الفاتورة المسددة</span><strong>{{ number_format($averageTicket,3) }} د.ك</strong></div>
     </div>
-    <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
         <div class="panel">
             <h2>حالات الطلبات</h2>
             @php($labels=['pending'=>'جديد','confirmed'=>'مؤكد','preparing'=>'قيد التجهيز','ready'=>'جاهز','out_for_delivery'=>'خرج للتوصيل','completed'=>'مكتمل','cancelled'=>'ملغي'])
