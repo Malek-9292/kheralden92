@@ -123,7 +123,7 @@ class AdminSearchController extends Controller
                 ->map(fn (DeliveryArea $area) => [
                     'title' => $area->name,
                     'subtitle' => $area->governorate.' · منطقة توصيل',
-                    'url' => '/admin/delivery-areas',
+                    'url' => '/admin/delivery-areas?search='.urlencode($area->name),
                     'type' => 'delivery_area',
                 ])->values();
         }
