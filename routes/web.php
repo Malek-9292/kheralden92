@@ -26,35 +26,35 @@ use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'storefront.index')->name('storefront.home');
+Route::view('/', 'storefront.index')->middleware('module.enabled:Storefront')->name('storefront.home');
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
-    Route::view('/login', 'admin.login')->name('login');
+    Route::view('/login', 'admin.login')->middleware('module.enabled:Identity')->name('login');
 
     Route::post('/session', [EmployeeSessionController::class, 'store'])
-        ->middleware('throttle:5,1')
+        ->middleware(['throttle:5,1', 'module.enabled:Identity'])
         ->name('session.store');
 
-    Route::middleware(['auth', 'employee.active', 'permission:branches.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:branches.manage', 'module.enabled:Branches'])->group(function (): void {
         Route::get('/branches', BranchesIndex::class)->name('branches.index');
         Route::get('/api/branches', [BranchController::class, 'index'])->name('branches.api.index');
         Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
         Route::patch('/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:employees.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:employees.manage', 'module.enabled:Identity'])->group(function (): void {
         Route::get('/employees', EmployeesIndex::class)->name('employees.index');
         Route::get('/api/employees', [EmployeeController::class, 'index'])->name('employees.api.index');
         Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
         Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:catalog.view'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:catalog.view', 'module.enabled:Catalog'])->group(function (): void {
         Route::get('/categories', CategoriesIndex::class)->name('categories.index');
         Route::get('/products', ProductsIndex::class)->name('products.index');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:catalog.manage'])->prefix('/api')->name('catalog.api.')->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:catalog.manage', 'module.enabled:Catalog'])->prefix('/api')->name('catalog.api.')->group(function (): void {
         Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::patch('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
@@ -67,26 +67,26 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::delete('/products/{product}/images/{image}', [ProductController::class, 'destroyImage'])->name('products.images.destroy');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:delivery.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:delivery.manage', 'module.enabled:Delivery'])->group(function (): void {
         Route::get('/delivery-areas', DeliveryAreasIndex::class)->name('delivery-areas.index');
         Route::get('/api/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.api.index');
         Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
         Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:modules.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:modules.manage', 'module.enabled:SystemSettings'])->group(function (): void {
         Route::get('/modules', ModulesIndex::class)->name('modules.index');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:reports.view'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:reports.view', 'module.enabled:Reporting'])->group(function (): void {
         Route::get('/reports', ReportsIndex::class)->name('reports.index');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:settings.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:settings.manage', 'module.enabled:SystemSettings'])->group(function (): void {
         Route::get('/settings', SettingsIndex::class)->name('settings.index');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:printing.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:printing.manage', 'module.enabled:Printing'])->group(function (): void {
         Route::get('/printers', PrintersIndex::class)->name('printers.index');
     });
 
@@ -97,26 +97,26 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('/printers/{printer}/rotate-token', [PrinterController::class, 'rotateToken'])->name('rotate-token');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:cashier.use'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:cashier.use', 'module.enabled:Cashier'])->group(function (): void {
         Route::get('/cashier', CashierIndex::class)->name('cashier.index');
         Route::post('/cashier/orders/{order}/collect-cash', [CashierController::class, 'markPaid'])->name('cashier.orders.collect-cash');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:orders.view'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:orders.view', 'module.enabled:Orders'])->group(function (): void {
         Route::get('/orders', OrdersIndex::class)->name('orders.index');
         Route::get('/api/orders', [OrderController::class, 'index'])->name('orders.api.index');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:orders.accept'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:orders.accept', 'module.enabled:Orders'])->group(function (): void {
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:orders.cancel'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:orders.cancel', 'module.enabled:Orders'])->group(function (): void {
         Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:roles.manage', 'module.enabled:AccessControl'])->group(function (): void {
         Route::get('/roles', RolesIndex::class)->name('roles.index');
         Route::get('/api/roles', [RoleController::class, 'index'])->name('roles.api.index');
         Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
@@ -133,7 +133,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     });
 
     Route::middleware(['auth', 'employee.active'])->group(function (): void {
-        Route::get('/session', [EmployeeSessionController::class, 'show'])->name('session.show');
-        Route::delete('/session', [EmployeeSessionController::class, 'destroy'])->name('session.destroy');
+        Route::get('/session', [EmployeeSessionController::class, 'show'])->middleware('module.enabled:Identity')->name('session.show');
+        Route::delete('/session', [EmployeeSessionController::class, 'destroy'])->middleware('module.enabled:Identity')->name('session.destroy');
     });
 });
