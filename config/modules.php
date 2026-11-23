@@ -84,7 +84,7 @@ return [
         'provider' => PaymentsServiceProvider::class,
     ],
     'Promotions' => [
-        'enabled' => true,
+        'enabled' => false,
         'core' => false,
         'depends_on' => ['Catalog', 'Orders'],
         'provider' => PromotionsServiceProvider::class,
@@ -108,13 +108,13 @@ return [
         'provider' => PrintingServiceProvider::class,
     ],
     'Notifications' => [
-        'enabled' => true,
+        'enabled' => false,
         'core' => false,
         'depends_on' => ['Orders'],
         'provider' => NotificationsServiceProvider::class,
     ],
     'Reviews' => [
-        'enabled' => true,
+        'enabled' => false,
         'core' => false,
         'depends_on' => ['Orders'],
         'provider' => ReviewsServiceProvider::class,
@@ -126,19 +126,19 @@ return [
         'provider' => ReportingServiceProvider::class,
     ],
     'Content' => [
-        'enabled' => true,
+        'enabled' => false,
         'core' => false,
         'depends_on' => ['Branches'],
         'provider' => ContentServiceProvider::class,
     ],
     'CustomerService' => [
-        'enabled' => true,
+        'enabled' => false,
         'core' => false,
         'depends_on' => ['Identity'],
         'provider' => CustomerServiceServiceProvider::class,
     ],
     'BackupOps' => [
-        'enabled' => true,
+        'enabled' => false,
         'core' => false,
         'depends_on' => ['SystemSettings'],
         'provider' => BackupOpsServiceProvider::class,
