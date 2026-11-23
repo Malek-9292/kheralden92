@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Cashier;
 use App\Models\Order;
 use App\Services\BranchAccess;
 use App\Services\OrderWorkflow;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,10 +14,22 @@ class Index extends Component
 {
     use WithPagination;
 
+    /** Active POS queue: new storefront orders through collection-ready / unpaid completed. */
+    public const QUEUE_STATUSES = [
+        'pending',
+        'confirmed',
+        'preparing',
+        'ready',
+        'out_for_delivery',
+        'completed',
+    ];
+
     #[Url]
     public string $search = '';
 
     public string $fulfillmentFilter = '';
+
+    public string $statusFilter = '';
 
     public string $paymentFilter = 'unpaid';
 
@@ -37,6 +50,11 @@ class Index extends Component
     }
 
     public function updatedFulfillmentFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
     {
         $this->resetPage();
     }
@@ -91,9 +109,7 @@ class Index extends Component
     {
         $user = auth()->user();
         $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
-        $query = Order::query()->whereIn('branch_id', $branchIds)
-            ->whereIn('status', ['ready', 'out_for_delivery', 'completed'])
-            ->with('items')->latest();
+        $query = $this->queueQuery($branchIds)->with('items')->latest();
 
         if ($this->search !== '') {
             $term = trim($this->search);
@@ -106,6 +122,10 @@ class Index extends Component
 
         if ($this->fulfillmentFilter !== '') {
             $query->where('fulfillment_type', $this->fulfillmentFilter);
+        }
+
+        if ($this->statusFilter !== '') {
+            $query->where('status', $this->statusFilter);
         }
 
         if ($this->paymentFilter === 'unpaid') {
@@ -126,7 +146,34 @@ class Index extends Component
             'orders' => $query->paginate(25),
             'pendingOrders' => $pendingOrders,
             'canAccept' => $user->hasPermissionTo('orders.accept'),
+            'statusLabels' => $this->statusLabels(),
         ])->layout('layouts.admin', ['heading' => 'الكاشير والتحصيل']);
+    }
+
+    /**
+     * @param  Collection<int, int|string>  $branchIds
+     */
+    private function queueQuery($branchIds)
+    {
+        return Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->whereIn('status', self::QUEUE_STATUSES);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function statusLabels(): array
+    {
+        return [
+            'pending' => 'جديد',
+            'confirmed' => 'مؤكد',
+            'preparing' => 'قيد التجهيز',
+            'ready' => 'جاهز',
+            'out_for_delivery' => 'خرج للتوصيل',
+            'completed' => 'مكتمل',
+            'cancelled' => 'ملغي',
+        ];
     }
 
     private function refreshPendingCount(bool $initial = false): void
