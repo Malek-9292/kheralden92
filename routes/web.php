@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\EmployeeSessionController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -16,6 +18,18 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
         Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
         Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:catalog.manage'])->group(function (): void {
+        Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::patch('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+        Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+        Route::patch('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
