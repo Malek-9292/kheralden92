@@ -35,6 +35,7 @@ class Index extends Component
                 $manager->assertCanDisable($module);
             } catch (RuntimeException $exception) {
                 $this->moduleError = $exception->getMessage();
+
                 return;
             }
         } else {
@@ -45,6 +46,7 @@ class Index extends Component
 
             if ($disabledDependencies !== []) {
                 $this->moduleError = 'يجب تفعيل الوحدات المطلوبة أولًا: '.implode('، ', $disabledDependencies);
+
                 return;
             }
         }
