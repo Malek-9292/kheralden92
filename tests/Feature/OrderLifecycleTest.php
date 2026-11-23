@@ -8,9 +8,11 @@ use App\Models\Branch;
 use App\Models\EmployeeSession;
 use App\Models\Order;
 use App\Models\Permission;
+use App\Models\PrintJob;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\OrderWorkflow;
+use App\Services\PrintJobDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -131,7 +133,7 @@ class OrderLifecycleTest extends TestCase
             'job_type' => 'kitchen_ticket',
             'status' => 'pending',
         ]);
-        $this->assertEquals(1, \App\Models\PrintJob::query()
+        $this->assertEquals(1, PrintJob::query()
             ->where('order_id', $order->id)
             ->where('job_type', 'kitchen_ticket')
             ->count());
@@ -143,8 +145,8 @@ class OrderLifecycleTest extends TestCase
 
         $this->actingAs($user)->withSession(['employee_session_token' => $token]);
 
-        app(\App\Services\PrintJobDispatcher::class)->enqueueKitchenTicket($order->load('items'));
-        \App\Models\PrintJob::query()
+        app(PrintJobDispatcher::class)->enqueueKitchenTicket($order->load('items'));
+        PrintJob::query()
             ->where('order_id', $order->id)
             ->where('job_type', 'kitchen_ticket')
             ->update(['status' => 'completed']);
