@@ -48,7 +48,7 @@ class StorefrontPageTest extends TestCase
             ->assertSee("el('openCart').hidden=!count", false)
             ->assertSee('sf-brand-logo', false)
             ->assertSee('sf-brand-copy', false)
-            ->assertSee('height:clamp(140px,36vw,220px)', false)
+            ->assertSee('height:clamp(150px,40vw,240px)', false)
             ->assertSee('product-actions', false)
             ->assertSee('aspect-ratio:4/5', false)
             ->assertSee('align-items:stretch', false);

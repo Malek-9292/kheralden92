@@ -21,11 +21,11 @@
         body.modal-open{overflow:hidden;touch-action:none}
         .sf-header{background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);padding:0 0 12px;padding-top:max(0px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:100%}
         .sf-brand{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;text-align:center;min-width:0;width:100%}
-        .sf-brand-logo{width:100%;height:clamp(140px,36vw,220px);margin:0;background:var(--brand-logo-bg,#e8f0ea);overflow:hidden;border-bottom:1px solid var(--brand-box-border,#e7eee8);display:block}
-        .sf-brand-logo img{width:100%;height:100%;object-fit:contain;object-position:center;border-radius:0;background:transparent;display:block}
-        .sf-brand-copy{width:100%;padding:14px max(12px,env(safe-area-inset-right)) 14px max(12px,env(safe-area-inset-left));background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);box-sizing:border-box;display:block}
-        .sf-brand .name{font-size:clamp(18px,5vw,24px);font-weight:900;color:var(--brand-name-color,#1d5b3d);line-height:1.3;overflow-wrap:anywhere;width:100%}
-        .sf-brand .tag{font-size:12px;color:var(--brand-tagline-color,#6f8376);line-height:1.5;width:100%;margin-top:4px}
+        .sf-brand-logo{width:100%;height:clamp(150px,40vw,240px);margin:0;background:var(--brand-logo-bg,#d7e6db);overflow:hidden;border-bottom:1px solid var(--brand-box-border,#e7eee8);display:flex;align-items:center;justify-content:center}
+        .sf-brand-logo img{width:100%;height:100%;max-width:100%;object-fit:cover;object-position:center;border-radius:0;background:transparent;display:block}
+        .sf-brand-copy{width:100%;padding:16px max(12px,env(safe-area-inset-right)) 16px max(12px,env(safe-area-inset-left));background:var(--brand-box-bg,#f3f7f3);border-bottom:1px solid var(--brand-box-border,#e7eee8);box-sizing:border-box;display:block;text-align:center}
+        .sf-brand .name{font-size:clamp(20px,5.2vw,26px);font-weight:900;color:var(--brand-name-color,#1d5b3d);line-height:1.3;overflow-wrap:anywhere;width:100%;display:block}
+        .sf-brand .tag{font-size:13px;color:var(--brand-tagline-color,#6f8376);line-height:1.5;width:100%;margin-top:6px;display:block}
         .sf-header .sf-fulfillment,.sf-header .sf-actions{padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
         .cartbar.is-empty #openCart{display:none}
         .sf-fulfillment{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:420px;margin-inline:auto}
