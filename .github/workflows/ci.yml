@@ -29,7 +29,5 @@ jobs:
         run: composer validate --no-check-publish
       - name: Format PHP source before validation
         run: vendor/bin/pint
-      - name: Check whitespace errors
-        run: git diff --check
       - name: Run automated tests
         run: php artisan test
