@@ -15,6 +15,7 @@ use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\DeliveryAreas\Index as DeliveryAreasIndex;
 use App\Livewire\Admin\Catalog\Categories as CategoriesIndex;
 use App\Livewire\Admin\Catalog\Products as ProductsIndex;
+use App\Livewire\Admin\Cashier\Index as CashierIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -64,6 +65,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:cashier.use'])->group(function (): void {
+        Route::get('/cashier', CashierIndex::class)->name('cashier.index');
         Route::post('/cashier/orders/{order}/collect-cash', [CashierController::class, 'markPaid'])->name('cashier.orders.collect-cash');
     });
 
