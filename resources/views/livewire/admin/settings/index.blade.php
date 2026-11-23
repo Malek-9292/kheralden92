@@ -62,12 +62,12 @@
             </label>
 
             <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">
-                <strong>كتلة الترحيب وتتبع الطلب</strong>
-                <p class="muted" style="margin:6px 0 0;line-height:1.7">تشمل أزرار تتبع الطلب، تنبيه تثبيت التطبيق على iPhone، وبانر الترحيب «أهلاً بيك…». يمكن إخفاؤها لإبقاء الواجهة أنظف.</p>
+                <strong>كتلة الترحيب</strong>
+                <p class="muted" style="margin:6px 0 0;line-height:1.7">تشمل تنبيه تثبيت التطبيق على iPhone وبانر الترحيب «أهلاً بيك…». يمكن إخفاؤها لإبقاء الواجهة أنظف.</p>
             </div>
             <label class="field full" style="display:flex;align-items:flex-start;gap:10px">
                 <input wire:model.live="showStorefrontTopBlock" type="checkbox" style="margin-top:4px">
-                <span>إظهار كتلة الترحيب وتتبع الطلب أعلى المنيو</span>
+                <span>إظهار كتلة الترحيب أعلى المنيو</span>
             </label>
 
             <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">

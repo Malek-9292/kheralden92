@@ -51,13 +51,9 @@ class OrderCheckoutTest extends TestCase
         ]);
         $this->assertNotNull(Order::query()->find($orderId)?->confirmed_at);
 
-        $orderNumber = $response->json('order.order_number');
-        $trackingToken = $response->json('tracking_token');
-
-        $this->withHeader('X-Order-Tracking-Token', $trackingToken)
-            ->getJson("/api/orders/KHAL/{$orderNumber}")
-            ->assertOk()
-            ->assertJsonPath('order.order_number', $orderNumber);
+        // Customer storefront order tracking endpoint is removed.
+        $this->getJson('/api/orders/KHAL/'.$response->json('order.order_number'))
+            ->assertNotFound();
     }
 
     public function test_delivery_order_enforces_area_minimum_and_calculates_fee_on_server(): void
