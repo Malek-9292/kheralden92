@@ -44,7 +44,7 @@ class ModuleManagerScreenTest extends TestCase
 
         Livewire::test(ModulesIndex::class)
             ->call('toggle', 'Catalog')
-            ->assertSet('moduleError', fn (string $message): bool => $message !== '');
+            ->assertSee('يجب تفعيل الوحدات المطلوبة أولًا');
 
         $this->assertDatabaseMissing('module_settings', [
             'module_key' => 'Catalog',
