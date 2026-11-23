@@ -60,7 +60,7 @@
     </style>
 </head>
 <body>
-<header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="openTrack">تتبع طلب</button><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></div></header>
+<header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="openLastOrder" hidden>آخر طلب</button><button class="secondary" id="openTrack">تتبع طلب</button><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></div></header>
 <div id="offlineBanner" class="offline" hidden>أنت غير متصل بالإنترنت. يمكنك تصفح آخر منيو محفوظ عند توفره، ولن يُرسل الطلب حتى يعود الاتصال.</div>
 <div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
 <section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
@@ -278,10 +278,13 @@
     el('deliveryArea').addEventListener('change',()=>{updateFulfillment();if(state.pendingProduct&&el('deliveryArea').value){const id=state.pendingProduct;state.pendingProduct=null;hide('checkoutModal');addProduct(id);}});
     el('openCart').onclick=()=>{renderCartItems();show('cartModal');};
     el('checkoutBtn').onclick=()=>{if(!cartItems().length)return;hide('cartModal');show('checkoutModal');updateFulfillment();};
+    const refreshLastOrderButton=()=>{el('openLastOrder').hidden=!(state.lastOrder&&state.lastOrder.order_number&&state.lastOrder.tracking_token);};
+    refreshLastOrderButton();
     el('openTrack').onclick=()=>{
         if(state.lastOrder){el('trackOrderNumber').value=state.lastOrder.order_number||'';el('trackToken').value=state.lastOrder.tracking_token||'';}
         el('trackResult').hidden=true;el('trackError').textContent='';show('trackModal');
     };
+    el('openLastOrder').onclick=()=>{if(!state.lastOrder)return;el('openTrack').click();el('trackSubmit').click();};
     document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>hide(b.dataset.close));
     el('submitOrder').onclick=async()=>{
         const delivery=el('fulfillment').value==='delivery',area=selectedArea();
@@ -302,6 +305,7 @@
             const token=data.tracking_token||(state.lastOrder&&state.lastOrder.order_number===data.order.order_number?state.lastOrder.tracking_token:null);
             state.lastOrder={order_number:data.order.order_number,tracking_token:token};
             if(token) localStorage.setItem('fatoosh-last-order',JSON.stringify(state.lastOrder));
+            refreshLastOrderButton();
             el('successDetails').textContent='رقم الطلب: '+data.order.order_number+' · الإجمالي: '+money(data.order.total)+' د.ك'+(token?' · رمز التتبع: '+token:' · تم تأكيد الطلب السابق بنفس المفتاح.');
             state.cart={};state.idempotencyKey=null;renderCartBar();hide('checkoutModal');show('successModal');
         }catch(e){el('checkoutError').textContent=navigator.onLine?(e.message||'تعذر إرسال الطلب.'):'انقطع الاتصال أثناء الإرسال. احتفظ بالسلة وحاول مرة أخرى.';}
