@@ -86,10 +86,10 @@
 (() => {
     const branch = 'KHAL';
     const state = {products:[],categories:[],areas:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null};
-    if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone){el('iosInstallHint').hidden=false;}
     try { state.cart = JSON.parse(localStorage.getItem('fatoosh-cart') || '{}'); } catch { state.cart = {}; }
     const money = n => (Number(n)||0).toFixed(3);
     const el = id => document.getElementById(id);
+    if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone){el('iosInstallHint').hidden=false;}
     const show = id => el(id).classList.add('open');
     const hide = id => el(id).classList.remove('open');
     const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
