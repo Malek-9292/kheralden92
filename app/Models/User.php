@@ -7,8 +7,9 @@ use App\Models\Branch;
 use App\Models\Concerns\HasRoles;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 class User extends Authenticatable {
- use HasFactory, Notifiable, HasRoles;
+ use HasFactory, Notifiable, HasRoles, SoftDeletes;
  public function branch(): BelongsTo { return $this->belongsTo(Branch::class); }
  public function employeeSessions(): HasMany { return $this->hasMany(EmployeeSession::class); }
  protected $fillable = ['name','phone','email','password','branch_id','status'];
