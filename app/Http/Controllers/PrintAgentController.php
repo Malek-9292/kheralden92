@@ -10,27 +10,31 @@ use Illuminate\Support\Facades\DB;
 
 class PrintAgentController extends Controller
 {
+    public function heartbeat(Request $request): JsonResponse
+    {
+        $printer = $this->authenticatePrinter($request);
+        $printer->update(['last_seen_at' => now()]);
+
+        return response()->json([
+            'ok' => true,
+            'printer' => [
+                'code' => $printer->code,
+                'name' => $printer->name,
+                'purpose' => $printer->purpose,
+                'is_active' => $printer->is_active,
+            ],
+            'pending_jobs' => $this->pendingJobsCount($printer),
+            'last_seen_at' => $printer->fresh()->last_seen_at?->toIso8601String(),
+            'server_time' => now()->toIso8601String(),
+        ]);
+    }
+
     public function claim(Request $request): JsonResponse
     {
         $printer = $this->authenticatePrinter($request);
 
         $job = DB::transaction(function () use ($printer): ?PrintJob {
-            $jobType = $printer->purpose === 'kitchen' ? 'kitchen_ticket' : 'customer_receipt';
-
-            $job = PrintJob::query()
-                ->where('branch_id', $printer->branch_id)
-                ->where('job_type', $jobType)
-                ->where(function ($query) use ($printer): void {
-                    $query->whereNull('printer_id')->orWhere('printer_id', $printer->id);
-                })
-                ->where(function ($query): void {
-                    $query->where(function ($pending): void {
-                        $pending->where('status', 'pending')->where('available_at', '<=', now());
-                    })->orWhere(function ($stale): void {
-                        $stale->where('status', 'processing')->where('claimed_at', '<=', now()->subMinutes(3));
-                    });
-                })
-                ->orderBy('id')
+            $job = $this->claimableJobsQuery($printer)
                 ->lockForUpdate()
                 ->first();
 
@@ -58,6 +62,7 @@ class PrintAgentController extends Controller
                 'attempt' => $job->attempts,
                 'payload' => $job->payload,
             ] : null,
+            'pending_jobs' => $this->pendingJobsCount($printer),
             'server_time' => now()->toIso8601String(),
         ]);
     }
@@ -153,5 +158,30 @@ class PrintAgentController extends Controller
         abort_unless($printer && hash_equals($printer->device_token_hash, $tokenHash), 401, 'بيانات الطابعة غير صحيحة أو موقوفة.');
 
         return $printer;
+    }
+
+    private function claimableJobsQuery(Printer $printer)
+    {
+        $jobType = $printer->purpose === 'kitchen' ? 'kitchen_ticket' : 'customer_receipt';
+
+        return PrintJob::query()
+            ->where('branch_id', $printer->branch_id)
+            ->where('job_type', $jobType)
+            ->where(function ($query) use ($printer): void {
+                $query->whereNull('printer_id')->orWhere('printer_id', $printer->id);
+            })
+            ->where(function ($query): void {
+                $query->where(function ($pending): void {
+                    $pending->where('status', 'pending')->where('available_at', '<=', now());
+                })->orWhere(function ($stale): void {
+                    $stale->where('status', 'processing')->where('claimed_at', '<=', now()->subMinutes(3));
+                });
+            })
+            ->orderBy('id');
+    }
+
+    private function pendingJobsCount(Printer $printer): int
+    {
+        return (int) $this->claimableJobsQuery($printer)->count();
     }
 }

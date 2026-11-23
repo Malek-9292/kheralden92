@@ -8,6 +8,7 @@ use App\Http\Controllers\Storefront\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('print-agent')->middleware(['throttle:120,1', 'module.enabled:Printing'])->name('print-agent.')->group(function (): void {
+    Route::post('/heartbeat', [PrintAgentController::class, 'heartbeat'])->name('heartbeat');
     Route::post('/jobs/claim', [PrintAgentController::class, 'claim'])->name('jobs.claim');
     Route::post('/jobs/{jobId}/complete', [PrintAgentController::class, 'complete'])->name('jobs.complete');
     Route::post('/jobs/{jobId}/fail', [PrintAgentController::class, 'fail'])->name('jobs.fail');

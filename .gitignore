@@ -22,3 +22,4 @@
 /bootstrap/cache/*
 /composer.phar
 database/preview.sqlite
+database/local-print-verify.sqlite

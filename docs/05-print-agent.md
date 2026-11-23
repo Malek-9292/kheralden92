@@ -20,6 +20,11 @@
 - X-Printer-Token
 - Accept: application/json
 
+### نبض الاتصال (heartbeat)
+POST /api/print-agent/heartbeat
+
+يحدّث `last_seen_at` دون سحب مهمة، ويُرجع `pending_jobs` وحالة الطابعة. يستخدمه التطبيق لإظهار «متصلة الآن» في `/admin/printers` حتى قبل جاهزية USB، ولاختبار الاتصال من الزر في الواجهة.
+
 ### سحب مهمة
 POST /api/print-agent/jobs/claim
 
@@ -28,6 +33,7 @@ POST /api/print-agent/jobs/claim
 - job_type مثل kitchen_ticket
 - attempt
 - payload ويتضمن بيانات الطلب والأصناف والعنوان والمبالغ بالدينار الكويتي.
+- pending_jobs (عدد المهام القابلة للسحب بعد العملية)
 
 ### تأكيد الطباعة
 POST /api/print-agent/jobs/{jobId}/complete

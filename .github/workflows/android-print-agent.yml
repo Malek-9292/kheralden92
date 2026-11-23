@@ -2,12 +2,12 @@ name: Android Print Agent
 
 on:
   push:
-    branches: [implementation/foundation-v1]
+    branches: [main, implementation/foundation-v1]
     paths:
       - 'android-print-agent/**'
       - '.github/workflows/android-print-agent.yml'
   pull_request:
-    branches: [implementation/foundation-v1]
+    branches: [main, implementation/foundation-v1]
     paths:
       - 'android-print-agent/**'
       - '.github/workflows/android-print-agent.yml'
