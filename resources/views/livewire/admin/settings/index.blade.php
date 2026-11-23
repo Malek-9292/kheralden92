@@ -47,6 +47,10 @@
             <label class="field">خلفية البانر
                 <div style="display:flex;gap:9px;align-items:center"><input wire:model.live="bannerBackground" type="color" style="width:55px;height:40px;padding:2px"><input wire:model="bannerBackground" dir="ltr" maxlength="7"></div>
             </label>
+            <label class="field">حجم خط البانر (12–48)
+                <input wire:model="bannerFontSize" type="number" min="12" max="48">
+                @error('bannerFontSize')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
             <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">
                 <strong>نص أسفل الموقع</strong>
             </div>
