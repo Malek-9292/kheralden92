@@ -121,16 +121,17 @@ final class ModuleManager
 
     private function databaseOverride(string $module): ?bool
     {
+        // May run during provider registration before the DB/Eloquent resolver is ready.
         try {
             if (! Schema::hasTable('module_settings')) {
                 return null;
             }
+
+            $setting = ModuleSetting::query()->where('module_key', $module)->first();
+
+            return $setting ? (bool) $setting->is_enabled : null;
         } catch (\Throwable) {
             return null;
         }
-
-        $setting = ModuleSetting::query()->where('module_key', $module)->first();
-
-        return $setting ? (bool) $setting->is_enabled : null;
     }
 }

@@ -52,12 +52,12 @@
             <tbody>
             @forelse($employees as $employee)
                 <tr wire:key="employee-{{ $employee->id }}">
-                    <td><strong>{{ $employee->name }}</strong></td>
-                    <td dir="ltr">{{ $employee->phone }}</td>
-                    <td>{{ $employee->roles->pluck('name')->join('، ') }}</td>
-                    <td><span class="status {{ $employee->status === 'active' ? '' : 'danger' }}">{{ ['active'=>'نشط','suspended'=>'موقوف','inactive'=>'غير نشط'][$employee->status] ?? $employee->status }}</span></td>
-                    <td class="muted">{{ $employee->valid_from?->format('Y-m-d') ?? 'من الآن' }} — {{ $employee->valid_until?->format('Y-m-d') ?? 'مفتوحة' }}</td>
-                    <td>
+                    <td data-label="الموظف"><strong>{{ $employee->name }}</strong></td>
+                    <td data-label="الهاتف" dir="ltr">{{ $employee->phone }}</td>
+                    <td data-label="الأدوار">{{ $employee->roles->pluck('name')->join('، ') }}</td>
+                    <td data-label="الحالة"><span class="status {{ $employee->status === 'active' ? '' : 'danger' }}">{{ ['active'=>'نشط','suspended'=>'موقوف','inactive'=>'غير نشط'][$employee->status] ?? $employee->status }}</span></td>
+                    <td data-label="الصلاحية" class="muted">{{ $employee->valid_from?->format('Y-m-d') ?? 'من الآن' }} — {{ $employee->valid_until?->format('Y-m-d') ?? 'مفتوحة' }}</td>
+                    <td data-label="إجراء">
                         <div style="display:flex;gap:6px;flex-wrap:wrap">
                             <button wire:click="edit({{ $employee->id }})" class="secondary" style="padding:7px 10px;font-size:12px">تعديل</button>
                             <button wire:click="toggleStatus({{ $employee->id }})" wire:confirm="تأكيد تغيير حالة الموظف؟" class="secondary" style="padding:7px 10px;font-size:12px">

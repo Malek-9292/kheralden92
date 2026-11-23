@@ -13,48 +13,48 @@
     </div>
     <div class="panel">
         <div class="table-wrap">
-            <table style="min-width:900px">
+            <table>
                 <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الأصناف</th><th>الاستلام والعنوان</th><th>الإجمالي</th><th>الحالة / الدفع</th><th>الإجراءات</th></tr></thead>
                 <tbody>
                 @forelse($orders as $order)
                     <tr wire:key="order-{{ $order->id }}">
-                        <td><strong>{{ $order->order_number }}</strong><div class="muted">{{ $order->created_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') }}</div></td>
-                        <td>
+                        <td data-label="رقم الطلب"><strong>{{ $order->order_number }}</strong><div class="muted">{{ $order->created_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') }}</div></td>
+                        <td data-label="العميل">
                             {{ $order->customer_name }}
                             <div class="muted">{{ $order->customer_phone }}</div>
                             @if(filled($order->customer_notes))
-                                <div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:#f7faf7;border:1px solid #e5ece6;font-size:12px;line-height:1.6">
+                                <div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:#f7faf7;border:1px solid #e5ece6;font-size:12px;line-height:1.6;overflow-wrap:anywhere">
                                     <strong>ملاحظات:</strong> {{ $order->customer_notes }}
                                 </div>
                             @endif
                         </td>
-                        <td>
+                        <td data-label="الأصناف">
                             @foreach($order->items as $item)
                                 <div style="margin-bottom:4px">{{ $item->product_name }} × {{ $item->quantity }}</div>
                             @endforeach
                         </td>
-                        <td>
+                        <td data-label="الاستلام والعنوان">
                             @if($order->fulfillment_type === 'pickup')
                                 استلام من المطعم
                             @else
                                 توصيل · {{ $order->delivery_area_name }}<div class="muted">قطعة {{ $order->block }}، شارع {{ $order->street }}@if($order->avenue)، جادة {{ $order->avenue }}@endif، منزل {{ $order->house_number }}@if($order->floor)، دور {{ $order->floor }}@endif @if($order->apartment)، شقة {{ $order->apartment }}@endif</div>
                             @endif
                         </td>
-                        <td><strong>{{ $order->total }} د.ك</strong><div class="muted">رسوم التوصيل: {{ $order->delivery_fee }}</div></td>
-                        <td><span class="status">{{ ['pending'=>'جديد','confirmed'=>'مؤكد','preparing'=>'قيد التجهيز','ready'=>'جاهز','out_for_delivery'=>'خرج للتوصيل','completed'=>'مكتمل','cancelled'=>'ملغي'][$order->status] ?? $order->status }}</span><div class="muted" style="margin-top:5px">{{ $order->payment_status === 'paid' ? 'تم السداد' : 'غير مدفوع' }}</div></td>
-                        <td>
+                        <td data-label="الإجمالي"><strong>{{ $order->total }} د.ك</strong><div class="muted">رسوم التوصيل: {{ $order->delivery_fee }}</div></td>
+                        <td data-label="الحالة / الدفع"><span class="status">{{ ['pending'=>'جديد','confirmed'=>'مؤكد','preparing'=>'قيد التجهيز','ready'=>'جاهز','out_for_delivery'=>'خرج للتوصيل','completed'=>'مكتمل','cancelled'=>'ملغي'][$order->status] ?? $order->status }}</span><div class="muted" style="margin-top:5px">{{ $order->payment_status === 'paid' ? 'تم السداد' : 'غير مدفوع' }}</div></td>
+                        <td data-label="الإجراءات">
                             <div style="display:flex;gap:6px;flex-wrap:wrap">
                                 @if($canAdvance && !in_array($order->status,['completed','cancelled'],true))
-                                    <button wire:click="advance({{ $order->id }})" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:8px 10px;background:#e4f2e8;color:#1b603b;cursor:pointer;font:inherit;font-size:12px">الخطوة التالية</button>
+                                    <button wire:click="advance({{ $order->id }})" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:10px 12px;min-height:40px;background:#e4f2e8;color:#1b603b;cursor:pointer;font:inherit;font-size:12px">الخطوة التالية</button>
                                 @endif
                                 @if($canCollect && $order->payment_status !== 'paid' && (($order->fulfillment_type === 'pickup' && in_array($order->status,['ready','completed'],true)) || ($order->fulfillment_type === 'delivery' && in_array($order->status,['out_for_delivery','completed'],true))))
-                                    <button wire:click="collectCash({{ $order->id }})" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:8px 10px;background:#eaf0fb;color:#315b9a;cursor:pointer;font:inherit;font-size:12px">تحصيل نقدي</button>
+                                    <button wire:click="collectCash({{ $order->id }})" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:10px 12px;min-height:40px;background:#eaf0fb;color:#315b9a;cursor:pointer;font:inherit;font-size:12px">تحصيل نقدي</button>
                                 @endif
                                 @if($canCancel && !in_array($order->status,['completed','cancelled'],true))
-                                    <button wire:click="cancel({{ $order->id }})" wire:confirm="متأكد من إلغاء الطلب؟" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:8px 10px;background:#fcebea;color:#a33a31;cursor:pointer;font:inherit;font-size:12px">إلغاء</button>
+                                    <button wire:click="cancel({{ $order->id }})" wire:confirm="متأكد من إلغاء الطلب؟" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:10px 12px;min-height:40px;background:#fcebea;color:#a33a31;cursor:pointer;font:inherit;font-size:12px">إلغاء</button>
                                 @endif
                                 @if($canReprint && $order->status !== 'cancelled')
-                                    <button wire:click="reprintKitchen({{ $order->id }})" wire:confirm="إعادة طباعة تذكرة المطبخ؟" wire:loading.attr="disabled" class="secondary" style="padding:8px 10px;font-size:12px">إعادة تذكرة مطبخ</button>
+                                    <button wire:click="reprintKitchen({{ $order->id }})" wire:confirm="إعادة طباعة تذكرة المطبخ؟" wire:loading.attr="disabled" class="secondary" style="padding:10px 12px;min-height:40px;font-size:12px">إعادة تذكرة مطبخ</button>
                                 @endif
                             </div>
                         </td>

@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>تسجيل الدخول - فتوش الخالدية</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,12 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;color:#173c2c}
-        *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at top,#dceee2,#f7faf7 48%,#eef5f0);padding:20px}
-        .card{width:min(420px,100%);background:#fff;border:1px solid #e0eae2;border-radius:22px;padding:30px;box-shadow:0 18px 55px #183d2a12}
-        h1{margin:0 0 8px;font-size:24px}.sub{color:#74867a;font-size:13px;margin-bottom:25px;line-height:1.7}
-        label{display:block;font-size:13px;margin:16px 0 7px}input{width:100%;padding:13px;border:1px solid #d8e3da;border-radius:11px;font:inherit;outline:none}
+        *{box-sizing:border-box}html,body{margin:0;max-width:100%;overflow-x:clip}
+        body{min-height:100vh;min-height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at top,#dceee2,#f7faf7 48%,#eef5f0);padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+        .card{width:min(420px,100%);background:#fff;border:1px solid #e0eae2;border-radius:22px;padding:clamp(20px,5vw,30px);box-shadow:0 18px 55px #183d2a12}
+        h1{margin:0 0 8px;font-size:clamp(20px,5vw,24px)}.sub{color:#74867a;font-size:13px;margin-bottom:25px;line-height:1.7}
+        label{display:block;font-size:13px;margin:16px 0 7px}input{width:100%;min-height:44px;padding:13px;border:1px solid #d8e3da;border-radius:11px;font:inherit;outline:none}
         input:focus{border-color:#4b9569;box-shadow:0 0 0 3px #e2f1e6}
-        button{width:100%;border:0;border-radius:11px;background:#1d5b3d;color:#fff;padding:14px;font:inherit;font-weight:700;margin-top:22px;cursor:pointer}
+        button{width:100%;border:0;border-radius:11px;background:#1d5b3d;color:#fff;min-height:44px;padding:14px;font:inherit;font-weight:700;margin-top:22px;cursor:pointer}
         button:disabled{opacity:.65;cursor:wait}.error{color:#b42318;font-size:13px;min-height:20px;margin-top:12px}
         .brand{font-size:14px;font-weight:700;color:#3f7955;margin-bottom:25px}
     </style>
