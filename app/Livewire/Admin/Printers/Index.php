@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Printers;
 use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Printer;
+use App\Models\PrintJob;
 use App\Services\BranchAccess;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -116,6 +117,35 @@ class Index extends Component
         ]);
     }
 
+    public function retryFailedJob(int $jobId): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('printing.manage'), 403);
+        $job = PrintJob::query()->findOrFail($jobId);
+        app(BranchAccess::class)->assertCanAccess($user, $job->branch_id);
+        abort_unless($job->status === 'failed', 409);
+
+        $job->update([
+            'printer_id' => null,
+            'status' => 'pending',
+            'attempts' => 0,
+            'available_at' => now(),
+            'claimed_at' => null,
+            'last_error' => null,
+        ]);
+
+        AuditLog::query()->create([
+            'branch_id' => $job->branch_id,
+            'actor_id' => $user->id,
+            'action' => 'print_job.retried',
+            'auditable_type' => PrintJob::class,
+            'auditable_id' => $job->id,
+            'created_at' => now(),
+        ]);
+
+        session()->flash('status', 'تمت إعادة المهمة إلى طابور الطباعة.');
+    }
+
     public function dismissToken(): void
     {
         $this->newDeviceToken = null;
@@ -126,6 +156,7 @@ class Index extends Component
         $user = auth()->user();
         $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
         return view('livewire.admin.printers.index', [
+            'failedJobs' => PrintJob::query()->whereIn('branch_id', $branchIds)->where('status', 'failed')->with('order:id,order_number')->latest()->limit(10)->get(),
             'printers' => Printer::query()->whereIn('branch_id', $branchIds)->withCount([
                 'jobs as pending_jobs_count' => fn ($query) => $query->whereIn('status', ['pending', 'processing']),
             ])->orderBy('name')->paginate(20),
