@@ -90,7 +90,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/printers', PrintersIndex::class)->name('printers.index');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:printing.manage'])->prefix('/api')->name('printers.api.')->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:printing.manage', 'module.enabled:Printing'])->prefix('/api')->name('printers.api.')->group(function (): void {
         Route::get('/printers', [PrinterController::class, 'index'])->name('index');
         Route::post('/printers', [PrinterController::class, 'store'])->name('store');
         Route::patch('/printers/{printer}', [PrinterController::class, 'update'])->name('update');
