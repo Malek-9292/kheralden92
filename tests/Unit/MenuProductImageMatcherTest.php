@@ -35,4 +35,33 @@ class MenuProductImageMatcherTest extends TestCase
         $this->assertSame('كباب.jpg', $matcher->bestMatch('ساندويتش كباب', $images)['filename']);
         $this->assertNull($matcher->bestMatch('فتوش', $images));
     }
+
+    public function test_live_menu_zip_spellings_match_catalog_names(): void
+    {
+        $matcher = new MenuProductImageMatcher;
+        $potato = "\u{0628}\u{0637}\u{0627}\u{0637}"; // بطاط (live ZIP spelling)
+        $images = [
+            ['stem' => 'مسقعه', 'path' => '/tmp/a.jpg', 'filename' => 'مسقعه.jpg'],
+            ['stem' => 'جبن ابيض', 'path' => '/tmp/b.jpg', 'filename' => 'جبن ابيض.jpg'],
+            ['stem' => 'فروالة', 'path' => '/tmp/c.jpg', 'filename' => 'فروالة.jpg'],
+            ['stem' => 'مياه صحية', 'path' => '/tmp/d.jpg', 'filename' => 'مياه صحية.jpg'],
+            ['stem' => 'ساندويش كباب', 'path' => '/tmp/e.jpg', 'filename' => 'ساندويش كباب.jpg'],
+            ['stem' => 'وجبة كفتة بالشبك', 'path' => '/tmp/f.jpg', 'filename' => 'وجبة كفتة بالشبك.jpg'],
+            ['stem' => 'الاجبان بأنواعها', 'path' => '/tmp/g.jpg', 'filename' => 'الاجبان بأنواعها.jpg'],
+            ['stem' => "{$potato} كاتشب مايونيز", 'path' => '/tmp/i.jpg', 'filename' => "{$potato} كاتشب مايونيز.jpg"],
+            ['stem' => 'شاورما دجاج صاج', 'path' => '/tmp/j.jpg', 'filename' => 'شاورما دجاج صاج.jpg'],
+            ['stem' => 'شاورما دجاج', 'path' => '/tmp/k.jpg', 'filename' => 'شاورما دجاج.jpg'],
+        ];
+
+        $this->assertSame('مسقعه.jpg', $matcher->bestMatch('مسقعة', $images)['filename']);
+        $this->assertSame('جبن ابيض.jpg', $matcher->bestMatch('جبن أبيض', $images)['filename']);
+        $this->assertSame('فروالة.jpg', $matcher->bestMatch('فراوله', $images)['filename']);
+        $this->assertSame('مياه صحية.jpg', $matcher->bestMatch('مياه صحيه', $images)['filename']);
+        $this->assertSame('ساندويش كباب.jpg', $matcher->bestMatch('ساندويتش كباب', $images)['filename']);
+        $this->assertSame('وجبة كفتة بالشبك.jpg', $matcher->bestMatch('وجبة كفتة بالسيخ', $images)['filename']);
+        $this->assertSame('الاجبان بأنواعها.jpg', $matcher->bestMatch('الأجبان بأنواعها', $images)['filename']);
+        $this->assertSame("{$potato} كاتشب مايونيز.jpg", $matcher->bestMatch('بطاطس كاتشب مايونيز', $images)['filename']);
+        $this->assertSame('شاورما دجاج صاج.jpg', $matcher->bestMatch('شاورما دجاج صاج', $images)['filename']);
+        $this->assertSame('شاورما دجاج.jpg', $matcher->bestMatch('شاورما دجاج', $images)['filename']);
+    }
 }
