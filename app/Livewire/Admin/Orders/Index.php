@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Orders;
 use App\Models\Order;
 use App\Services\BranchAccess;
 use App\Services\OrderWorkflow;
+use App\Services\PrintJobDispatcher;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -71,6 +72,18 @@ class Index extends Component
         session()->flash('status', 'تم تسجيل التحصيل النقدي.');
     }
 
+    public function reprintKitchen(int $orderId, PrintJobDispatcher $dispatcher): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('orders.accept') || $user->hasPermissionTo('printing.manage'), 403);
+
+        $order = Order::query()->findOrFail($orderId);
+        app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
+
+        $dispatcher->reprintKitchenTicket($order->load('items'));
+        session()->flash('status', 'تمت إعادة تذكرة المطبخ إلى طابور الطباعة.');
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -103,6 +116,7 @@ class Index extends Component
             'canAdvance' => $user->hasPermissionTo('orders.accept'),
             'canCancel' => $user->hasPermissionTo('orders.cancel'),
             'canCollect' => $user->hasPermissionTo('cashier.use'),
+            'canReprint' => $user->hasPermissionTo('orders.accept') || $user->hasPermissionTo('printing.manage'),
         ])->layout('layouts.admin', ['heading' => 'إدارة الطلبات']);
     }
 }

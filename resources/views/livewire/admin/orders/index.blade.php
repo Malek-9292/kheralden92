@@ -45,6 +45,9 @@
                                 @if($canCancel && !in_array($order->status,['completed','cancelled'],true))
                                     <button wire:click="cancel({{ $order->id }})" wire:confirm="متأكد من إلغاء الطلب؟" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:8px 10px;background:#fcebea;color:#a33a31;cursor:pointer;font:inherit;font-size:12px">إلغاء</button>
                                 @endif
+                                @if($canReprint && $order->status !== 'cancelled')
+                                    <button wire:click="reprintKitchen({{ $order->id }})" wire:confirm="إعادة طباعة تذكرة المطبخ؟" wire:loading.attr="disabled" class="secondary" style="padding:8px 10px;font-size:12px">إعادة تذكرة مطبخ</button>
+                                @endif
                             </div>
                         </td>
                     </tr>

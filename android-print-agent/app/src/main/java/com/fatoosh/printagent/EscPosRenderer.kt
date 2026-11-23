@@ -29,6 +29,18 @@ object EscPosRenderer {
     }
 
     fun kitchenTicket(payload: JSONObject): ByteArray {
+        payload.optJSONArray("lines")?.let { prepared ->
+            if (prepared.length() > 0) {
+                val lines = mutableListOf<String>()
+                for (index in 0 until prepared.length()) {
+                    lines += prepared.optString(index)
+                }
+                lines += ""
+                lines += ""
+                return render(lines.joinToString("\n"))
+            }
+        }
+
         val lines = mutableListOf<String>()
         lines += payload.optString("branch", "فتوش الخالدية")
         lines += "تذكرة المطبخ"
@@ -75,6 +87,19 @@ object EscPosRenderer {
     }
 
     fun customerReceipt(payload: JSONObject): ByteArray {
+        payload.optJSONArray("lines")?.let { prepared ->
+            if (prepared.length() > 0) {
+                val lines = mutableListOf<String>()
+                for (index in 0 until prepared.length()) {
+                    lines += prepared.optString(index)
+                }
+                lines += "شكرًا لزيارتكم فتوش الخالدية"
+                lines += ""
+                lines += ""
+                return render(lines.joinToString("\n"))
+            }
+        }
+
         val lines = mutableListOf<String>()
         lines += payload.optString("branch", "فتوش الخالدية")
         lines += "فاتورة العميل"
