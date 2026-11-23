@@ -108,7 +108,7 @@ class AdminSearchController extends Controller
                 ->map(fn (User $employee) => [
                     'title' => $employee->name,
                     'subtitle' => $employee->phone.' · '.$employee->status,
-                    'url' => '/admin/employees',
+                    'url' => '/admin/employees?search='.urlencode($employee->name),
                     'type' => 'employee',
                 ])->values();
         }
@@ -140,7 +140,7 @@ class AdminSearchController extends Controller
                 ->map(fn (Branch $branch) => [
                     'title' => $branch->name,
                     'subtitle' => $branch->code,
-                    'url' => '/admin/branches',
+                    'url' => '/admin/branches?search='.urlencode($branch->name),
                     'type' => 'branch',
                 ])->values();
         }
