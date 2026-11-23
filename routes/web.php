@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\AdminSearchController;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\DeliveryAreas\Index as DeliveryAreasIndex;
+use App\Livewire\Admin\Catalog\Categories as CategoriesIndex;
+use App\Livewire\Admin\Catalog\Products as ProductsIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -36,7 +38,12 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
     });
 
-    Route::middleware(['auth', 'employee.active', 'permission:catalog.manage'])->group(function (): void {
+    Route::middleware(['auth', 'employee.active', 'permission:catalog.view'])->group(function (): void {
+        Route::get('/categories', CategoriesIndex::class)->name('categories.index');
+        Route::get('/products', ProductsIndex::class)->name('products.index');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:catalog.manage'])->prefix('/api')->name('catalog.api.')->group(function (): void {
         Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::patch('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
