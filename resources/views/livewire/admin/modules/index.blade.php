@@ -14,13 +14,15 @@
                         <strong>{{ $labels[$module['name']] ?? $module['name'] }}</strong>
                         <div class="muted" dir="ltr">{{ $module['name'] }}</div>
                     </div>
-                    <span class="status">{{ $module['core'] ? 'أساسية' : ($module['enabled'] ? 'مفعلة' : 'متوقفة') }}</span>
+                    <span class="status">{{ $module['core'] ? 'أساسية' : ($module['implemented'] ? ($module['enabled'] ? 'مفعلة' : 'متوقفة') : 'قيد التطوير') }}</span>
                 </div>
                 <div class="muted" style="margin-top:10px">المتطلبات: {{ count($module['dependencies']) ? implode('، ', $module['dependencies']) : 'لا يوجد' }}</div>
                 <div class="muted" dir="ltr" style="overflow-wrap:anywhere;margin-top:5px;font-size:10px">{{ $module['provider'] }}</div>
                 <div style="margin-top:14px">
                     @if($module['core'])
                         <button disabled class="secondary" style="opacity:.55;cursor:not-allowed">وحدة أساسية لا يمكن إيقافها</button>
+                    @elseif(!$module['implemented'] && !$module['enabled'])
+                        <button disabled class="secondary" style="opacity:.55;cursor:not-allowed">قيد التطوير</button>
                     @else
                         <button wire:click="toggle('{{ $module['name'] }}')" wire:confirm="{{ $module['enabled'] ? 'تأكيد إيقاف الوحدة؟' : 'تأكيد تفعيل الوحدة؟' }}" wire:loading.attr="disabled" class="{{ $module['enabled'] ? 'secondary' : 'primary' }}">
                             {{ $module['enabled'] ? 'إيقاف الوحدة' : 'تفعيل الوحدة' }}
