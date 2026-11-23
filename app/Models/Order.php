@@ -14,10 +14,10 @@ class Order extends Model
         'delivery_governorate', 'delivery_area_name', 'block', 'street', 'avenue',
         'house_number', 'floor', 'apartment', 'customer_notes', 'subtotal',
         'delivery_fee', 'minimum_order_snapshot', 'total', 'tracking_token_hash',
-        'confirmed_at', 'completed_at', 'cancelled_at', 'paid_at',
+        'idempotency_key_hash', 'confirmed_at', 'completed_at', 'cancelled_at', 'paid_at',
     ];
 
-    protected $hidden = ['tracking_token_hash'];
+    protected $hidden = ['tracking_token_hash', 'idempotency_key_hash'];
 
     protected function casts(): array
     {
