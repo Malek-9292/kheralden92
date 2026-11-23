@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Branch;
+use App\Models\Category;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
@@ -15,6 +16,24 @@ class DatabaseSeeder extends Seeder
             ['code' => 'KHAL'],
             ['name' => 'فتوش الخالدية', 'timezone' => 'Asia/Kuwait', 'is_active' => true],
         );
+
+        $initialCategories = [
+            ['name' => 'أفطار الخالدية', 'slug' => 'eftar-alkhaldiya'],
+            ['name' => 'العصائر', 'slug' => 'juices'],
+            ['name' => 'مشويات الخالدية', 'slug' => 'grills'],
+            ['name' => 'صواني مشويات', 'slug' => 'grill-trays'],
+            ['name' => 'مواعين الخالدية', 'slug' => 'plates'],
+            ['name' => 'الساندويتشات الخفيفة', 'slug' => 'light-sandwiches'],
+            ['name' => 'الساندويتشات الحارة والباردة', 'slug' => 'hot-cold-sandwiches'],
+            ['name' => 'ساندويتشات الصاج', 'slug' => 'saj-sandwiches'],
+        ];
+
+        foreach ($initialCategories as $index => $category) {
+            Category::query()->firstOrCreate(
+                ['branch_id' => $branch->id, 'slug' => $category['slug']],
+                ['name' => $category['name'], 'sort_order' => $index, 'is_active' => true],
+            );
+        }
 
         $permissions = [
             ['name' => 'View dashboard', 'slug' => 'dashboard.view', 'module' => 'System'],
