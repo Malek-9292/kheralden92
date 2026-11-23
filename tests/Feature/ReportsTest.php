@@ -81,6 +81,10 @@ class ReportsTest extends TestCase
             ->assertSee('إجمالي الطلبات')
             ->assertSee('المبيعات المحصلة')
             ->assertSee('ساندويتش تجريبي')
-            ->assertSee('3.000');
+            ->assertSee('3.000')
+            ->assertSee('تصدير CSV');
+
+        $response = Livewire::test(ReportsIndex::class)->call('exportCsv');
+        $response->assertFileDownloaded('fatoosh-orders-'.now('Asia/Kuwait')->startOfMonth()->toDateString().'_'.now('Asia/Kuwait')->toDateString().'.csv');
     }
 }

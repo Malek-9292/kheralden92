@@ -50,14 +50,14 @@
                 <tbody>
                 @forelse($printers as $printer)
                     <tr wire:key="printer-{{ $printer->id }}">
-                        <td><strong>{{ $printer->name }}</strong></td>
-                        <td dir="ltr">{{ $printer->code }}</td>
-                        <td>{{ $printer->purpose==='kitchen' ? 'المطبخ' : 'الكاشير' }}</td>
-                        <td>{{ strtoupper($printer->connection_type) }}</td>
-                        <td>{{ $printer->pending_jobs_count }}</td>
-                        <td>{{ $printer->last_seen_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') ?? 'لم تتصل بعد' }}</td>
-                        <td><span class="status">{{ $printer->is_active ? 'نشطة' : 'متوقفة' }}</span></td>
-                        <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <td data-label="الطابعة"><strong>{{ $printer->name }}</strong></td>
+                        <td data-label="الكود" dir="ltr">{{ $printer->code }}</td>
+                        <td data-label="الاستخدام">{{ $printer->purpose==='kitchen' ? 'المطبخ' : 'الكاشير' }}</td>
+                        <td data-label="الاتصال">{{ strtoupper($printer->connection_type) }}</td>
+                        <td data-label="المهام المعلقة">{{ $printer->pending_jobs_count }}</td>
+                        <td data-label="آخر اتصال">{{ $printer->last_seen_at?->timezone('Asia/Kuwait')->format('Y-m-d H:i') ?? 'لم تتصل بعد' }}</td>
+                        <td data-label="الحالة"><span class="status">{{ $printer->is_active ? 'نشطة' : 'متوقفة' }}</span></td>
+                        <td data-label="إجراءات"><div style="display:flex;gap:6px;flex-wrap:wrap">
                             <button wire:click="rotateToken({{ $printer->id }})" wire:confirm="تغيير رمز الطابعة سيوقف الرمز القديم. متابعة؟" class="secondary" style="padding:7px 9px;font-size:11px">تغيير الرمز</button>
                             <button wire:click="toggleActive({{ $printer->id }})" wire:confirm="تأكيد تغيير حالة الطابعة؟" class="secondary" style="padding:7px 9px;font-size:11px">{{ $printer->is_active ? 'إيقاف' : 'تفعيل' }}</button>
                         </div></td>
@@ -78,10 +78,10 @@
                 <tbody>
                 @foreach($failedJobs as $job)
                     <tr wire:key="failed-print-job-{{ $job->id }}">
-                        <td>{{ $job->order?->order_number }}</td>
-                        <td>{{ $job->job_type==='kitchen_ticket' ? 'تذكرة مطبخ' : 'فاتورة عميل' }}</td>
-                        <td>{{ \Illuminate\Support\Str::limit($job->last_error,90) }}</td>
-                        <td><button wire:click="retryFailedJob({{ $job->id }})" wire:confirm="إعادة المهمة للطباعة من البداية؟" class="secondary">إعادة المحاولة</button></td>
+                        <td data-label="رقم الطلب">{{ $job->order?->order_number }}</td>
+                        <td data-label="نوع المهمة">{{ $job->job_type==='kitchen_ticket' ? 'تذكرة مطبخ' : 'فاتورة عميل' }}</td>
+                        <td data-label="آخر خطأ">{{ \Illuminate\Support\Str::limit($job->last_error,90) }}</td>
+                        <td data-label="إجراء"><button wire:click="retryFailedJob({{ $job->id }})" wire:confirm="إعادة المهمة للطباعة من البداية؟" class="secondary">إعادة المحاولة</button></td>
                     </tr>
                 @endforeach
                 </tbody>

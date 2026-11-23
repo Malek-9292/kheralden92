@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
+use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\EmployeeSession;
 use App\Models\Order;
@@ -73,6 +74,37 @@ class OrderLifecycleTest extends TestCase
 
         app(OrderWorkflow::class)->collectCash($order->fresh(), $user);
         $this->assertSame('paid', $order->fresh()->payment_status);
+    }
+
+    public function test_livewire_cancel_requires_reason_and_persists_it(): void
+    {
+        [$user, $token, $order] = $this->createStaffAndOrder();
+
+        $this->actingAs($user)->withSession(['employee_session_token' => $token]);
+
+        Livewire::test(OrdersIndex::class)
+            ->call('openCancelModal', $order->id)
+            ->assertSet('cancelOrderId', $order->id)
+            ->call('confirmCancel')
+            ->assertHasErrors(['cancelReason']);
+
+        $this->assertSame('pending', $order->fresh()->status);
+
+        Livewire::test(OrdersIndex::class)
+            ->call('openCancelModal', $order->id)
+            ->set('cancelReason', 'طلب مكرر من العميل')
+            ->call('confirmCancel')
+            ->assertHasNoErrors()
+            ->assertSet('cancelOrderId', null);
+
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $log = AuditLog::query()
+            ->where('action', 'order.cancelled')
+            ->where('auditable_id', $order->id)
+            ->latest('id')
+            ->first();
+        $this->assertNotNull($log);
+        $this->assertSame('طلب مكرر من العميل', data_get($log->after_values, 'reason'));
     }
 
     /**

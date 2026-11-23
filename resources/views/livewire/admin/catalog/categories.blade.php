@@ -38,12 +38,12 @@
                 <tbody>
                 @forelse($categories as $category)
                     <tr wire:key="category-{{ $category->id }}">
-                        <td><strong>{{ $category->name }}</strong></td>
-                        <td>{{ $category->parent?->name ?? 'قسم رئيسي' }}</td>
-                        <td>{{ $category->products_count }}</td>
-                        <td><span class="status">{{ $category->is_active ? 'ظاهر' : 'مخفي' }}</span></td>
-                        <td>{{ $category->sort_order }}</td>
-                        <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <td data-label="القسم"><strong>{{ $category->name }}</strong></td>
+                        <td data-label="القسم الرئيسي">{{ $category->parent?->name ?? 'قسم رئيسي' }}</td>
+                        <td data-label="عدد الأصناف">{{ $category->products_count }}</td>
+                        <td data-label="الحالة"><span class="status">{{ $category->is_active ? 'ظاهر' : 'مخفي' }}</span></td>
+                        <td data-label="الترتيب">{{ $category->sort_order }}</td>
+                        <td data-label="إجراءات"><div style="display:flex;gap:6px;flex-wrap:wrap">
                             <button wire:click="edit({{ $category->id }})" style="border:0;border-radius:8px;padding:7px 10px;background:#edf3f8;color:#315b83;cursor:pointer;font:inherit;font-size:12px">تعديل</button>
                             <button wire:click="toggleActive({{ $category->id }})" style="border:0;border-radius:8px;padding:7px 10px;background:#f0f4ef;color:#42664c;cursor:pointer;font:inherit;font-size:12px">{{ $category->is_active ? 'إخفاء' : 'إظهار' }}</button>
                             @if($category->products_count===0)
