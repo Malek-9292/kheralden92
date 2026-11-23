@@ -61,6 +61,8 @@ class ProductController extends Controller
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'bread_type' => ['nullable', 'in:samoon,saj,none'],
+            'ingredients' => ['nullable', 'string', 'max:5000'],
             'price' => ['required', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
             'is_active' => ['sometimes', 'boolean'],
@@ -93,6 +95,8 @@ class ProductController extends Controller
                 'name' => $data['name'],
                 'slug' => $this->uniqueSlug($data['name'], $branchId),
                 'description' => $data['description'] ?? null,
+                'bread_type' => $data['bread_type'] ?? null,
+                'ingredients' => $data['ingredients'] ?? null,
                 'price' => $data['price'],
                 'compare_at_price' => $data['compare_at_price'] ?? null,
                 'is_active' => $data['is_active'] ?? true,
@@ -142,6 +146,8 @@ class ProductController extends Controller
             'category_id' => ['sometimes', 'required', 'integer', 'exists:categories,id'],
             'name' => ['sometimes', 'required', 'string', 'max:180'],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'bread_type' => ['sometimes', 'nullable', 'in:samoon,saj,none'],
+            'ingredients' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'price' => ['sometimes', 'required', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
             'compare_at_price' => ['sometimes', 'nullable', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
             'is_active' => ['sometimes', 'boolean'],
@@ -205,7 +211,7 @@ class ProductController extends Controller
             $request
         ): void {
             $product->fill(collect($data)->only([
-                'name', 'description', 'price', 'compare_at_price', 'is_active', 'is_best_seller', 'sort_order',
+                'name', 'description', 'bread_type', 'ingredients', 'price', 'compare_at_price', 'is_active', 'is_best_seller', 'sort_order',
             ])->all());
             $product->category_id = $categoryId;
             $product->save();

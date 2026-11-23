@@ -31,6 +31,9 @@
         .product h3{font-size:15px;margin:0}.desc{color:#75857a;font-size:12px;line-height:1.6;min-height:30px}
         .price{font-weight:800;color:#225d3b}.add{border:0;border-radius:10px;background:var(--brand);color:white;padding:10px;font-weight:700}
         .badge-best{font-size:10px;color:#8a6416;background:#fff2d3;border-radius:20px;padding:4px 7px;width:max-content}
+        .badge-bread{font-size:10px;color:#24563d;background:#e7f3ea;border-radius:20px;padding:4px 7px;width:max-content;margin-inline-start:4px}
+        .detail-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:12px}
+        .ingredients{background:#eef6ef;border-radius:10px;padding:12px;font-size:13px;line-height:1.8;white-space:pre-line;margin:10px 0}
         .cartbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dce7de;padding:12px max(16px,calc((100vw - 1180px)/2));display:flex;justify-content:space-between;align-items:center;gap:15px;z-index:5;box-shadow:0 -6px 20px #173d2610}
         .primary{border:0;background:var(--brand);color:#fff;padding:12px 18px;border-radius:11px;font-weight:700}
         .modal{position:fixed;inset:0;background:#12291db8;z-index:20;display:none;align-items:center;justify-content:center;padding:15px}
@@ -81,7 +84,7 @@
     <div class="actions"><button class="primary" id="submitOrder">تأكيد الطلب</button><button class="secondary" data-close="checkoutModal">رجوع</button></div>
 </div></div>
 <div class="modal" id="successModal"><div class="dialog"><h2>تم استلام طلبك بنجاح 🎉</h2><div id="successDetails" class="hint"></div><button class="primary" id="finishOrder">تمام</button></div></div>
-<div class="modal" id="productModal"><div class="dialog"><h2 id="detailName"></h2><img id="detailImage" alt="" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px"><div id="detailDescription" style="white-space:pre-line;line-height:1.8;font-size:14px;margin:14px 0"></div><div class="price" id="detailPrice"></div><div class="actions"><button class="primary" id="detailAdd">أضف للسلة</button><button class="secondary" data-close="productModal">إغلاق</button></div></div></div>
+<div class="modal" id="productModal"><div class="dialog"><h2 id="detailName"></h2><img id="detailImage" alt="" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px"><div class="detail-meta" id="detailMeta"></div><div id="detailDescription" style="white-space:pre-line;line-height:1.8;font-size:14px;margin:14px 0"></div><div id="detailIngredients" class="ingredients" hidden></div><div class="price" id="detailPrice"></div><div class="actions"><button class="primary" id="detailAdd">أضف للسلة</button><button class="secondary" data-close="productModal">إغلاق</button></div></div></div>
 
 <script>
 (() => {
@@ -151,21 +154,33 @@
         const term=state.search.trim().toLowerCase();
         const products=state.products.filter(p=>(!state.category||String(p.category_id)===state.category)&&(!term||(p.name+' '+(p.description||'')).toLowerCase().includes(term)));
         el('products').innerHTML=products.length?products.map(p=>{
-            const img=p.primary_image?.url||p.images?.[0]?.url||'';
-            return '<article class="product"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy"><div class="body">'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><button class="secondary" data-details="'+p.id+'">تفاصيل الصنف</button><button class="add" data-add="'+p.id+'">＋ أضف للسلة</button></div></article>';
+            const img=p.primary_image?.url||p.images?.[0]?.url||'/images/product-placeholder.jpg';
+            const badges=(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+(p.bread_label?'<span class="badge-bread">'+esc(p.bread_label)+'</span>':'');
+            return '<article class="product"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy"><div class="body">'+badges+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><button class="secondary" data-details="'+p.id+'">تفاصيل الصنف</button><button class="add" data-add="'+p.id+'">＋ أضف للسلة</button></div></article>';
         }).join(''):'<div class="empty">لا توجد أصناف مطابقة لبحثك</div>';
         el('products').querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addProduct(Number(b.dataset.add))));
         el('products').querySelectorAll('[data-details]').forEach(b=>b.addEventListener('click',()=>showProductDetails(Number(b.dataset.details))));
     }
-    function showProductDetails(id){
-        const p=state.products.find(x=>x.id===id);if(!p)return;
-        el('detailName').textContent=p.name;
-        el('detailImage').src=p.primary_image?.url||p.images?.[0]?.url||'';
-        el('detailImage').alt=p.name;
-        el('detailDescription').textContent=p.description||'لا توجد تفاصيل إضافية لهذا الصنف.';
-        el('detailPrice').textContent=money(p.price)+' د.ك';
+    async function showProductDetails(id){
+        const listed=state.products.find(x=>x.id===id);if(!listed)return;
+        el('detailName').textContent=listed.name;
+        el('detailImage').src=listed.primary_image?.url||listed.images?.[0]?.url||'/images/product-placeholder.jpg';
+        el('detailImage').alt=listed.name;
+        el('detailMeta').innerHTML=(listed.bread_label?'<span class="badge-bread">'+esc(listed.bread_label)+'</span>':'')+(listed.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'');
+        el('detailDescription').textContent=listed.description||'';
+        el('detailIngredients').hidden=true;el('detailIngredients').textContent='';
+        el('detailPrice').textContent=money(listed.price)+' د.ك';
         el('detailAdd').onclick=()=>{hide('productModal');addProduct(id);};
         show('productModal');
+        try{
+            const res=await fetch('/api/catalog/'+branch+'/products/'+encodeURIComponent(listed.slug));
+            if(!res.ok)return;
+            const data=await res.json();
+            const p=data.product||{};
+            el('detailDescription').textContent=p.description||listed.description||'لا توجد تفاصيل إضافية لهذا الصنف.';
+            if(p.ingredients){el('detailIngredients').hidden=false;el('detailIngredients').textContent='المكونات:\n'+p.ingredients;}
+            if(p.bread_label){el('detailMeta').innerHTML='<span class="badge-bread">'+esc(p.bread_label)+'</span>'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'');}
+        }catch(_){/* keep listed data */}
     }
     function renderAreas(){
         el('deliveryArea').innerHTML='<option value="">اختر المنطقة</option>'+state.areas.map(a=>'<option value="'+a.id+'">'+esc(a.governorate+' - '+a.name)+'</option>').join('');

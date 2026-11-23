@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\Catalog\ProductPresentation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -67,12 +68,20 @@ class CatalogController extends Controller
             }
         }
 
+        $paginator = $query
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate(min(max((int) $request->query('per_page', 24), 1), 60));
+
+        $paginator->setCollection(
+            $paginator->getCollection()->map(
+                fn (Product $product): array => ProductPresentation::toCustomerListArray($product),
+            ),
+        );
+
         return response()->json([
             'branch' => ['code' => $branch->code, 'name' => $branch->name],
-            'products' => $query
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->paginate(min(max((int) $request->query('per_page', 24), 1), 60)),
+            'products' => $paginator,
         ]);
     }
 
@@ -103,7 +112,7 @@ class CatalogController extends Controller
 
         return response()->json([
             'branch' => ['code' => $branch->code, 'name' => $branch->name],
-            'product' => $product,
+            'product' => ProductPresentation::toCustomerDetailArray($product),
         ]);
     }
 

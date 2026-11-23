@@ -39,6 +39,10 @@ class Products extends Component
 
     public string $description = '';
 
+    public string $breadType = '';
+
+    public string $ingredients = '';
+
     public string $price = '';
 
     public string $compareAtPrice = '';
@@ -54,6 +58,9 @@ class Products extends Component
     public array $images = [];
 
     public int $primaryImageIndex = 0;
+
+    /** @var array<int, array{start_time:string,end_time:string,is_active:bool}> */
+    public array $availabilityWindows = [];
 
     public function mount(): void
     {
@@ -90,6 +97,8 @@ class Products extends Component
             'categoryId' => ['required', 'integer', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'breadType' => ['nullable', 'in:samoon,saj,none'],
+            'ingredients' => ['nullable', 'string', 'max:5000'],
             'price' => ['required', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
             'compareAtPrice' => ['nullable', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
             'reason' => ['nullable', 'string', 'max:500'],
@@ -99,7 +108,19 @@ class Products extends Component
             'images' => [$this->editingId ? 'nullable' : 'required', 'array'],
             'images.*' => ['image', 'mimes:jpg,jpeg,webp', 'max:3072'],
             'primaryImageIndex' => ['integer', 'min:0'],
+            'availabilityWindows' => ['array'],
+            'availabilityWindows.*.start_time' => ['required', 'date_format:H:i'],
+            'availabilityWindows.*.end_time' => ['required', 'date_format:H:i'],
+            'availabilityWindows.*.is_active' => ['boolean'],
         ]);
+
+        foreach ($data['availabilityWindows'] ?? [] as $index => $window) {
+            if (($window['end_time'] ?? '') <= ($window['start_time'] ?? '')) {
+                throw ValidationException::withMessages([
+                    "availabilityWindows.{$index}.end_time" => ['وقت النهاية يجب أن يكون بعد وقت البداية.'],
+                ]);
+            }
+        }
 
         abort_unless(
             Category::query()->whereKey($data['categoryId'])->where('branch_id', $branchId)->exists(),
@@ -129,7 +150,7 @@ class Products extends Component
         }
 
         DB::transaction(function () use ($data, $branchId, $user, $product, $oldPrice, $priceChanged): void {
-            $before = $product?->only(['name', 'category_id', 'price', 'compare_at_price', 'is_active', 'is_best_seller']);
+            $before = $product?->only(['name', 'category_id', 'price', 'compare_at_price', 'bread_type', 'ingredients', 'is_active', 'is_best_seller']);
 
             if (! $product) {
                 $product = new Product(['branch_id' => $branchId]);
@@ -141,6 +162,8 @@ class Products extends Component
                 'category_id' => $data['categoryId'],
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
+                'bread_type' => ($data['breadType'] ?? '') !== '' ? $data['breadType'] : null,
+                'ingredients' => $data['ingredients'] ?: null,
                 'price' => $data['price'],
                 'compare_at_price' => $data['compareAtPrice'] ?: null,
                 'is_active' => $data['isActive'],
@@ -179,6 +202,16 @@ class Products extends Component
                 $product->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
             }
 
+            $product->availabilityWindows()->delete();
+            foreach ($data['availabilityWindows'] ?? [] as $index => $window) {
+                $product->availabilityWindows()->create([
+                    'start_time' => $window['start_time'],
+                    'end_time' => $window['end_time'],
+                    'is_active' => $window['is_active'] ?? true,
+                    'sort_order' => $index,
+                ]);
+            }
+
             AuditLog::query()->create([
                 'branch_id' => $branchId,
                 'actor_id' => $user->id,
@@ -186,7 +219,7 @@ class Products extends Component
                 'auditable_type' => Product::class,
                 'auditable_id' => $product->id,
                 'before_values' => $before,
-                'after_values' => $product->only(['name', 'category_id', 'price', 'compare_at_price', 'is_active', 'is_best_seller']),
+                'after_values' => $product->only(['name', 'category_id', 'price', 'compare_at_price', 'bread_type', 'ingredients', 'is_active', 'is_best_seller']),
                 'reason' => $priceChanged ? $data['reason'] : null,
                 'created_at' => now(),
             ]);
@@ -196,15 +229,32 @@ class Products extends Component
         session()->flash('status', 'تم حفظ الصنف بنجاح.');
     }
 
+    public function addAvailabilityWindow(): void
+    {
+        $this->availabilityWindows[] = [
+            'start_time' => '09:00',
+            'end_time' => '14:00',
+            'is_active' => true,
+        ];
+    }
+
+    public function removeAvailabilityWindow(int $index): void
+    {
+        unset($this->availabilityWindows[$index]);
+        $this->availabilityWindows = array_values($this->availabilityWindows);
+    }
+
     public function edit(int $id): void
     {
-        $product = Product::query()->with('images')->findOrFail($id);
+        $product = Product::query()->with(['images', 'availabilityWindows'])->findOrFail($id);
         app(BranchAccess::class)->assertCanAccess(auth()->user(), $product->branch_id);
         $this->editingId = $product->id;
         $this->branchId = $product->branch_id;
         $this->categoryId = $product->category_id;
         $this->name = $product->name;
         $this->description = (string) $product->description;
+        $this->breadType = (string) ($product->bread_type ?? '');
+        $this->ingredients = (string) ($product->ingredients ?? '');
         $this->price = (string) $product->price;
         $this->compareAtPrice = (string) ($product->compare_at_price ?? '');
         $this->isActive = $product->is_active;
@@ -212,6 +262,11 @@ class Products extends Component
         $this->sortOrder = $product->sort_order;
         $this->images = [];
         $this->reason = '';
+        $this->availabilityWindows = $product->availabilityWindows->map(fn ($window): array => [
+            'start_time' => substr((string) $window->start_time, 0, 5),
+            'end_time' => substr((string) $window->end_time, 0, 5),
+            'is_active' => (bool) $window->is_active,
+        ])->values()->all();
     }
 
     public function toggleActive(int $id): void
@@ -290,6 +345,8 @@ class Products extends Component
         $this->editingId = null;
         $this->name = '';
         $this->description = '';
+        $this->breadType = '';
+        $this->ingredients = '';
         $this->price = '';
         $this->compareAtPrice = '';
         $this->reason = '';
@@ -299,6 +356,7 @@ class Products extends Component
         $this->sortOrder = 0;
         $this->images = [];
         $this->primaryImageIndex = 0;
+        $this->availabilityWindows = [];
     }
 
     private function normalizePrice(string $price): string

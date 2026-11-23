@@ -31,9 +31,44 @@
             <label style="font-size:13px">ترتيب الظهور
                 <input wire:model="sortOrder" type="number" min="0" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px">
             </label>
-            <label style="font-size:13px;grid-column:1/-1">الوصف والمكونات
-                <textarea wire:model="description" rows="3" maxlength="5000" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px"></textarea>
+            <label style="font-size:13px">نوع الخبز
+                <select wire:model="breadType" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px;background:#fff">
+                    <option value="">حسب القسم (صمون للساندويتشات / صاج للصاج)</option>
+                    <option value="samoon">خبز صمون</option>
+                    <option value="saj">خبز صاج</option>
+                    <option value="none">بدون خبز محدد</option>
+                </select>
+                @error('breadType')<small style="color:#b42318">{{ $message }}</small>@enderror
             </label>
+            <label style="font-size:13px;grid-column:1/-1">الوصف (يظهر في القائمة والتفاصيل)
+                <textarea wire:model="description" rows="2" maxlength="5000" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px"></textarea>
+            </label>
+            <label style="font-size:13px;grid-column:1/-1">المكونات (لتفاصيل الصنف فقط — مثل صواني المشويات)
+                <textarea wire:model="ingredients" rows="3" maxlength="5000" placeholder="تظهر داخل تفاصيل الصنف فقط ولا تظهر في شبكة المنيو" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px"></textarea>
+                @error('ingredients')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
+            <div style="grid-column:1/-1;border:1px solid #e5ece6;border-radius:12px;padding:12px;background:#f8fbf8">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+                    <strong style="font-size:13px">فترات الظهور اليومية (اختياري)</strong>
+                    <button type="button" wire:click="addAvailabilityWindow" class="secondary">إضافة فترة</button>
+                </div>
+                <p class="muted" style="margin:0 0 10px">بدون فترات يظهر الصنف طوال اليوم. الأوقات بتوقيت الكويت.</p>
+                @forelse($availabilityWindows as $index => $window)
+                    <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end;margin-bottom:8px">
+                        <label style="font-size:12px">من
+                            <input type="time" wire:model="availabilityWindows.{{ $index }}.start_time" style="display:block;width:100%;padding:9px;border:1px solid #d8e3da;border-radius:9px;margin-top:4px">
+                        </label>
+                        <label style="font-size:12px">إلى
+                            <input type="time" wire:model="availabilityWindows.{{ $index }}.end_time" style="display:block;width:100%;padding:9px;border:1px solid #d8e3da;border-radius:9px;margin-top:4px">
+                        </label>
+                        <label style="font-size:12px;display:flex;align-items:center;gap:6px;padding-bottom:10px"><input type="checkbox" wire:model="availabilityWindows.{{ $index }}.is_active"> نشطة</label>
+                        <button type="button" wire:click="removeAvailabilityWindow({{ $index }})" class="secondary" style="margin-bottom:8px;color:#b42318;border-color:#f0c7c3">حذف</button>
+                    </div>
+                    @error('availabilityWindows.'.$index.'.end_time')<small style="color:#b42318">{{ $message }}</small>@enderror
+                @empty
+                    <div class="muted" style="font-size:12px">لا توجد فترات مخصصة.</div>
+                @endforelse
+            </div>
             <label style="font-size:13px;grid-column:1/-1">صور الصنف (JPG / WEBP، حتى 3 ميجابايت للصورة)
                 <input wire:model="images" type="file" accept=".jpg,.jpeg,.webp,image/jpeg,image/webp" multiple style="display:block;width:100%;padding:10px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px">
                 @error('images')<small style="color:#b42318">{{ $message }}</small>@enderror
