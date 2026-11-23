@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Catalog\ProductPresentation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,8 +14,8 @@ class Product extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'branch_id', 'category_id', 'name', 'slug', 'description', 'price',
-        'compare_at_price', 'is_active', 'is_best_seller', 'sort_order',
+        'branch_id', 'category_id', 'name', 'slug', 'description', 'bread_type', 'ingredients',
+        'price', 'compare_at_price', 'is_active', 'is_best_seller', 'sort_order',
     ];
 
     protected function casts(): array
@@ -56,5 +57,15 @@ class Product extends Model
     public function priceHistory(): HasMany
     {
         return $this->hasMany(ProductPriceHistory::class)->orderByDesc('created_at');
+    }
+
+    public function resolvedBreadType(): string
+    {
+        return ProductPresentation::resolveBreadType($this);
+    }
+
+    public function breadLabel(): ?string
+    {
+        return ProductPresentation::breadLabel($this->resolvedBreadType());
     }
 }

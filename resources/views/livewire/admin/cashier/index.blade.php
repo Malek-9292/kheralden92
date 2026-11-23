@@ -10,6 +10,9 @@
             <select wire:model.live="fulfillmentFilter" style="padding:11px;border:1px solid #d8e3da;border-radius:9px;background:#fff">
                 <option value="">كل طرق الاستلام</option><option value="pickup">استلام من المطعم</option><option value="delivery">توصيل</option>
             </select>
+            <select wire:model.live="paymentFilter" style="padding:11px;border:1px solid #d8e3da;border-radius:9px;background:#fff">
+                <option value="unpaid">غير مسدد</option><option value="paid">مسدد</option><option value="">الكل</option>
+            </select>
         </div>
         <div class="table-wrap">
             <table style="min-width:800px">

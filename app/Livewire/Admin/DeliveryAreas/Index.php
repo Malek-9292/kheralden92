@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\DeliveryArea;
 use App\Services\BranchAccess;
+use App\Support\Delivery\KuwaitAreas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Url;
@@ -73,7 +74,7 @@ class Index extends Component
 
         $data = $this->validate([
             'branchId' => ['required', 'integer', 'exists:branches,id'],
-            'governorate' => ['required', 'string', 'max:100'],
+            'governorate' => ['required', 'string', 'max:100', Rule::in(KuwaitAreas::governorates())],
             'name' => ['required', 'string', 'max:150', $uniqueName],
             'deliveryFee' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],
             'minimumOrder' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],

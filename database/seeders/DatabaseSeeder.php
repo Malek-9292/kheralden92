@@ -99,5 +99,8 @@ class DatabaseSeeder extends Seeder
                 Permission::query()->whereIn('slug', $template['permissions'])->pluck('id'),
             );
         }
+
+        $this->call(CatalogSeeder::class);
+        $this->call(DeliveryAreaSeeder::class);
     }
 }

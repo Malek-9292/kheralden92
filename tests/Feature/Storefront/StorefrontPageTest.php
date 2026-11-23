@@ -13,6 +13,15 @@ class StorefrontPageTest extends TestCase
             ->assertSee('فتوش الخالدية')
             ->assertSee('/manifest.webmanifest')
             ->assertSee('/api/catalog/')
-            ->assertSee('/api/storefront/');
+            ->assertSee('/api/storefront/')
+            ->assertSee('تتبع طلب')
+            ->assertSee('loadingSkeleton')
+            ->assertSee('offlineBanner')
+            ->assertSee('serviceWorker');
+
+        $this->assertFileExists(public_path('manifest.webmanifest'));
+        $this->assertStringContainsString('فتوش الخالدية', file_get_contents(public_path('manifest.webmanifest')));
+        $this->assertFileExists(public_path('sw.js'));
+        $this->assertStringContainsString('fatoosh-storefront-v2', file_get_contents(public_path('sw.js')));
     }
 }

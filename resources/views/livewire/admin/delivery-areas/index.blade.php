@@ -14,7 +14,7 @@
             @endif
             <label style="font-size:13px">المحافظة
                 <select wire:model="governorate" required style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px;background:#fff">
-                    @foreach(['محافظة العاصمة','محافظة حولي','محافظة الفروانية','محافظة الأحمدي','محافظة مبارك الكبير','محافظة الجهراء'] as $governorateOption)
+                    @foreach(\App\Support\Delivery\KuwaitAreas::governorates() as $governorateOption)
                         <option value="{{ $governorateOption }}">{{ $governorateOption }}</option>
                     @endforeach
                 </select>

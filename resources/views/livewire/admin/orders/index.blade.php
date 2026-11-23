@@ -1,4 +1,5 @@
 <section>
+    @if(session('status'))<div class="flash">{{ session('status') }}</div>@endif
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
         <input type="search" wire:model.live.debounce.300ms="search" placeholder="ابحث برقم الطلب أو اسم العميل أو الهاتف" style="flex:1;min-width:240px;padding:12px;border:1px solid #d8e3da;border-radius:10px;font:inherit">
         <select wire:model.live="statusFilter" style="padding:12px;border:1px solid #d8e3da;border-radius:10px;background:#fff;font:inherit">
@@ -43,6 +44,9 @@
                                 @endif
                                 @if($canCancel && !in_array($order->status,['completed','cancelled'],true))
                                     <button wire:click="cancel({{ $order->id }})" wire:confirm="متأكد من إلغاء الطلب؟" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:8px 10px;background:#fcebea;color:#a33a31;cursor:pointer;font:inherit;font-size:12px">إلغاء</button>
+                                @endif
+                                @if($canReprint && $order->status !== 'cancelled')
+                                    <button wire:click="reprintKitchen({{ $order->id }})" wire:confirm="إعادة طباعة تذكرة المطبخ؟" wire:loading.attr="disabled" class="secondary" style="padding:8px 10px;font-size:12px">إعادة تذكرة مطبخ</button>
                                 @endif
                             </div>
                         </td>

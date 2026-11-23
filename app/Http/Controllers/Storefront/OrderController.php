@@ -33,6 +33,7 @@ class OrderController extends Controller
             'floor' => ['nullable', 'string', 'max:30'],
             'apartment' => ['nullable', 'string', 'max:30'],
             'customer_notes' => ['nullable', 'string', 'max:2000'],
+            'idempotency_key' => ['nullable', 'string', 'min:16', 'max:128'],
             'items' => ['required', 'array', 'min:1', 'max:40'],
             'items.*.product_id' => ['required', 'integer', 'distinct'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
@@ -43,9 +44,29 @@ class OrderController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        $idempotencyKey = $data['idempotency_key']
+            ?? (is_string($request->header('Idempotency-Key')) ? $request->header('Idempotency-Key') : null);
+        $idempotencyHash = filled($idempotencyKey) ? hash('sha256', $branch->id.'|'.$idempotencyKey) : null;
+
+        if ($idempotencyHash !== null) {
+            $existing = Order::query()
+                ->where('branch_id', $branch->id)
+                ->where('idempotency_key_hash', $idempotencyHash)
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'message' => 'تم استلام طلبك مسبقًا.',
+                    'order' => $existing->load('items'),
+                    'tracking_token' => null,
+                    'idempotent_replay' => true,
+                ]);
+            }
+        }
+
         $trackingToken = Str::random(64);
 
-        $order = DB::transaction(function () use ($data, $branch, $trackingToken, $request, $printJobDispatcher): Order {
+        $order = DB::transaction(function () use ($data, $branch, $trackingToken, $idempotencyHash, $request, $printJobDispatcher): Order {
             $area = null;
             $deliveryFee = 0;
             $minimumOrder = 0;
@@ -138,6 +159,7 @@ class OrderController extends Controller
                 'minimum_order_snapshot' => Money::fromFils($minimumOrder),
                 'total' => Money::fromFils(Money::addFils($subtotal, $deliveryFee)),
                 'tracking_token_hash' => hash('sha256', $trackingToken),
+                'idempotency_key_hash' => $idempotencyHash,
             ]);
 
             $order->update([

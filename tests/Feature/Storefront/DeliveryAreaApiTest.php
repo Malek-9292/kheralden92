@@ -43,7 +43,9 @@ class DeliveryAreaApiTest extends TestCase
             ->assertJsonCount(1, 'delivery_areas')
             ->assertJsonPath('delivery_areas.0.name', 'الخالدية')
             ->assertJsonPath('delivery_areas.0.delivery_fee', '1.000')
-            ->assertJsonPath('delivery_areas.0.minimum_order', '5.000');
+            ->assertJsonPath('delivery_areas.0.minimum_order', '5.000')
+            ->assertJsonPath('delivery_areas_by_governorate.0.governorate', 'محافظة العاصمة')
+            ->assertJsonCount(1, 'delivery_areas_by_governorate.0.areas');
 
         $branch->update(['is_active' => false]);
 

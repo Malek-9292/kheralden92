@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
 use App\Models\Order;
 use App\Services\BranchAccess;
+use App\Services\OrderWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -50,106 +48,41 @@ class OrderController extends Controller
         return response()->json(['order' => $order->load('items', 'deliveryArea')]);
     }
 
-    public function updateStatus(Request $request, Order $order, BranchAccess $branchAccess): JsonResponse
+    public function updateStatus(Request $request, Order $order, BranchAccess $branchAccess, OrderWorkflow $workflow): JsonResponse
     {
         $branchAccess->assertCanAccess($request->user(), $order->branch_id);
         $data = $request->validate(['status' => ['required', 'in:confirmed,preparing,ready,out_for_delivery,completed']]);
 
-        $next = $data['status'];
-        $allowed = [
-            'pending' => ['confirmed'],
-            'confirmed' => ['preparing'],
-            'preparing' => ['ready'],
-            'ready' => $order->fulfillment_type === 'delivery' ? ['out_for_delivery'] : ['completed'],
-            'out_for_delivery' => ['completed'],
-        ];
-
-        if (! in_array($next, $allowed[$order->status] ?? [], true)) {
-            throw ValidationException::withMessages([
-                'status' => ['انتقال حالة الطلب غير مسموح من الحالة الحالية.'],
-            ]);
-        }
-
-        $before = $order->status;
-
-        DB::transaction(function () use ($request, $order, $next, $before): void {
-            $order->status = $next;
-
-            if ($next === 'confirmed') {
-                $order->confirmed_at = now();
-            }
-
-            if ($next === 'completed') {
-                $order->completed_at = now();
-            }
-
-            $order->save();
-
-            $this->audit($request, $order, 'order.status_updated', [
-                'status' => $before,
-            ], [
-                'status' => $next,
-            ]);
-        });
+        $updated = $workflow->transitionTo(
+            $order,
+            $data['status'],
+            $request->user(),
+            $request->ip(),
+            (string) $request->userAgent(),
+        );
 
         return response()->json([
             'message' => 'تم تحديث حالة الطلب.',
-            'order' => $order->fresh()->load('items'),
+            'order' => $updated,
         ]);
     }
 
-    public function cancel(Request $request, Order $order, BranchAccess $branchAccess): JsonResponse
+    public function cancel(Request $request, Order $order, BranchAccess $branchAccess, OrderWorkflow $workflow): JsonResponse
     {
         $branchAccess->assertCanAccess($request->user(), $order->branch_id);
         $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        if (in_array($order->status, ['completed', 'cancelled'], true)) {
-            throw ValidationException::withMessages([
-                'status' => ['لا يمكن إلغاء طلب مكتمل أو ملغي بالفعل.'],
-            ]);
-        }
-
-        $before = $order->status;
-
-        DB::transaction(function () use ($request, $order, $data, $before): void {
-            $order->update([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-            ]);
-            $order->printJobs()->where('status', 'pending')->update(['status' => 'cancelled']);
-
-            $this->audit($request, $order, 'order.cancelled', [
-                'status' => $before,
-            ], [
-                'status' => 'cancelled',
-                'reason' => $data['reason'],
-            ]);
-        });
+        $updated = $workflow->cancel(
+            $order,
+            $request->user(),
+            $data['reason'],
+            $request->ip(),
+            (string) $request->userAgent(),
+        );
 
         return response()->json([
             'message' => 'تم إلغاء الطلب.',
-            'order' => $order->fresh()->load('items'),
-        ]);
-    }
-
-    private function audit(
-        Request $request,
-        Order $order,
-        string $action,
-        array $before,
-        array $after,
-    ): void {
-        AuditLog::query()->create([
-            'branch_id' => $order->branch_id,
-            'actor_id' => $request->user()->id,
-            'action' => $action,
-            'auditable_type' => Order::class,
-            'auditable_id' => $order->id,
-            'before_values' => $before,
-            'after_values' => $after,
-            'ip_address' => $request->ip(),
-            'user_agent' => substr((string) $request->userAgent(), 0, 500),
-            'created_at' => now(),
+            'order' => $updated,
         ]);
     }
 }
