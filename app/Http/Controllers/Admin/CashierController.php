@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Order;
 use App\Services\BranchAccess;
+use App\Services\PrintJobDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class CashierController extends Controller
 {
-    public function markPaid(Request $request, Order $order, BranchAccess $branchAccess): JsonResponse
+    public function markPaid(Request $request, PrintJobDispatcher $printJobDispatcher, Order $order, BranchAccess $branchAccess): JsonResponse
     {
         $branchAccess->assertCanAccess($request->user(), $order->branch_id);
 
@@ -33,12 +34,14 @@ class CashierController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($request, $order): void {
+        DB::transaction(function () use ($request, $order, $printJobDispatcher): void {
             $order->update([
                 'payment_method' => 'cash',
                 'payment_status' => 'paid',
                 'paid_at' => now(),
             ]);
+
+            $printJobDispatcher->enqueueCustomerReceipt($order->fresh()->load('items'));
 
             AuditLog::query()->create([
                 'branch_id' => $order->branch_id,
