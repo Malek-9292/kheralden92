@@ -53,7 +53,7 @@ class RoleController extends Controller
             'permission_slugs.*' => ['string', 'distinct', 'exists:permissions,slug'],
         ]);
 
-        if (! $request->user()->hasRole('system_admin') && in_array('modules.manage', $data['permission_slugs'] ?? [], true)) {
+        if ($request->user()->hasRole('system_admin') === false && in_array('modules.manage', $data['permission_slugs'] ?? [], true)) {
             throw ValidationException::withMessages([
                 'permission_slugs' => ['صلاحية إدارة الوحدات مخصصة لمدير النظام فقط.'],
             ]);
