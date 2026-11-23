@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\BranchAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -120,7 +121,7 @@ class EmployeeController extends Controller
         $newBranchId = (int) ($data['branch_id'] ?? $oldBranchId);
         $effectiveValidFrom = array_key_exists('valid_from', $data) ? $data['valid_from'] : $employee->valid_from;
         $effectiveValidUntil = array_key_exists('valid_until', $data) ? $data['valid_until'] : $employee->valid_until;
-        if ($effectiveValidFrom && $effectiveValidUntil && now()->parse($effectiveValidUntil)->lt(now()->parse($effectiveValidFrom))) {
+        if ($effectiveValidFrom && $effectiveValidUntil && Carbon::parse($effectiveValidUntil)->lt(Carbon::parse($effectiveValidFrom))) {
             throw ValidationException::withMessages(['valid_until' => ['يجب أن يكون تاريخ نهاية الصلاحية بعد تاريخ بدايتها.']]);
         }
 
@@ -139,7 +140,7 @@ class EmployeeController extends Controller
             || array_key_exists('valid_from', $data)
             || array_key_exists('valid_until', $data);
 
-        $beforeValues = $employee->only(['name', 'phone', 'branch_id', 'status']);
+        $beforeValues = $employee->only(['name', 'phone', 'branch_id', 'status', 'valid_from', 'valid_until']);
         $beforeValues['role_ids'] = $employee->roles()->pluck('roles.id')->all();
 
         DB::transaction(function () use (
