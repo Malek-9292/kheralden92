@@ -16,7 +16,7 @@
                     <tbody>
                     @foreach($recentOrders as $order)
                         <tr>
-                            <td><a href="/admin/orders/{{ $order->id }}"><strong>{{ $order->order_number }}</strong></a></td>
+                            <td><a href="/admin/orders"><strong>{{ $order->order_number }}</strong></a></td>
                             <td>{{ $order->customer_name }}<div class="muted">{{ $order->customer_phone }}</div></td>
                             <td>{{ $order->fulfillment_type === 'pickup' ? 'استلام من المطعم' : 'توصيل' }}</td>
                             <td>{{ $order->total }} د.ك</td>
