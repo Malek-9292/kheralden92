@@ -39,16 +39,20 @@
     <aside class="sidebar">
         <div class="brand">فتوش الخالدية <small>نظام إدارة المطعم</small></div>
         <nav class="nav">
-            @if(auth()->user()->hasPermissionTo('dashboard.view')) <a class="active" href="/admin/dashboard">الرئيسية</a> @endif
-            @if(auth()->user()->hasPermissionTo('orders.view')) <a href="/admin/orders">الطلبات</a> @endif
-            @if(auth()->user()->hasPermissionTo('catalog.view')) <a href="/admin/products">الأصناف</a><a href="/admin/categories">الأقسام</a> @endif
-            @if(auth()->user()->hasPermissionTo('delivery.manage')) <a href="/admin/delivery-areas">مناطق التوصيل</a> @endif
-            @if(auth()->user()->hasPermissionTo('employees.manage')) <a href="/admin/employees">الموظفون</a> @endif
-            @if(auth()->user()->hasPermissionTo('branches.manage')) <a href="/admin/branches">الفروع</a> @endif
-            @if(auth()->user()->hasPermissionTo('roles.manage')) <a href="/admin/roles">الأدوار والصلاحيات</a> @endif
-            @if(auth()->user()->hasPermissionTo('cashier.use')) <a href="/admin/cashier">الكاشير</a> @endif
-            @if(auth()->user()->hasPermissionTo('printing.manage')) <a href="/admin/printers">الطابعات</a> @endif
-            @if(auth()->user()->hasPermissionTo('settings.manage')) <a href="/admin/settings">إعدادات المطعم</a> @endif
+            @php($currentPath = '/'.ltrim(request()->path(), '/'))
+            @if(auth()->user()->hasPermissionTo('dashboard.view')) <a class="{{ $currentPath === '/admin/dashboard' ? 'active' : '' }}" href="/admin/dashboard">الرئيسية</a> @endif
+            @if(auth()->user()->hasPermissionTo('orders.view')) <a class="{{ str_starts_with($currentPath, '/admin/orders') ? 'active' : '' }}" href="/admin/orders">الطلبات</a> @endif
+            @if(auth()->user()->hasPermissionTo('catalog.view'))
+                <a class="{{ str_starts_with($currentPath, '/admin/products') ? 'active' : '' }}" href="/admin/products">الأصناف</a>
+                <a class="{{ str_starts_with($currentPath, '/admin/categories') ? 'active' : '' }}" href="/admin/categories">الأقسام</a>
+            @endif
+            @if(auth()->user()->hasPermissionTo('delivery.manage')) <a class="{{ str_starts_with($currentPath, '/admin/delivery-areas') ? 'active' : '' }}" href="/admin/delivery-areas">مناطق التوصيل</a> @endif
+            @if(auth()->user()->hasPermissionTo('employees.manage')) <a class="{{ str_starts_with($currentPath, '/admin/employees') ? 'active' : '' }}" href="/admin/employees">الموظفون</a> @endif
+            @if(auth()->user()->hasPermissionTo('branches.manage')) <a class="{{ str_starts_with($currentPath, '/admin/branches') ? 'active' : '' }}" href="/admin/branches">الفروع</a> @endif
+            @if(auth()->user()->hasPermissionTo('roles.manage')) <a class="{{ str_starts_with($currentPath, '/admin/roles') ? 'active' : '' }}" href="/admin/roles">الأدوار والصلاحيات</a> @endif
+            @if(auth()->user()->hasPermissionTo('cashier.use')) <a class="{{ str_starts_with($currentPath, '/admin/cashier') ? 'active' : '' }}" href="/admin/cashier">الكاشير</a> @endif
+            @if(auth()->user()->hasPermissionTo('printing.manage')) <a class="{{ str_starts_with($currentPath, '/admin/printers') ? 'active' : '' }}" href="/admin/printers">الطابعات</a> @endif
+            @if(auth()->user()->hasPermissionTo('settings.manage')) <a class="{{ str_starts_with($currentPath, '/admin/settings') ? 'active' : '' }}" href="/admin/settings">إعدادات المطعم</a> @endif
         </nav>
         <div class="muted" style="color:#b9d7c5;margin-top:auto">{{ auth()->user()->name }}</div>
         <form method="POST" action="/admin/session" onsubmit="return false">

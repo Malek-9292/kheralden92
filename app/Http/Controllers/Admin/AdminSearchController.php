@@ -26,7 +26,8 @@ class AdminSearchController extends Controller
         $navigation = [
             ['permission' => 'dashboard.view', 'label' => 'لوحة التحكم', 'url' => '/admin/dashboard'],
             ['permission' => 'orders.view', 'label' => 'الطلبات', 'url' => '/admin/orders'],
-            ['permission' => 'catalog.view', 'label' => 'الأقسام والأصناف', 'url' => '/admin/catalog'],
+            ['permission' => 'catalog.view', 'label' => 'الأصناف', 'url' => '/admin/products'],
+            ['permission' => 'catalog.view', 'label' => 'الأقسام', 'url' => '/admin/categories'],
             ['permission' => 'delivery.manage', 'label' => 'مناطق التوصيل', 'url' => '/admin/delivery-areas'],
             ['permission' => 'employees.manage', 'label' => 'الموظفون', 'url' => '/admin/employees'],
             ['permission' => 'branches.manage', 'label' => 'الفروع', 'url' => '/admin/branches'],

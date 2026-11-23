@@ -18,3 +18,4 @@
 /storage/framework/views/*
 /storage/logs/*
 /bootstrap/cache/*
+/composer.phar
