@@ -129,7 +129,8 @@ class Index extends Component
                 || (string) ($before['valid_until'] ?? '') !== (string) ($employee->valid_until ?? '')
             );
             $statusChangedToInactive = $employee->status !== 'active';
-            if ($employee->exists && ($branchChanged || $validityChanged || $statusChangedToInactive)) {
+            $passwordChanged = filled($data['password']);
+            if ($employee->exists && ($branchChanged || $validityChanged || $statusChangedToInactive || $passwordChanged)) {
                 $employee->employeeSessions()->whereNull('logged_out_at')->update([
                     'logged_out_at' => now(),
                     'ended_reason' => 'account_changed',
