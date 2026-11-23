@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\BranchAccess;
+use App\Support\Modules\ModuleManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,7 +23,7 @@ class AdminSearchController extends Controller
         $user = $request->user();
         $branchIds = $branchAccess->visibleBranchIds($user);
         $results = [];
-        $moduleManager = app(\App\Support\Modules\ModuleManager::class);
+        $moduleManager = app(ModuleManager::class);
         $moduleByPermission = [
             'orders.view' => 'Orders',
             'catalog.view' => 'Catalog',
