@@ -41,6 +41,7 @@ class DeliveryAreaController extends Controller
 
     public function store(Request $request, BranchAccess $branchAccess): JsonResponse
     {
+        $branchId = (int) $request->input('branch_id', 0);
         $data = $request->validate([
             'branch_id' => ['required', 'integer', 'exists:branches,id'],
             'governorate' => ['required', 'string', 'max:100'],
