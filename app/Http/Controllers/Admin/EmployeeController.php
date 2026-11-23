@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
+use App\Models\AuditLog;\nuse App\Models\Role;
 use App\Models\User;
 use App\Services\BranchAccess;
 use Illuminate\Http\JsonResponse;
@@ -53,7 +53,7 @@ class EmployeeController extends Controller
         $roleIds = $data['role_ids'] ?? [];
         $this->assertRolesAllowed($roleIds, (int) $data['branch_id'], $request->user()->hasRole('system_admin'));
 
-        $employee = DB::transaction(function () use ($data, $roleIds): User {
+        $employee = DB::transaction(function () use ($data, $roleIds, $request): User {
             $employee = User::query()->create([
                 'name' => $data['name'],
                 'phone' => $data['phone'],
@@ -89,6 +89,11 @@ class EmployeeController extends Controller
         ]);
 
         $newBranchId = (int) ($data['branch_id'] ?? $oldBranchId);
+        if ($newBranchId !== $oldBranchId && ! array_key_exists('role_ids', $data)) {
+            throw ValidationException::withMessages([
+                'role_ids' => ['حدد صلاحيات الموظف مرة أخرى عند نقله إلى فرع مختلف.'],
+            ]);
+        }
         $branchAccess->assertCanAccess($request->user(), $newBranchId);
         $roleIds = $data['role_ids'] ?? $employee->roles()->pluck('roles.id')->all();
         $this->assertRolesAllowed($roleIds, $newBranchId, $request->user()->hasRole('system_admin'));
@@ -105,6 +110,25 @@ class EmployeeController extends Controller
 
             $employee->save();
             $employee->roles()->sync($roleIds);
+
+            AuditLog::query()->create([
+                'branch_id' => $newBranchId,
+                'actor_id' => $request->user()->id,
+                'action' => 'employee.updated',
+                'auditable_type' => User::class,
+                'auditable_id' => $employee->id,
+                'before_values' => $beforeValues,
+                'after_values' => [
+                    'name' => $employee->name,
+                    'phone' => $employee->phone,
+                    'branch_id' => $employee->branch_id,
+                    'status' => $employee->status,
+                    'role_ids' => $roleIds,
+                ],
+                'ip_address' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 500),
+                'created_at' => now(),
+            ]);
 
             if ($mustRevokeSessions) {
                 $employee->employeeSessions()
