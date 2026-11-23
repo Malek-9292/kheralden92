@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'storefront.index')->middleware('module.enabled:Storefront')->name('storefront.home');
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
-    Route::view('/login', 'admin.login')->middleware('module.enabled:Identity')->name('login');
+    Route::view('/login', 'admin.login')->middleware(['guest', 'module.enabled:Identity'])->name('login');
 
     Route::post('/session', [EmployeeSessionController::class, 'store'])
         ->middleware(['throttle:5,1', 'module.enabled:Identity'])
