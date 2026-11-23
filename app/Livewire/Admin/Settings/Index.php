@@ -16,18 +16,29 @@ class Index extends Component
     use WithFileUploads;
 
     public ?int $branchId = null;
+
     public string $restaurantName = '';
+
     public string $tagline = '';
+
     public string $phone = '';
+
     public string $whatsapp = '';
+
     public string $primaryColor = '#2f704b';
+
     public string $accentColor = '#8fcf9b';
+
     public string $bannerText = '';
+
     public string $bannerTextColor = '#ffffff';
+
     public string $bannerBackground = '#2f704b';
-    public int $bannerFontSize = 18;
+
     public string $footerText = '';
+
     public $logo = null;
+
     public ?string $currentLogoUrl = null;
 
     public function mount(): void
@@ -47,7 +58,9 @@ class Index extends Component
 
     public function loadSettings(): void
     {
-        if (! $this->branchId) return;
+        if (! $this->branchId) {
+            return;
+        }
 
         app(BranchAccess::class)->assertCanAccess(auth()->user(), (int) $this->branchId);
         $settings = BranchSetting::query()->where('branch_id', $this->branchId)->pluck('value', 'key');
@@ -61,7 +74,6 @@ class Index extends Component
         $this->bannerText = $settings->get('banner_text', '');
         $this->bannerTextColor = $settings->get('banner_text_color', '#ffffff');
         $this->bannerBackground = $settings->get('banner_background', '#2f704b');
-        $this->bannerFontSize = (int) $settings->get('banner_font_size', 18);
         $this->footerText = $settings->get('footer_text', '');
         $logoPath = $settings->get('logo_path');
         $this->currentLogoUrl = $logoPath ? Storage::disk('public')->url($logoPath) : null;
@@ -86,7 +98,6 @@ class Index extends Component
             'bannerText' => ['nullable', 'string', 'max:500'],
             'bannerTextColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'bannerBackground' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'bannerFontSize' => ['required', 'integer', 'min:12', 'max:48'],
             'footerText' => ['nullable', 'string', 'max:500'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
@@ -101,7 +112,6 @@ class Index extends Component
             'banner_text' => $data['bannerText'] ?? '',
             'banner_text_color' => $data['bannerTextColor'],
             'banner_background' => $data['bannerBackground'],
-            'banner_font_size' => (string) $data['bannerFontSize'],
             'footer_text' => $data['footerText'] ?? '',
         ];
 
@@ -123,7 +133,7 @@ class Index extends Component
                 'branch_id' => $branchId,
                 'actor_id' => $user->id,
                 'action' => 'branch.settings.updated',
-                'auditable_type' => Branch::class,
+                'auditable_type' => BranchSetting::class,
                 'auditable_id' => $branchId,
                 'before_values' => $before,
                 'after_values' => $keys,
@@ -138,6 +148,7 @@ class Index extends Component
     public function render()
     {
         $user = auth()->user();
+
         return view('livewire.admin.settings.index', [
             'branches' => $user->hasRole('system_admin') ? Branch::query()->orderBy('name')->get(['id', 'name']) : collect(),
             'isSystemAdmin' => $user->hasRole('system_admin'),
