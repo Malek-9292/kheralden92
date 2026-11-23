@@ -74,7 +74,7 @@ class EmployeeController extends Controller
 
     public function update(Request $request, User $employee, BranchAccess $branchAccess): JsonResponse
     {
-        $branchAccess->assertCanAccess($request->user(), (int) $employee->branch_id);
+        abort_if($employee->hasRole('system_admin'), 403, 'لا يمكن تعديل حساب مدير النظام الرئيسي من إدارة الموظفين.');\n        $oldBranchId = (int) $employee->branch_id;\n        $branchAccess->assertCanAccess($request->user(), $oldBranchId);
 
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:150'],
@@ -86,12 +86,12 @@ class EmployeeController extends Controller
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
         ]);
 
-        $newBranchId = (int) ($data['branch_id'] ?? $employee->branch_id);
+        $newBranchId = (int) ($data['branch_id'] ?? $oldBranchId);
         $branchAccess->assertCanAccess($request->user(), $newBranchId);
         $roleIds = $data['role_ids'] ?? $employee->roles()->pluck('roles.id')->all();
         $this->assertRolesAllowed($roleIds, $newBranchId, $request->user()->hasRole('system_admin'));
 
-        DB::transaction(function () use ($employee, $data, $roleIds, $newBranchId): void {
+        $mustRevokeSessions = (array_key_exists('status', $data) && $data['status'] !== 'active') || $newBranchId !== $oldBranchId;\n\n        DB::transaction(function () use ($employee, $data, $roleIds, $newBranchId, $mustRevokeSessions): void {
             $employee->fill(collect($data)->only(['name', 'phone', 'status'])->all());
             $employee->branch_id = $newBranchId;
 
@@ -102,7 +102,7 @@ class EmployeeController extends Controller
             $employee->save();
             $employee->roles()->sync($roleIds);
 
-            if (($data['status'] ?? null) !== 'active' || $newBranchId !== (int) $employee->getOriginal('branch_id')) {
+            if ($mustRevokeSessions) {
                 $employee->employeeSessions()
                     ->whereNull('logged_out_at')
                     ->update(['logged_out_at' => now(), 'ended_reason' => 'account_changed']);
