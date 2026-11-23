@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\DeliveryAreaController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\CashierController;
+use App\Http\Controllers\Admin\PrinterController;
 use App\Http\Controllers\Admin\AdminSearchController;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
@@ -62,6 +63,13 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/api/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.api.index');
         Route::post('/api/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.api.store');
         Route::patch('/api/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.api.update');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:printing.manage'])->prefix('/api')->name('printers.api.')->group(function (): void {
+        Route::get('/printers', [PrinterController::class, 'index'])->name('index');
+        Route::post('/printers', [PrinterController::class, 'store'])->name('store');
+        Route::patch('/printers/{printer}', [PrinterController::class, 'update'])->name('update');
+        Route::post('/printers/{printer}/rotate-token', [PrinterController::class, 'rotateToken'])->name('rotate-token');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:cashier.use'])->group(function (): void {
