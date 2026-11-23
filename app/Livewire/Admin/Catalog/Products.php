@@ -21,6 +21,7 @@ class Products extends Component
 {
     use WithFileUploads, WithPagination;
 
+    #[Url]
     public string $search = '';
     public string $categoryFilter = '';
     public string $statusFilter = '';
@@ -285,6 +286,7 @@ class Products extends Component
 
         return view('livewire.admin.catalog.products', [
             'products' => $query->paginate(20),
+            'editingProduct' => $this->editingId ? Product::query()->whereIn('branch_id', $branchIds)->with('images')->find($this->editingId) : null,
             'categories' => Category::query()->whereIn('branch_id', $branchIds)->orderBy('sort_order')->get(['id', 'name']),
             'formCategories' => Category::query()->whereIn('branch_id', $branchIds)->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
             'branches' => $user->hasRole('system_admin') ? Branch::query()->orderBy('name')->get(['id', 'name']) : collect(),
