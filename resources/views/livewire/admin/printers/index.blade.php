@@ -70,6 +70,24 @@
         </div>
         <div style="padding-top:16px">{{ $printers->links() }}</div>
     </div>
+    @if($failedJobs->isNotEmpty())
+        <div class="panel" style="margin-top:16px">
+            <h2>مهام طباعة فشلت وتحتاج مراجعة</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>رقم الطلب</th><th>نوع المهمة</th><th>آخر خطأ</th><th>إجراء</th></tr></thead>
+                <tbody>
+                @foreach($failedJobs as $job)
+                    <tr wire:key="failed-print-job-{{ $job->id }}">
+                        <td>{{ $job->order?->order_number }}</td>
+                        <td>{{ $job->job_type==='kitchen_ticket' ? 'تذكرة مطبخ' : 'فاتورة عميل' }}</td>
+                        <td>{{ \Illuminate\Support\Str::limit($job->last_error,90) }}</td>
+                        <td><button wire:click="retryFailedJob({{ $job->id }})" wire:confirm="إعادة المهمة للطباعة من البداية؟" class="secondary">إعادة المحاولة</button></td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table></div>
+        </div>
+    @endif
     <div class="panel" style="margin-top:16px">
         <h2>إعداد Print Agent</h2>
         <p class="muted">يستخدم جهاز الطباعة الرمز السري وكود الجهاز للاتصال بهذه الواجهات:</p>
