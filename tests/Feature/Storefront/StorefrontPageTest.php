@@ -48,9 +48,9 @@ class StorefrontPageTest extends TestCase
             ->assertSee("el('openCart').hidden=!count", false)
             ->assertSee('sf-brand-logo', false)
             ->assertSee('sf-brand-copy', false)
-            ->assertSee('aspect-ratio:21/9', false)
+            ->assertSee('height:clamp(140px,36vw,220px)', false)
             ->assertSee('product-actions', false)
-            ->assertSee('aspect-ratio:1/1', false)
+            ->assertSee('aspect-ratio:4/5', false)
             ->assertSee('align-items:stretch', false);
 
         $this->assertFileExists(public_path('manifest.webmanifest'));

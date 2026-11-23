@@ -21,9 +21,9 @@
         body.modal-open{overflow:hidden;touch-action:none}
         .sf-header{background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);padding:0 0 12px;padding-top:max(0px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:100%}
         .sf-brand{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;text-align:center;min-width:0;width:100%}
-        .sf-brand-logo{width:100%;margin:0;background:var(--brand-logo-bg,#f3f7f3);overflow:hidden;border-bottom:1px solid var(--brand-box-border,#e7eee8)}
-        .sf-brand-logo img{width:100%;height:auto;min-height:clamp(120px,28vw,180px);max-height:clamp(140px,32vw,220px);aspect-ratio:21/9;object-fit:contain;object-position:center;border-radius:0;background:var(--brand-logo-bg,#f3f7f3);display:block}
-        .sf-brand-copy{width:100%;padding:12px max(12px,env(safe-area-inset-right)) 12px max(12px,env(safe-area-inset-left));background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);box-sizing:border-box}
+        .sf-brand-logo{width:100%;height:clamp(140px,36vw,220px);margin:0;background:var(--brand-logo-bg,#e8f0ea);overflow:hidden;border-bottom:1px solid var(--brand-box-border,#e7eee8);display:block}
+        .sf-brand-logo img{width:100%;height:100%;object-fit:contain;object-position:center;border-radius:0;background:transparent;display:block}
+        .sf-brand-copy{width:100%;padding:14px max(12px,env(safe-area-inset-right)) 14px max(12px,env(safe-area-inset-left));background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);box-sizing:border-box;display:block}
         .sf-brand .name{font-size:clamp(18px,5vw,24px);font-weight:900;color:var(--brand-name-color,#1d5b3d);line-height:1.3;overflow-wrap:anywhere;width:100%}
         .sf-brand .tag{font-size:12px;color:var(--brand-tagline-color,#6f8376);line-height:1.5;width:100%;margin-top:4px}
         .sf-header .sf-fulfillment,.sf-header .sf-actions{padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
@@ -51,7 +51,7 @@
         /* Mobile-first: 1 col tiny phones, 2 cols from ~360 */
         .grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:stretch}
         .product{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px #163b2410;display:flex;flex-direction:column;min-width:0;height:100%}
-        .product .media{background:#edf3ed;aspect-ratio:1/1;min-height:160px;display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
+        .product .media{background:#edf3ed;aspect-ratio:4/5;min-height:180px;display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
         .product .media img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
         .product .body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-width:0;min-height:0}
         .product .badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:22px}
@@ -84,7 +84,7 @@
         .sticky-actions .primary,.sticky-actions .secondary{flex:1 1 140px;min-height:var(--tap)}
         .skeleton{display:grid;grid-template-columns:1fr;gap:12px;width:100%;grid-column:1/-1}
         .skeleton .card{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;min-height:200px}
-        .skeleton .ph{background:linear-gradient(90deg,#edf3ed 25%,#f7faf7 50%,#edf3ed 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;aspect-ratio:1/1;min-height:160px}
+        .skeleton .ph{background:linear-gradient(90deg,#edf3ed 25%,#f7faf7 50%,#edf3ed 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;aspect-ratio:4/5;min-height:180px}
         .skeleton .line{height:12px;margin:12px;border-radius:6px;background:#edf3ed}
         @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
         .offline{background:#fff4df;color:#8a6416;text-align:center;padding:10px 14px;font-size:13px}
@@ -109,7 +109,7 @@
             .sf-header{gap:14px}
             .sf-header .sf-fulfillment,.sf-header .sf-actions,.sf-brand-copy{padding-inline:max(16px,calc((100vw - 1180px)/2))}
             .sf-fulfillment{max-width:480px}
-            .product .media{min-height:200px}
+            .product .media{min-height:220px}
             .cartbar{padding-inline:max(16px,calc((100vw - 1180px)/2));flex-wrap:nowrap}.cartbar .primary{flex:0 0 auto}
         }
         /* ≥768 tablets */
