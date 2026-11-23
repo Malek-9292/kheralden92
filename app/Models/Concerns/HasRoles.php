@@ -23,7 +23,7 @@ trait HasRoles
     public function hasPermissionTo(string $permission): bool
     {
         return $this->roles()
-            ->where(fn ($query) => $query->whereNull('branch_id')->orWhere('branch_id', $this->branch_id))
+            ->where(fn ($query) => $query->whereNull('roles.branch_id')->orWhere('roles.branch_id', $this->branch_id))
             ->whereHas('permissions', fn ($query) => $query->where('slug', $permission))
             ->exists();
     }
