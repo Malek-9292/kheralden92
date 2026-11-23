@@ -1,0 +1,294 @@
+<?php
+
+namespace App\Livewire\Admin\Catalog;
+
+use App\Models\AuditLog;
+use App\Models\Branch;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\ProductPriceHistory;
+use App\Services\BranchAccess;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+
+class Products extends Component
+{
+    use WithFileUploads, WithPagination;
+
+    public string $search = '';
+    public string $categoryFilter = '';
+    public string $statusFilter = '';
+    public ?int $branchId = null;
+    public ?int $editingId = null;
+    public ?int $categoryId = null;
+    public string $name = '';
+    public string $description = '';
+    public string $price = '';
+    public string $compareAtPrice = '';
+    public string $reason = '';
+    public bool $isActive = true;
+    public bool $isBestSeller = false;
+    public int $sortOrder = 0;
+    public array $images = [];
+    public int $primaryImageIndex = 0;
+
+    public function mount(): void
+    {
+        $user = auth()->user();
+        $this->branchId = $user->hasRole('system_admin')
+            ? Branch::query()->orderBy('id')->value('id')
+            : $user->branch_id;
+    }
+
+    public function updatedSearch(): void { $this->resetPage(); }
+    public function updatedCategoryFilter(): void { $this->resetPage(); }
+    public function updatedStatusFilter(): void { $this->resetPage(); }
+
+    public function save(): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('catalog.manage'), 403);
+        $branchId = $user->hasRole('system_admin') ? (int) $this->branchId : (int) $user->branch_id;
+        app(BranchAccess::class)->assertCanAccess($user, $branchId);
+
+        $data = $this->validate([
+            'branchId' => ['required', 'integer', 'exists:branches,id'],
+            'categoryId' => ['required', 'integer', 'exists:categories,id'],
+            'name' => ['required', 'string', 'max:180'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'price' => ['required', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
+            'compareAtPrice' => ['nullable', 'numeric', 'min:0.001', 'regex:/^\d+(\.\d{1,3})?$/'],
+            'reason' => ['nullable', 'string', 'max:500'],
+            'isActive' => ['boolean'],
+            'isBestSeller' => ['boolean'],
+            'sortOrder' => ['integer', 'min:0'],
+            'images' => [$this->editingId ? 'nullable' : 'required', 'array'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,webp', 'max:3072'],
+            'primaryImageIndex' => ['integer', 'min:0'],
+        ]);
+
+        abort_unless(
+            Category::query()->whereKey($data['categoryId'])->where('branch_id', $branchId)->exists(),
+            422,
+            'القسم المحدد لا يتبع هذا الفرع.',
+        );
+
+        $product = $this->editingId ? Product::query()->findOrFail($this->editingId) : null;
+        if ($product) {
+            app(BranchAccess::class)->assertCanAccess($user, $product->branch_id);
+            abort_unless($product->branch_id === $branchId, 422);
+            if ($product->images()->count() === 0 && count($data['images'] ?? []) === 0) {
+                throw ValidationException::withMessages(['images' => ['يجب إضافة صورة واحدة على الأقل للصنف.']]);
+            }
+        } elseif (count($data['images'] ?? []) === 0) {
+            throw ValidationException::withMessages(['images' => ['أضف صورة واحدة على الأقل للصنف.']]);
+        }
+
+        if (count($data['images'] ?? []) > 0 && $data['primaryImageIndex'] >= count($data['images'])) {
+            throw ValidationException::withMessages(['primaryImageIndex' => ['اختيار الصورة الأساسية غير صالح.']]);
+        }
+
+        $oldPrice = $product ? (string) $product->price : null;
+        $priceChanged = $product && $this->normalizePrice($oldPrice) !== $this->normalizePrice($data['price']);
+        if ($priceChanged && trim($data['reason'] ?? '') === '') {
+            throw ValidationException::withMessages(['reason' => ['سبب تعديل السعر مطلوب.']]);
+        }
+
+        DB::transaction(function () use ($data, $branchId, $user, $product, $oldPrice, $priceChanged): void {
+            $before = $product?->only(['name', 'category_id', 'price', 'compare_at_price', 'is_active', 'is_best_seller']);
+
+            if (! $product) {
+                $product = new Product(['branch_id' => $branchId]);
+                $product->slug = $this->uniqueSlug($data['name'], $branchId);
+            }
+
+            $product->fill([
+                'branch_id' => $branchId,
+                'category_id' => $data['categoryId'],
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'price' => $data['price'],
+                'compare_at_price' => $data['compareAtPrice'] ?: null,
+                'is_active' => $data['isActive'],
+                'is_best_seller' => $data['isBestSeller'],
+                'sort_order' => $data['sortOrder'],
+            ])->save();
+
+            if ($priceChanged) {
+                ProductPriceHistory::query()->create([
+                    'product_id' => $product->id,
+                    'branch_id' => $branchId,
+                    'changed_by' => $user->id,
+                    'old_price' => $oldPrice,
+                    'new_price' => $product->price,
+                    'reason' => $data['reason'],
+                    'created_at' => now(),
+                ]);
+            }
+
+            foreach ($data['images'] ?? [] as $index => $image) {
+                if ($index === (int) $data['primaryImageIndex']) {
+                    $product->images()->update(['is_primary' => false]);
+                }
+                $path = $image->store('products/'.$product->id, 'public');
+                $product->images()->create([
+                    'path' => $path,
+                    'original_name' => substr($image->getClientOriginalName(), 0, 255),
+                    'mime_type' => $image->getMimeType(),
+                    'size_bytes' => $image->getSize(),
+                    'is_primary' => $index === (int) $data['primaryImageIndex'] && ! $product->images()->where('is_primary', true)->exists(),
+                    'sort_order' => $product->images()->count(),
+                ]);
+            }
+
+            if (! $product->images()->where('is_primary', true)->exists()) {
+                $product->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
+            }
+
+            AuditLog::query()->create([
+                'branch_id' => $branchId,
+                'actor_id' => $user->id,
+                'action' => $this->editingId ? 'product.updated' : 'product.created',
+                'auditable_type' => Product::class,
+                'auditable_id' => $product->id,
+                'before_values' => $before,
+                'after_values' => $product->only(['name', 'category_id', 'price', 'compare_at_price', 'is_active', 'is_best_seller']),
+                'reason' => $priceChanged ? $data['reason'] : null,
+                'created_at' => now(),
+            ]);
+        });
+
+        $this->resetForm();
+        session()->flash('status', 'تم حفظ الصنف بنجاح.');
+    }
+
+    public function edit(int $id): void
+    {
+        $product = Product::query()->with('images')->findOrFail($id);
+        app(BranchAccess::class)->assertCanAccess(auth()->user(), $product->branch_id);
+        $this->editingId = $product->id;
+        $this->branchId = $product->branch_id;
+        $this->categoryId = $product->category_id;
+        $this->name = $product->name;
+        $this->description = (string) $product->description;
+        $this->price = (string) $product->price;
+        $this->compareAtPrice = (string) ($product->compare_at_price ?? '');
+        $this->isActive = $product->is_active;
+        $this->isBestSeller = $product->is_best_seller;
+        $this->sortOrder = $product->sort_order;
+        $this->images = [];
+        $this->reason = '';
+    }
+
+    public function toggleActive(int $id): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('catalog.manage'), 403);
+        $product = Product::query()->findOrFail($id);
+        app(BranchAccess::class)->assertCanAccess($user, $product->branch_id);
+        $before = $product->is_active;
+        $product->update(['is_active' => ! $before]);
+        AuditLog::query()->create([
+            'branch_id' => $product->branch_id,
+            'actor_id' => $user->id,
+            'action' => 'product.status_updated',
+            'auditable_type' => Product::class,
+            'auditable_id' => $product->id,
+            'before_values' => ['is_active' => $before],
+            'after_values' => ['is_active' => ! $before],
+            'created_at' => now(),
+        ]);
+    }
+
+    public function toggleBestSeller(int $id): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('catalog.manage'), 403);
+        $product = Product::query()->findOrFail($id);
+        app(BranchAccess::class)->assertCanAccess($user, $product->branch_id);
+        $product->update(['is_best_seller' => ! $product->is_best_seller]);
+    }
+
+    public function deleteImage(int $imageId): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('catalog.manage'), 403);
+        $image = ProductImage::query()->findOrFail($imageId);
+        $product = $image->product;
+        app(BranchAccess::class)->assertCanAccess($user, $product->branch_id);
+        abort_if($product->images()->count() <= 1, 409, 'لا يمكن حذف الصورة الوحيدة للصنف.');
+        $wasPrimary = $image->is_primary;
+        $path = $image->path;
+        $image->delete();
+        Storage::disk('public')->delete($path);
+        if ($wasPrimary) {
+            $product->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
+        }
+    }
+
+    public function resetForm(): void
+    {
+        $this->editingId = null;
+        $this->name = '';
+        $this->description = '';
+        $this->price = '';
+        $this->compareAtPrice = '';
+        $this->reason = '';
+        $this->categoryId = null;
+        $this->isActive = true;
+        $this->isBestSeller = false;
+        $this->sortOrder = 0;
+        $this->images = [];
+        $this->primaryImageIndex = 0;
+    }
+
+    private function normalizePrice(string $price): string
+    {
+        [$whole, $fraction] = array_pad(explode('.', $price, 2), 2, '');
+        return (ltrim($whole, '0') ?: '0').'.'.str_pad(substr($fraction, 0, 3), 3, '0');
+    }
+
+    private function uniqueSlug(string $name, int $branchId): string
+    {
+        $base = Str::slug($name) ?: 'product';
+        $slug = $base;
+        $suffix = 2;
+        while (Product::withTrashed()->where('branch_id', $branchId)->where('slug', $slug)->exists()) {
+            $slug = $base.'-'.$suffix++;
+        }
+        return $slug;
+    }
+
+    public function render()
+    {
+        $user = auth()->user();
+        $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
+        $query = Product::query()->whereIn('branch_id', $branchIds)->with(['category:id,name', 'primaryImage'])->orderBy('sort_order')->orderBy('name');
+        if ($this->search !== '') {
+            $term = trim($this->search);
+            $query->where('name', 'like', '%'.$term.'%');
+        }
+        if ($this->categoryFilter !== '') {
+            $query->where('category_id', $this->categoryFilter);
+        }
+        if ($this->statusFilter === 'active') {
+            $query->where('is_active', true);
+        } elseif ($this->statusFilter === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        return view('livewire.admin.catalog.products', [
+            'products' => $query->paginate(20),
+            'categories' => Category::query()->whereIn('branch_id', $branchIds)->orderBy('sort_order')->get(['id', 'name']),
+            'formCategories' => Category::query()->whereIn('branch_id', $branchIds)->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
+            'branches' => $user->hasRole('system_admin') ? Branch::query()->orderBy('name')->get(['id', 'name']) : collect(),
+            'isSystemAdmin' => $user->hasRole('system_admin'),
+        ])->layout('layouts.admin', ['heading' => 'إدارة الأصناف']);
+    }
+}
