@@ -41,6 +41,7 @@
    composer install
    php artisan key:generate
    php artisan migrate --seed
+   php artisan storage:link
    php artisan fatoosh:admin:create
    php artisan serve
    ```
@@ -51,6 +52,7 @@
 
 - `GET /` — واجهة العميل والمنيو والسلة وإرسال الطلب.
 - `/manifest.webmanifest` و`/sw.js` — أساس تثبيت PWA على الأجهزة المدعومة.
+- `android-print-agent/` — مصدر تطبيق Android Print Agent الأولي لطابعات USB؛ يحتاج بناء APK واختبارًا فعليًا على Epson TM-T20 قبل التشغيل.
 - `GET /admin/login` — صفحة تسجيل دخول الموظفين.
 - `GET /admin/dashboard` — لوحة مؤشرات التشغيل.
 - `GET /admin/orders` — شاشة الطلبات والبحث وتحديث الحالة والتحصيل النقدي حسب الصلاحيات.
