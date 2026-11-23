@@ -42,7 +42,7 @@ class OrderController extends Controller
 
         $trackingToken = Str::random(64);
 
-        $order = DB::transaction(function () use ($data, $branch, $trackingToken): Order {
+        $order = DB::transaction(function () use ($data, $branch, $trackingToken, $request): Order {
             $area = null;
             $deliveryFee = 0;
             $minimumOrder = 0;
@@ -152,6 +152,24 @@ class OrderController extends Controller
                     'line_total' => $this->fromFils($unitPrice * $quantity),
                 ]);
             }
+
+            AuditLog::query()->create([
+                'branch_id' => $branch->id,
+                'actor_id' => null,
+                'action' => 'order.created',
+                'auditable_type' => Order::class,
+                'auditable_id' => $order->id,
+                'after_values' => [
+                    'order_number' => $order->order_number,
+                    'fulfillment_type' => $order->fulfillment_type,
+                    'subtotal' => $order->subtotal,
+                    'delivery_fee' => $order->delivery_fee,
+                    'total' => $order->total,
+                ],
+                'ip_address' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 500),
+                'created_at' => now(),
+            ]);
 
             return $order;
         });
