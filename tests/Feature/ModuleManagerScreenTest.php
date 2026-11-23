@@ -44,7 +44,7 @@ class ModuleManagerScreenTest extends TestCase
 
         Livewire::test(ModulesIndex::class)
             ->call('toggle', 'Catalog')
-            ->assertSee('يجب تفعيل الوحدات المطلوبة أولًا');
+            ->assertSee('Cannot disable [Catalog]');
 
         $this->assertDatabaseMissing('module_settings', [
             'module_key' => 'Catalog',
