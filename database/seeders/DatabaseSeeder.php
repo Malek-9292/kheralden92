@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Manage delivery areas', 'slug' => 'delivery.manage', 'module' => 'Delivery'],
             ['name' => 'Manage restaurant settings', 'slug' => 'settings.manage', 'module' => 'Settings'],
             ['name' => 'View reports', 'slug' => 'reports.view', 'module' => 'Reports'],
+            ['name' => 'Manage modules', 'slug' => 'modules.manage', 'module' => 'System'],
             ['name' => 'View orders', 'slug' => 'orders.view', 'module' => 'Orders'],
             ['name' => 'Accept orders', 'slug' => 'orders.accept', 'module' => 'Orders'],
             ['name' => 'Cancel orders', 'slug' => 'orders.cancel', 'module' => 'Orders'],
