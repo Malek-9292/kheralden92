@@ -19,8 +19,23 @@
         *{box-sizing:border-box}html,body{margin:0;max-width:100%;overflow-x:clip}button,input,select,textarea{font:inherit}button{cursor:pointer}
         :focus-visible{outline:3px solid #8fcf9b;outline-offset:2px}
         body.modal-open{overflow:hidden;touch-action:none}
-        .top{background:var(--brand);color:white;padding:14px max(12px,env(safe-area-inset-right)) 14px max(12px,env(safe-area-inset-left));padding-top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;gap:10px}
-        .logo{font-size:clamp(17px,4.6vw,23px);font-weight:900;min-width:0;line-height:1.35}.logo small{display:block;font-size:11px;font-weight:400;color:#d3e8d8;margin-top:4px}
+        .sf-header{background:#fff;border-bottom:1px solid #e7eee8;padding:12px max(12px,env(safe-area-inset-right)) 12px max(12px,env(safe-area-inset-left));padding-top:max(12px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:100%}
+        .sf-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;min-width:0}
+        .sf-brand img{width:56px;height:56px;object-fit:contain;border-radius:14px;background:#f3f7f3;display:block}
+        .sf-brand .name{font-size:clamp(18px,5vw,24px);font-weight:900;color:#1d5b3d;line-height:1.3;overflow-wrap:anywhere}
+        .sf-brand .tag{font-size:12px;color:#6f8376;line-height:1.5}
+        .sf-fulfillment{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:420px;margin-inline:auto}
+        .sf-fulfillment button{border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:999px;min-height:var(--tap);padding:10px 12px;font-weight:700;font-size:13px;width:100%;line-height:1.3}
+        .sf-fulfillment button.active{background:var(--brand);color:#fff}
+        .sf-fulfillment button:disabled{opacity:.45;cursor:not-allowed}
+        .sf-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0}
+        .sf-actions .icon-btn{flex:0 0 auto;width:44px;height:44px;border:1px solid #d9e4db;border-radius:12px;background:#fff;color:#2f5a3f;display:inline-flex;align-items:center;justify-content:center;padding:0}
+        .sf-actions .icon-btn.pill{width:auto;min-width:44px;padding:0 12px;border-radius:999px;font-weight:700;font-size:13px}
+        .sf-actions .account-btn{flex:1 1 auto;min-width:0;min-height:44px;border:1px solid #d9e4db;border-radius:12px;background:#fff;color:#2f5a3f;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;font-weight:700;font-size:13px}
+        .sf-actions .account-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .sf-actions svg{width:20px;height:20px;flex:0 0 auto}
+        .top-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
+        .top-tools .secondary{border:1px solid #d9e4db;background:#fff;color:#355b42;border-radius:10px;padding:8px 12px;min-height:40px;font-size:12px}
         .hero{background:linear-gradient(120deg,var(--brand),var(--accent));color:white;padding:28px 14px;text-align:center}
         .hero h1{font-size:clamp(22px,5.5vw,38px);margin:0 0 10px;line-height:1.35}.hero p{margin:0;color:#e0eee3;font-size:clamp(12px,3.2vw,14px);line-height:1.7}
         .wrap{max-width:1180px;margin:auto;padding:16px 12px 120px;padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
@@ -68,7 +83,6 @@
         .error-box{background:#fdecec;color:#b42318;border-radius:12px;padding:16px;text-align:center;overflow-wrap:anywhere}
         .actions{display:flex;gap:8px;justify-content:flex-start;margin-top:16px;flex-wrap:wrap}
         .secondary{border:1px solid #d9e4db;background:#fff;color:#355b42;border-radius:10px;padding:10px 14px;min-height:var(--tap)}
-        .top .secondary{padding:8px 12px;font-size:12px;min-height:40px;white-space:nowrap}
         #detailImage{width:100%;max-height:min(42vh,280px);object-fit:contain;background:#edf3ed;border-radius:12px}
         /* ≥360: two columns on small phones */
         @media(min-width:360px){.grid,.skeleton{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.search{flex:1 1 200px}}
@@ -76,20 +90,50 @@
         @media(min-width:700px){
             .modal{align-items:center;padding:15px}.dialog{border-radius:18px;max-height:90vh;padding:20px}
             .formgrid{grid-template-columns:1fr 1fr}.hero{padding:36px 20px}
-            .wrap{padding:22px 16px 100px}.top{padding-inline:max(16px,calc((100vw - 1180px)/2))}
+            .wrap{padding:22px 16px 100px}
+            .sf-header{padding-inline:max(16px,calc((100vw - 1180px)/2));gap:14px}
+            .sf-fulfillment{max-width:480px}
             .cartbar{padding-inline:max(16px,calc((100vw - 1180px)/2));flex-wrap:nowrap}.cartbar .primary{flex:0 0 auto}
         }
         /* ≥768 tablets */
         @media(min-width:768px){.grid,.skeleton{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.product h3{font-size:15px}}
         /* ≥1024 Windows laptop */
-        @media(min-width:1024px){.grid,.skeleton{grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.logo{font-size:23px}}
+        @media(min-width:1024px){.grid,.skeleton{grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.sf-brand .name{font-size:24px}}
         /* ≥1280 desktop */
         @media(min-width:1280px){.wrap{padding-bottom:100px}}
-        @media(max-width:359px){.product .body{padding:10px}.product h3{font-size:13px}.desc{font-size:11px}.top .secondary{padding:8px 9px;font-size:11px}}
+        @media(max-width:359px){.product .body{padding:10px}.product h3{font-size:13px}.desc{font-size:11px}.sf-fulfillment button{font-size:12px;padding:10px 8px}.sf-actions .account-btn{font-size:12px;padding:8px}}
     </style>
 </head>
 <body>
-<header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary" id="openLastOrder" hidden aria-label="تتبع آخر طلب">آخر طلب</button><button type="button" class="secondary" id="openTrack" aria-label="تتبع طلب">تتبع طلب</button><button type="button" class="secondary" id="installBtn" hidden aria-label="تثبيت التطبيق على الجهاز">تثبيت التطبيق</button></div></header>
+<header class="sf-header" role="banner">
+    <div class="sf-brand">
+        <img id="brandLogo" src="/icons/fatoosh.svg" alt="شعار فتوش الخالدية" width="56" height="56">
+        <div class="name" id="brandName">فتوش الخالدية</div>
+        <div class="tag" id="brandTagline">طعم يجمعنا</div>
+    </div>
+    <div class="sf-fulfillment" role="group" aria-label="طريقة الاستلام">
+        <button type="button" id="fulfillmentPickup" class="active" data-fulfillment="pickup" aria-pressed="true">استلام من المطعم</button>
+        <button type="button" id="fulfillmentDelivery" data-fulfillment="delivery" aria-pressed="false">التوصيل</button>
+    </div>
+    <div class="sf-actions" aria-label="اختصارات الصفحة">
+        <button type="button" class="icon-btn" id="headerMenuBtn" aria-label="المنيو">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <button type="button" class="icon-btn pill" id="headerLangBtn" aria-label="Language">EN</button>
+        <button type="button" class="icon-btn" id="headerCartBtn" aria-label="السلة">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 7h15l-1.5 9h-12z"/><path d="M6 7 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
+        </button>
+        <button type="button" class="account-btn" id="headerAccountBtn" aria-label="حسابي وتتبع الطلب">
+            <span>حسابي</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 19c1.8-3.2 4.2-4.5 7-4.5s5.2 1.3 7 4.5"/></svg>
+        </button>
+    </div>
+</header>
+<div class="top-tools">
+    <button type="button" class="secondary" id="openLastOrder" hidden aria-label="تتبع آخر طلب">آخر طلب</button>
+    <button type="button" class="secondary" id="openTrack" aria-label="تتبع طلب">تتبع طلب</button>
+    <button type="button" class="secondary" id="installBtn" hidden aria-label="تثبيت التطبيق على الجهاز">تثبيت التطبيق</button>
+</div>
 <div id="deliveryPauseBanner" class="offline" hidden role="status" style="background:#fff4e5;color:#8a4b08;border-bottom:1px solid #f0d7a8">التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.</div>
 <div id="offlineBanner" class="offline" hidden role="status">أنت غير متصل بالإنترنت. يمكنك تصفح آخر منيو محفوظ عند توفره، ولن يُرسل الطلب حتى يعود الاتصال.</div>
 <div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
@@ -245,6 +289,7 @@
         if(settings.primary_color)document.documentElement.style.setProperty('--brand',settings.primary_color);
         if(settings.accent_color)document.documentElement.style.setProperty('--accent',settings.accent_color);
         if(settings.logo_url){el('brandLogo').src=settings.logo_url;el('brandLogo').hidden=false;}
+        else{el('brandLogo').src='/icons/fatoosh.svg';el('brandLogo').hidden=false;}
         if(settings.banner_text){
             el('banner').textContent=settings.banner_text;
             el('banner').style.color=settings.banner_text_color||'#ffffff';
@@ -269,12 +314,34 @@
                 :'التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.';
             const deliveryOpt=el('fulfillment').querySelector('option[value="delivery"]');
             if(deliveryOpt) deliveryOpt.disabled=true;
-            if(el('fulfillment').value==='delivery'){el('fulfillment').value='pickup';updateFulfillment();}
+            el('fulfillmentDelivery').disabled=true;
+            if(el('fulfillment').value==='delivery'){setFulfillment('pickup');}
+            else syncFulfillmentButtons();
         }else{
             pauseBanner.hidden=true;
             const deliveryOpt=el('fulfillment').querySelector('option[value="delivery"]');
             if(deliveryOpt) deliveryOpt.disabled=false;
+            el('fulfillmentDelivery').disabled=false;
+            syncFulfillmentButtons();
         }
+    }
+    function syncFulfillmentButtons(){
+        const mode=el('fulfillment').value==='delivery'?'delivery':'pickup';
+        el('fulfillmentPickup').classList.toggle('active',mode==='pickup');
+        el('fulfillmentDelivery').classList.toggle('active',mode==='delivery');
+        el('fulfillmentPickup').setAttribute('aria-pressed',mode==='pickup'?'true':'false');
+        el('fulfillmentDelivery').setAttribute('aria-pressed',mode==='delivery'?'true':'false');
+    }
+    function setFulfillment(mode){
+        if(mode==='delivery'&&state.deliveryPaused){
+            el('fulfillment').value='pickup';
+            syncFulfillmentButtons();
+            updateFulfillment();
+            return;
+        }
+        el('fulfillment').value=mode;
+        syncFulfillmentButtons();
+        updateFulfillment();
     }
     function renderCategories(){
         el('categories').innerHTML='<button type="button" class="chip '+(!state.category?'active':'')+'" data-category="" aria-pressed="'+(!state.category)+'">الكل</button>'+
@@ -363,7 +430,20 @@
         renderCartItems();
     }
     el('search').addEventListener('input',e=>{state.search=e.target.value;renderProducts();});
-    el('fulfillment').addEventListener('change',updateFulfillment);
+    el('fulfillment').addEventListener('change',()=>{syncFulfillmentButtons();updateFulfillment();});
+    el('fulfillmentPickup').onclick=()=>setFulfillment('pickup');
+    el('fulfillmentDelivery').onclick=()=>setFulfillment('delivery');
+    el('headerMenuBtn').onclick=()=>{el('menuMain').scrollIntoView({behavior:'smooth',block:'start'});el('search').focus({preventScroll:true});};
+    el('headerCartBtn').onclick=()=>{renderCartItems();el('checkoutBtn').disabled=!cartItems().length;show('cartModal');};
+    el('headerAccountBtn').onclick=()=>{if(state.lastOrder){el('openLastOrder').click();}else{el('openTrack').click();}};
+    el('headerLangBtn').onclick=()=>{
+        const next=document.documentElement.lang==='ar'?'en':'ar';
+        document.documentElement.lang=next;
+        document.documentElement.dir=next==='ar'?'rtl':'ltr';
+        el('headerLangBtn').textContent=next==='ar'?'EN':'ع';
+        el('headerLangBtn').setAttribute('aria-label',next==='ar'?'Switch to English':'التبديل إلى العربية');
+    };
+    syncFulfillmentButtons();
     el('deliveryGovernorate').addEventListener('change',()=>{el('deliveryArea').value='';renderAreas();updateFulfillment();});
     el('deliveryArea').addEventListener('change',()=>{updateFulfillment();if(state.pendingProduct&&el('deliveryArea').value){const id=state.pendingProduct;state.pendingProduct=null;hide('checkoutModal');addProduct(id);}});
     el('openCart').onclick=()=>{renderCartItems();el('checkoutBtn').disabled=!cartItems().length;show('cartModal');};
