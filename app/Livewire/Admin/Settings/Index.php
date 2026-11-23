@@ -29,6 +29,16 @@ class Index extends Component
 
     public string $accentColor = '#8fcf9b';
 
+    public string $brandBoxBackground = '#ffffff';
+
+    public string $brandBoxBorderColor = '#e7eee8';
+
+    public string $brandNameColor = '#1d5b3d';
+
+    public string $brandTaglineColor = '#6f8376';
+
+    public string $brandLogoBackground = '#f3f7f3';
+
     public string $bannerText = '';
 
     public string $bannerTextColor = '#ffffff';
@@ -38,6 +48,8 @@ class Index extends Component
     public string $footerText = '';
 
     public int $bannerFontSize = 18;
+
+    public bool $showStorefrontTopBlock = false;
 
     public bool $deliveryPaused = false;
 
@@ -77,11 +89,17 @@ class Index extends Component
         $this->whatsapp = $settings->get('whatsapp', '');
         $this->primaryColor = $settings->get('primary_color', '#2f704b');
         $this->accentColor = $settings->get('accent_color', '#8fcf9b');
+        $this->brandBoxBackground = $settings->get('brand_box_background', '#ffffff');
+        $this->brandBoxBorderColor = $settings->get('brand_box_border_color', '#e7eee8');
+        $this->brandNameColor = $settings->get('brand_name_color', '#1d5b3d');
+        $this->brandTaglineColor = $settings->get('brand_tagline_color', '#6f8376');
+        $this->brandLogoBackground = $settings->get('brand_logo_background', '#f3f7f3');
         $this->bannerText = $settings->get('banner_text', '');
         $this->bannerTextColor = $settings->get('banner_text_color', '#ffffff');
         $this->bannerBackground = $settings->get('banner_background', '#2f704b');
         $this->bannerFontSize = (int) $settings->get('banner_font_size', 18);
         $this->footerText = $settings->get('footer_text', '');
+        $this->showStorefrontTopBlock = filter_var($settings->get('show_storefront_top_block', '0'), FILTER_VALIDATE_BOOLEAN);
         $this->deliveryPaused = filter_var($settings->get('delivery_paused', '0'), FILTER_VALIDATE_BOOLEAN);
         $this->deliveryPauseReason = (string) $settings->get('delivery_pause_reason', '');
         $logoPath = $settings->get('logo_path');
@@ -104,11 +122,17 @@ class Index extends Component
             'whatsapp' => ['nullable', 'string', 'max:30'],
             'primaryColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'accentColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brandBoxBackground' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brandBoxBorderColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brandNameColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brandTaglineColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brandLogoBackground' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'bannerText' => ['nullable', 'string', 'max:500'],
             'bannerTextColor' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'bannerBackground' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'bannerFontSize' => ['required', 'integer', 'min:12', 'max:48'],
             'footerText' => ['nullable', 'string', 'max:500'],
+            'showStorefrontTopBlock' => ['boolean'],
             'deliveryPaused' => ['boolean'],
             'deliveryPauseReason' => ['nullable', 'string', 'max:250'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
@@ -121,11 +145,17 @@ class Index extends Component
             'whatsapp' => $data['whatsapp'] ?? '',
             'primary_color' => $data['primaryColor'],
             'accent_color' => $data['accentColor'],
+            'brand_box_background' => $data['brandBoxBackground'],
+            'brand_box_border_color' => $data['brandBoxBorderColor'],
+            'brand_name_color' => $data['brandNameColor'],
+            'brand_tagline_color' => $data['brandTaglineColor'],
+            'brand_logo_background' => $data['brandLogoBackground'],
             'banner_text' => $data['bannerText'] ?? '',
             'banner_text_color' => $data['bannerTextColor'],
             'banner_background' => $data['bannerBackground'],
             'banner_font_size' => (string) $data['bannerFontSize'],
             'footer_text' => $data['footerText'] ?? '',
+            'show_storefront_top_block' => ! empty($data['showStorefrontTopBlock']) ? '1' : '0',
             'delivery_paused' => ! empty($data['deliveryPaused']) ? '1' : '0',
             'delivery_pause_reason' => trim((string) ($data['deliveryPauseReason'] ?? '')),
         ];
@@ -138,7 +168,7 @@ class Index extends Component
             $before = BranchSetting::query()->where('branch_id', $branchId)->pluck('value', 'key')->all();
 
             foreach ($keys as $key => $value) {
-                $group = in_array($key, ['delivery_paused', 'delivery_pause_reason'], true)
+                $group = in_array($key, ['delivery_paused', 'delivery_pause_reason', 'show_storefront_top_block'], true)
                     ? 'operations'
                     : 'branding';
 

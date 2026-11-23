@@ -39,7 +39,13 @@ class StorefrontPageTest extends TestCase
             ->assertSee('needsDeliveryArea', false)
             ->assertSee('openAreaGate', false)
             ->assertSee('fatoosh-delivery', false)
-            ->assertSee('gateGovernorate', false);
+            ->assertSee('gateGovernorate', false)
+            ->assertSee('storefrontTopBlock', false)
+            ->assertSee('show_storefront_top_block', false)
+            ->assertSee('brand-box-bg', false)
+            ->assertSee('brand_name_color', false)
+            ->assertSee('cartbar.is-empty', false)
+            ->assertSee("el('openCart').hidden=!count", false);
 
         $this->assertFileExists(public_path('manifest.webmanifest'));
         $this->assertStringContainsString('فتوش الخالدية', file_get_contents(public_path('manifest.webmanifest')));

@@ -35,8 +35,44 @@
                 @error('logo')<small style="color:#b42318">{{ $message }}</small>@enderror
                 @if($logo)<img src="{{ $logo->temporaryUrl() }}" alt="معاينة الشعار" style="width:110px;height:90px;object-fit:contain;background:#f4f7f4;border-radius:10px;padding:8px">@elseif($currentLogoUrl)<img src="{{ $currentLogoUrl }}" alt="شعار المطعم الحالي" style="width:110px;height:90px;object-fit:contain;background:#f4f7f4;border-radius:10px;padding:8px">@endif
             </label>
+
+            <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">
+                <strong>صندوق الهوية أعلى الواجهة</strong>
+                <p class="muted" style="margin:6px 0 0;line-height:1.7">تحكّم بلون خلفية صندوق الشعار والاسم والخط والحدود كما تظهر للعميل في أعلى الصفحة.</p>
+            </div>
+            <label class="field">خلفية صندوق الهوية
+                <div style="display:flex;gap:9px;align-items:center"><input wire:model.live="brandBoxBackground" type="color" style="width:55px;height:40px;padding:2px"><input wire:model="brandBoxBackground" dir="ltr" maxlength="7"></div>
+                @error('brandBoxBackground')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
+            <label class="field">لون حدود الصندوق
+                <div style="display:flex;gap:9px;align-items:center"><input wire:model.live="brandBoxBorderColor" type="color" style="width:55px;height:40px;padding:2px"><input wire:model="brandBoxBorderColor" dir="ltr" maxlength="7"></div>
+                @error('brandBoxBorderColor')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
+            <label class="field">لون اسم المطعم
+                <div style="display:flex;gap:9px;align-items:center"><input wire:model.live="brandNameColor" type="color" style="width:55px;height:40px;padding:2px"><input wire:model="brandNameColor" dir="ltr" maxlength="7"></div>
+                @error('brandNameColor')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
+            <label class="field">لون الشعار النصي
+                <div style="display:flex;gap:9px;align-items:center"><input wire:model.live="brandTaglineColor" type="color" style="width:55px;height:40px;padding:2px"><input wire:model="brandTaglineColor" dir="ltr" maxlength="7"></div>
+                @error('brandTaglineColor')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
+            <label class="field">خلفية إطار الشعار
+                <div style="display:flex;gap:9px;align-items:center"><input wire:model.live="brandLogoBackground" type="color" style="width:55px;height:40px;padding:2px"><input wire:model="brandLogoBackground" dir="ltr" maxlength="7"></div>
+                @error('brandLogoBackground')<small style="color:#b42318">{{ $message }}</small>@enderror
+            </label>
+
+            <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">
+                <strong>كتلة الترحيب وتتبع الطلب</strong>
+                <p class="muted" style="margin:6px 0 0;line-height:1.7">تشمل أزرار تتبع الطلب، تنبيه تثبيت التطبيق على iPhone، وبانر الترحيب «أهلاً بيك…». يمكن إخفاؤها لإبقاء الواجهة أنظف.</p>
+            </div>
+            <label class="field full" style="display:flex;align-items:flex-start;gap:10px">
+                <input wire:model.live="showStorefrontTopBlock" type="checkbox" style="margin-top:4px">
+                <span>إظهار كتلة الترحيب وتتبع الطلب أعلى المنيو</span>
+            </label>
+
             <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">
                 <strong>البانر الرئيسي</strong>
+                <p class="muted" style="margin:6px 0 0;line-height:1.7">يظهر داخل كتلة الترحيب عند تفعيلها أعلاه.</p>
             </div>
             <label class="field full">نص البانر
                 <input wire:model="bannerText" maxlength="500" placeholder="عروض فتوش الخالدية">

@@ -37,7 +37,35 @@ class StorefrontSettingsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('settings.restaurant_name', 'فتوش الخالدية المميز')
             ->assertJsonPath('settings.primary_color', '#336644')
-            ->assertJsonPath('settings.tagline', 'طعم يجمعنا');
+            ->assertJsonPath('settings.tagline', 'طعم يجمعنا')
+            ->assertJsonPath('settings.show_storefront_top_block', false)
+            ->assertJsonPath('settings.brand_box_background', '#ffffff')
+            ->assertJsonPath('settings.brand_name_color', '#1d5b3d');
+
+        BranchSetting::query()->create([
+            'branch_id' => $branch->id,
+            'setting_group' => 'operations',
+            'key' => 'show_storefront_top_block',
+            'value' => '1',
+        ]);
+        BranchSetting::query()->create([
+            'branch_id' => $branch->id,
+            'setting_group' => 'branding',
+            'key' => 'brand_name_color',
+            'value' => '#112233',
+        ]);
+        BranchSetting::query()->create([
+            'branch_id' => $branch->id,
+            'setting_group' => 'branding',
+            'key' => 'brand_box_background',
+            'value' => '#fafafa',
+        ]);
+
+        $this->getJson('/api/storefront/KHAL/settings')
+            ->assertOk()
+            ->assertJsonPath('settings.show_storefront_top_block', true)
+            ->assertJsonPath('settings.brand_name_color', '#112233')
+            ->assertJsonPath('settings.brand_box_background', '#fafafa');
 
         $branch->update(['is_active' => false]);
 
