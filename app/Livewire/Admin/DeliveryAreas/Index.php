@@ -61,6 +61,7 @@ class Index extends Component
         }
 
         $data = $this->validate([
+            'branchId' => ['required', 'integer', 'exists:branches,id'],
             'governorate' => ['required', 'string', 'max:100'],
             'name' => ['required', 'string', 'max:150', $uniqueName],
             'deliveryFee' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],
