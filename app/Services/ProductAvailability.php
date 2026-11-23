@@ -13,17 +13,20 @@ final class ProductAvailability
             return false;
         }
 
-        $windows = $product->availabilityWindows()
-            ->where('is_active', true)
-            ->get();
+        $allWindows = $product->availabilityWindows()->get();
 
-        if ($windows->isEmpty()) {
+        if ($allWindows->isEmpty()) {
             return true;
+        }
+
+        $activeWindows = $allWindows->where('is_active', true);
+        if ($activeWindows->isEmpty()) {
+            return false;
         }
 
         $localTime = ($at ?? now())->copy()->setTimezone('Asia/Kuwait')->format('H:i:s');
 
-        return $windows->contains(
+        return $activeWindows->contains(
             fn ($window): bool => $localTime >= $window->start_time && $localTime <= $window->end_time,
         );
     }
