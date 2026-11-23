@@ -36,6 +36,7 @@ class AdminSearchController extends Controller
             ['permission' => 'printing.manage', 'label' => 'الطابعات', 'url' => '/admin/printers'],
             ['permission' => 'settings.manage', 'label' => 'إعدادات المطعم', 'url' => '/admin/settings'],
             ['permission' => 'reports.view', 'label' => 'التقارير', 'url' => '/admin/reports'],
+            ['permission' => 'modules.manage', 'label' => 'مدير الوحدات', 'url' => '/admin/modules'],
         ];
 
         foreach ($navigation as $item) {
