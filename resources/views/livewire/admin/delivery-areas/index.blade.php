@@ -36,6 +36,12 @@
                 <input wire:model="sortOrder" type="number" min="0" step="1" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px">
             </label>
             <label style="display:flex;align-items:center;gap:9px;font-size:13px"><input wire:model="isActive" type="checkbox"> المنطقة متاحة للتوصيل</label>
+            @if($editingId)
+                <label style="font-size:13px;grid-column:1/-1">سبب تعديل الرسوم / الحد الأدنى
+                    <textarea wire:model="changeReason" rows="2" maxlength="500" placeholder="مطلوب عند تغيير رسوم التوصيل أو الحد الأدنى (3 أحرف على الأقل)" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px;font:inherit;resize:vertical"></textarea>
+                    @error('changeReason')<small style="color:#b42318">{{ $message }}</small>@enderror
+                </label>
+            @endif
             <div style="display:flex;gap:8px;align-items:center">
                 <button type="submit" wire:loading.attr="disabled" style="border:0;border-radius:9px;padding:11px 18px;background:#1d5b3d;color:#fff;font:inherit;cursor:pointer">حفظ المنطقة</button>
                 @if($editingId)<button type="button" wire:click="resetForm" style="border:1px solid #d8e3da;border-radius:9px;padding:10px 15px;background:#fff;font:inherit;cursor:pointer">إلغاء التعديل</button>@endif

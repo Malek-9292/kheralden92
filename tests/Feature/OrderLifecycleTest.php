@@ -8,9 +8,11 @@ use App\Models\Branch;
 use App\Models\EmployeeSession;
 use App\Models\Order;
 use App\Models\Permission;
+use App\Models\PrintJob;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\OrderWorkflow;
+use App\Services\PrintJobDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -31,6 +33,11 @@ class OrderLifecycleTest extends TestCase
             ->call('advance', $order->id)
             ->assertHasNoErrors();
         $this->assertSame('confirmed', $order->fresh()->status);
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $order->id,
+            'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
+        ]);
 
         Livewire::test(OrdersIndex::class)->call('advance', $order->id);
         $this->assertSame('preparing', $order->fresh()->status);
@@ -105,6 +112,66 @@ class OrderLifecycleTest extends TestCase
             ->first();
         $this->assertNotNull($log);
         $this->assertSame('طلب مكرر من العميل', data_get($log->after_values, 'reason'));
+    }
+
+    public function test_kitchen_ticket_is_created_only_when_order_is_confirmed(): void
+    {
+        [$user, $token, $order] = $this->createStaffAndOrder();
+
+        $this->assertDatabaseMissing('print_jobs', [
+            'order_id' => $order->id,
+            'job_type' => 'kitchen_ticket',
+        ]);
+
+        $this->actingAs($user)->withSession(['employee_session_token' => $token]);
+
+        Livewire::test(OrdersIndex::class)->call('advance', $order->id)->assertHasNoErrors();
+
+        $this->assertSame('confirmed', $order->fresh()->status);
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $order->id,
+            'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
+        ]);
+        $this->assertEquals(1, PrintJob::query()
+            ->where('order_id', $order->id)
+            ->where('job_type', 'kitchen_ticket')
+            ->count());
+    }
+
+    public function test_reprint_kitchen_requires_reason_and_writes_audit(): void
+    {
+        [$user, $token, $order] = $this->createStaffAndOrder(status: 'confirmed');
+
+        $this->actingAs($user)->withSession(['employee_session_token' => $token]);
+
+        app(PrintJobDispatcher::class)->enqueueKitchenTicket($order->load('items'));
+        PrintJob::query()
+            ->where('order_id', $order->id)
+            ->where('job_type', 'kitchen_ticket')
+            ->update(['status' => 'completed']);
+
+        Livewire::test(OrdersIndex::class)
+            ->call('openReprintModal', $order->id)
+            ->assertSet('reprintOrderId', $order->id)
+            ->call('confirmReprint')
+            ->assertHasErrors(['reprintReason']);
+
+        Livewire::test(OrdersIndex::class)
+            ->call('openReprintModal', $order->id)
+            ->set('reprintReason', 'الورقة انقطعت أثناء الطباعة')
+            ->call('confirmReprint')
+            ->assertHasNoErrors()
+            ->assertSet('reprintOrderId', null);
+
+        $log = AuditLog::query()
+            ->where('action', 'print.reprinted')
+            ->where('auditable_id', $order->id)
+            ->latest('id')
+            ->first();
+        $this->assertNotNull($log);
+        $this->assertSame('الورقة انقطعت أثناء الطباعة', $log->reason);
+        $this->assertSame('kitchen_ticket', data_get($log->after_values, 'job_type'));
     }
 
     /**

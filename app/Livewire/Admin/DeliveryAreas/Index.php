@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\DeliveryArea;
 use App\Services\BranchAccess;
 use App\Support\Delivery\KuwaitAreas;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Url;
@@ -37,6 +38,8 @@ class Index extends Component
     public bool $isActive = true;
 
     public int $sortOrder = 0;
+
+    public string $changeReason = '';
 
     public function mount(): void
     {
@@ -72,7 +75,7 @@ class Index extends Component
             $uniqueName->ignore($this->editingId);
         }
 
-        $data = $this->validate([
+        $rules = [
             'branchId' => ['required', 'integer', 'exists:branches,id'],
             'governorate' => ['required', 'string', 'max:100', Rule::in(KuwaitAreas::governorates())],
             'name' => ['required', 'string', 'max:150', $uniqueName],
@@ -80,11 +83,28 @@ class Index extends Component
             'minimumOrder' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],
             'isActive' => ['boolean'],
             'sortOrder' => ['integer', 'min:0'],
+            'changeReason' => ['nullable', 'string', 'max:500'],
+        ];
+
+        $feeOrMinimumChanging = false;
+        if ($this->editingId) {
+            $existing = DeliveryArea::query()->findOrFail($this->editingId);
+            app(BranchAccess::class)->assertCanAccess($user, $existing->branch_id);
+            $feeOrMinimumChanging = Money::toFils((string) $existing->delivery_fee) !== Money::toFils((string) $this->deliveryFee)
+                || Money::toFils((string) $existing->minimum_order) !== Money::toFils((string) $this->minimumOrder);
+            if ($feeOrMinimumChanging) {
+                $rules['changeReason'] = ['required', 'string', 'min:3', 'max:500'];
+            }
+        }
+
+        $data = $this->validate($rules, [], [
+            'changeReason' => 'سبب تعديل الرسوم',
         ]);
 
         $before = null;
+        $reason = filled($data['changeReason'] ?? null) ? trim((string) $data['changeReason']) : null;
 
-        DB::transaction(function () use ($data, $branchId, $user, &$before): void {
+        DB::transaction(function () use ($data, $branchId, $user, &$before, $reason, $feeOrMinimumChanging): void {
             if ($this->editingId) {
                 $area = DeliveryArea::query()->findOrFail($this->editingId);
                 app(BranchAccess::class)->assertCanAccess($user, $area->branch_id);
@@ -103,6 +123,11 @@ class Index extends Component
                 'sort_order' => $data['sortOrder'],
             ])->save();
 
+            $after = $area->only(['governorate', 'name', 'delivery_fee', 'minimum_order', 'is_active', 'sort_order']);
+            if ($feeOrMinimumChanging && $reason !== null) {
+                $after['reason'] = $reason;
+            }
+
             AuditLog::query()->create([
                 'branch_id' => $branchId,
                 'actor_id' => $user->id,
@@ -110,7 +135,8 @@ class Index extends Component
                 'auditable_type' => DeliveryArea::class,
                 'auditable_id' => $area->id,
                 'before_values' => $before,
-                'after_values' => $area->only(['governorate', 'name', 'delivery_fee', 'minimum_order', 'is_active', 'sort_order']),
+                'after_values' => $after,
+                'reason' => $feeOrMinimumChanging ? $reason : null,
                 'created_at' => now(),
             ]);
         });
@@ -132,6 +158,7 @@ class Index extends Component
         $this->minimumOrder = (string) $area->minimum_order;
         $this->isActive = $area->is_active;
         $this->sortOrder = $area->sort_order;
+        $this->changeReason = '';
     }
 
     public function toggleActive(int $areaId): void
@@ -165,6 +192,7 @@ class Index extends Component
         $this->minimumOrder = '0.000';
         $this->isActive = true;
         $this->sortOrder = 0;
+        $this->changeReason = '';
     }
 
     public function render()

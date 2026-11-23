@@ -54,7 +54,7 @@
                                     <button wire:click="openCancelModal({{ $order->id }})" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:10px 12px;min-height:40px;background:#fcebea;color:#a33a31;cursor:pointer;font:inherit;font-size:12px">إلغاء</button>
                                 @endif
                                 @if($canReprint && $order->status !== 'cancelled')
-                                    <button wire:click="reprintKitchen({{ $order->id }})" wire:confirm="إعادة طباعة تذكرة المطبخ؟" wire:loading.attr="disabled" class="secondary" style="padding:10px 12px;min-height:40px;font-size:12px">إعادة تذكرة مطبخ</button>
+                                    <button wire:click="openReprintModal({{ $order->id }})" wire:loading.attr="disabled" class="secondary" style="padding:10px 12px;min-height:40px;font-size:12px">إعادة تذكرة مطبخ</button>
                                 @endif
                             </div>
                         </td>
@@ -81,6 +81,24 @@
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
                     <button type="button" class="primary" wire:click="confirmCancel" wire:loading.attr="disabled" style="background:#a33a31">تأكيد الإلغاء</button>
                     <button type="button" class="secondary" wire:click="closeCancelModal">رجوع</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($reprintOrderId)
+        <div class="backdrop" style="display:block" wire:click="closeReprintModal" aria-hidden="true"></div>
+        <div role="dialog" aria-modal="true" aria-labelledby="reprint-order-title" style="position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px">
+            <div class="panel" style="width:min(440px,100%);margin:0;box-shadow:0 18px 50px #12291d33" @click.stop>
+                <h2 id="reprint-order-title" style="margin-top:0">سبب إعادة طباعة تذكرة المطبخ</h2>
+                <p class="muted" style="margin:0 0 12px;line-height:1.7">اكتب سببًا واضحًا (3 أحرف على الأقل). يُسجَّل المستخدم والوقت والسبب في سجل التدقيق.</p>
+                <label class="field" for="reprintReason">سبب إعادة الطباعة
+                    <textarea id="reprintReason" wire:model="reprintReason" rows="3" maxlength="500" required placeholder="مثال: الورق انقطع، التذكرة غير واضحة، طلب المطبخ..."></textarea>
+                </label>
+                @error('reprintReason')<div class="flash error" style="margin-top:10px">{{ $message }}</div>@enderror
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+                    <button type="button" class="primary" wire:click="confirmReprint" wire:loading.attr="disabled">تأكيد إعادة الطباعة</button>
+                    <button type="button" class="secondary" wire:click="closeReprintModal">رجوع</button>
                 </div>
             </div>
         </div>

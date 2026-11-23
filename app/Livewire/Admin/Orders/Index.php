@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Orders;
 
+use App\Models\AuditLog;
 use App\Models\Order;
 use App\Services\BranchAccess;
 use App\Services\OrderWorkflow;
@@ -24,6 +25,10 @@ class Index extends Component
     public ?int $cancelOrderId = null;
 
     public string $cancelReason = '';
+
+    public ?int $reprintOrderId = null;
+
+    public string $reprintReason = '';
 
     public function updatedSearch(): void
     {
@@ -104,7 +109,7 @@ class Index extends Component
         session()->flash('status', 'تم تسجيل التحصيل النقدي.');
     }
 
-    public function reprintKitchen(int $orderId, PrintJobDispatcher $dispatcher): void
+    public function openReprintModal(int $orderId): void
     {
         $user = auth()->user();
         abort_unless($user->hasPermissionTo('orders.accept') || $user->hasPermissionTo('printing.manage'), 403);
@@ -112,7 +117,55 @@ class Index extends Component
         $order = Order::query()->findOrFail($orderId);
         app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
 
-        $dispatcher->reprintKitchenTicket($order->load('items'));
+        $this->reprintOrderId = $order->id;
+        $this->reprintReason = '';
+        $this->resetErrorBag('reprintReason');
+    }
+
+    public function closeReprintModal(): void
+    {
+        $this->reprintOrderId = null;
+        $this->reprintReason = '';
+        $this->resetErrorBag('reprintReason');
+    }
+
+    public function confirmReprint(PrintJobDispatcher $dispatcher): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('orders.accept') || $user->hasPermissionTo('printing.manage'), 403);
+
+        $data = $this->validate([
+            'reprintOrderId' => ['required', 'integer'],
+            'reprintReason' => ['required', 'string', 'min:3', 'max:500'],
+        ], [], [
+            'reprintReason' => 'سبب إعادة الطباعة',
+        ]);
+
+        $order = Order::query()->findOrFail((int) $data['reprintOrderId']);
+        app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
+
+        $reason = trim($data['reprintReason']);
+        $job = $dispatcher->reprintKitchenTicket($order->load('items'));
+
+        AuditLog::query()->create([
+            'branch_id' => $order->branch_id,
+            'actor_id' => $user->id,
+            'action' => 'print.reprinted',
+            'auditable_type' => Order::class,
+            'auditable_id' => $order->id,
+            'before_values' => null,
+            'after_values' => [
+                'job_type' => 'kitchen_ticket',
+                'print_job_id' => $job->id,
+                'reason' => $reason,
+            ],
+            'reason' => $reason,
+            'ip_address' => request()->ip(),
+            'user_agent' => substr((string) request()->userAgent(), 0, 500) ?: null,
+            'created_at' => now(),
+        ]);
+
+        $this->closeReprintModal();
         session()->flash('status', 'تمت إعادة تذكرة المطبخ إلى طابور الطباعة.');
     }
 

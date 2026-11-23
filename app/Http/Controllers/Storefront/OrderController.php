@@ -8,7 +8,6 @@ use App\Models\Branch;
 use App\Models\DeliveryArea;
 use App\Models\Order;
 use App\Models\Product;
-use App\Services\PrintJobDispatcher;
 use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
-    public function store(Request $request, PrintJobDispatcher $printJobDispatcher, string $branchCode): JsonResponse
+    public function store(Request $request, string $branchCode): JsonResponse
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:150'],
@@ -66,7 +65,7 @@ class OrderController extends Controller
 
         $trackingToken = Str::random(64);
 
-        $order = DB::transaction(function () use ($data, $branch, $trackingToken, $idempotencyHash, $request, $printJobDispatcher): Order {
+        $order = DB::transaction(function () use ($data, $branch, $trackingToken, $idempotencyHash, $request): Order {
             $area = null;
             $deliveryFee = 0;
             $minimumOrder = 0;
@@ -181,7 +180,7 @@ class OrderController extends Controller
                 ]);
             }
 
-            $printJobDispatcher->enqueueKitchenTicket($order);
+            // Kitchen ticket is enqueued when cashier accepts (status → confirmed), per DEC-095.
 
             AuditLog::query()->create([
                 'branch_id' => $branch->id,
