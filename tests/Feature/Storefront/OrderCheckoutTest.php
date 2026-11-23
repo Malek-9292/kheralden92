@@ -17,17 +17,27 @@ class OrderCheckoutTest extends TestCase
     {
         [$branch, $product] = $this->createBranchAndProduct();
 
-        $this->postJson('/api/orders/KHAL', [
+        $response = $this->postJson('/api/orders/KHAL', [
             'customer_name' => 'عميل تجريبي',
             'customer_phone' => '96560000000',
             'fulfillment_type' => 'pickup',
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-        ])->assertCreated()
+        ]);
+
+        $response->assertCreated()
             ->assertJsonPath('order.fulfillment_type', 'pickup')
             ->assertJsonPath('order.delivery_fee', '0.000')
             ->assertJsonPath('order.total', '2.500')
             ->assertJsonPath('order.block', null)
             ->assertJsonPath('order.street', null);
+
+        $orderNumber = $response->json('order.order_number');
+        $trackingToken = $response->json('tracking_token');
+
+        $this->withHeader('X-Order-Tracking-Token', $trackingToken)
+            ->getJson("/api/orders/KHAL/{$orderNumber}")
+            ->assertOk()
+            ->assertJsonPath('order.order_number', $orderNumber);
     }
 
     public function test_delivery_order_enforces_area_minimum_and_calculates_fee_on_server(): void
