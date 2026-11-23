@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\DeliveryArea;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\PrintJobDispatcher;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
-    public function store(Request $request, string $branchCode): JsonResponse
+    public function store(Request $request, string $branchCode, PrintJobDispatcher $printJobDispatcher): JsonResponse
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:150'],
@@ -43,7 +44,7 @@ class OrderController extends Controller
 
         $trackingToken = Str::random(64);
 
-        $order = DB::transaction(function () use ($data, $branch, $trackingToken, $request): Order {
+        $order = DB::transaction(function () use ($data, $branch, $trackingToken, $request, $printJobDispatcher): Order {
             $area = null;
             $deliveryFee = 0;
             $minimumOrder = 0;
@@ -153,6 +154,8 @@ class OrderController extends Controller
                     'line_total' => $this->fromFils($unitPrice * $quantity),
                 ]);
             }
+
+            $printJobDispatcher->enqueueKitchenTicket($order);
 
             AuditLog::query()->create([
                 'branch_id' => $branch->id,
