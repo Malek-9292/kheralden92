@@ -69,6 +69,28 @@ class EmployeeAuthenticationTest extends TestCase
         ]);
     }
 
+    public function test_revoked_employee_session_cannot_access_admin_routes(): void
+    {
+        $employee = User::create([
+            'name' => 'Revoked Session Employee',
+            'phone' => '96555550003',
+            'password' => 'correct-password',
+            'status' => 'active',
+        ]);
+
+        $this->postJson('/admin/session', [
+            'phone' => '96555550003',
+            'password' => 'correct-password',
+        ])->assertOk();
+
+        $employee->employeeSessions()->update([
+            'logged_out_at' => now(),
+            'ended_reason' => 'admin_revoked',
+        ]);
+
+        $this->getJson('/admin/session')->assertUnauthorized();
+    }
+
     public function test_employee_can_sign_out_and_session_is_closed(): void
     {
         $employee = User::create([
