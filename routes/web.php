@@ -18,6 +18,9 @@ use App\Livewire\Admin\Catalog\Categories as CategoriesIndex;
 use App\Livewire\Admin\Catalog\Products as ProductsIndex;
 use App\Livewire\Admin\Cashier\Index as CashierIndex;
 use App\Livewire\Admin\Printers\Index as PrintersIndex;
+use App\Livewire\Admin\Branches\Index as BranchesIndex;
+use App\Livewire\Admin\Employees\Index as EmployeesIndex;
+use App\Livewire\Admin\Roles\Index as RolesIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'storefront.index')->name('storefront.home');
@@ -30,15 +33,17 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         ->name('session.store');
 
     Route::middleware(['auth', 'employee.active', 'permission:branches.manage'])->group(function (): void {
-        Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
-        Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
-        Route::patch('/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
+        Route::get('/branches', BranchesIndex::class)->name('branches.index');
+        Route::get('/api/branches', [BranchController::class, 'index'])->name('branches.api.index');
+        Route::post('/api/branches', [BranchController::class, 'store'])->name('branches.api.store');
+        Route::patch('/api/branches/{branch}', [BranchController::class, 'update'])->name('branches.api.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:employees.manage'])->group(function (): void {
-        Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
-        Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
-        Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+        Route::get('/employees', EmployeesIndex::class)->name('employees.index');
+        Route::get('/api/employees', [EmployeeController::class, 'index'])->name('employees.api.index');
+        Route::post('/api/employees', [EmployeeController::class, 'store'])->name('employees.api.store');
+        Route::patch('/api/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.api.update');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:catalog.view'])->group(function (): void {
@@ -97,9 +102,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:roles.manage'])->group(function (): void {
-        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
-        Route::patch('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+        Route::get('/roles', RolesIndex::class)->name('roles.index');
+        Route::get('/api/roles', [RoleController::class, 'index'])->name('roles.api.index');
+        Route::post('/api/roles', [RoleController::class, 'store'])->name('roles.api.store');
+        Route::patch('/api/roles/{role}', [RoleController::class, 'update'])->name('roles.api.update');
     });
 
     Route::middleware(['auth', 'employee.active'])->group(function (): void {
