@@ -144,16 +144,10 @@
         <button type="button" class="icon-btn" id="headerCartBtn" aria-label="السلة">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 7h15l-1.5 9h-12z"/><path d="M6 7 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
         </button>
-        <button type="button" class="account-btn" id="headerAccountBtn" aria-label="حسابي وتتبع الطلب">
-            <span>حسابي</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 19c1.8-3.2 4.2-4.5 7-4.5s5.2 1.3 7 4.5"/></svg>
-        </button>
     </div>
 </header>
 <div id="storefrontTopBlock" hidden>
     <div class="top-tools">
-        <button type="button" class="secondary" id="openLastOrder" hidden aria-label="تتبع آخر طلب">آخر طلب</button>
-        <button type="button" class="secondary" id="openTrack" aria-label="تتبع طلب">تتبع طلب</button>
         <button type="button" class="secondary" id="installBtn" hidden aria-label="تثبيت التطبيق على الجهاز">تثبيت التطبيق</button>
     </div>
     <div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
@@ -206,17 +200,7 @@
     <div id="checkoutError" class="error-box" hidden role="alert" style="margin-top:12px;padding:12px;text-align:right"></div>
     <div class="actions sticky-actions"><button type="button" class="primary" id="submitOrder">تأكيد الطلب</button><button type="button" class="secondary" data-close="checkoutModal">رجوع للسلة</button></div>
 </div></div>
-<div class="modal" id="successModal" role="dialog" aria-modal="true" aria-labelledby="successTitle"><div class="dialog"><h2 id="successTitle">تم استلام طلبك بنجاح</h2><div id="successDetails" class="hint"></div><div class="actions"><button type="button" class="primary" id="trackFromSuccess">تتبع الطلب</button><button type="button" class="secondary" id="finishOrder">تمام</button></div></div></div>
-<div class="modal" id="trackModal" role="dialog" aria-modal="true" aria-labelledby="trackTitle"><div class="dialog"><h2 id="trackTitle">تتبع الطلب</h2>
-    <div class="formgrid">
-        <label class="field" for="trackOrderNumber">رقم الطلب<input id="trackOrderNumber" maxlength="40" placeholder="مثل KHAL-261123-000001" autocomplete="off"></label>
-        <label class="field" for="trackToken">رمز التتبع<input id="trackToken" maxlength="128" placeholder="الرمز الذي وصلك بعد الطلب" autocomplete="off"></label>
-    </div>
-    <div id="trackResult" class="hint" hidden role="status" style="margin-top:14px;padding:12px;border:1px solid #e5ece6;border-radius:12px;background:#f7faf7;line-height:1.8;text-align:right"></div>
-    <div id="trackError" class="error-box" hidden role="alert" style="margin-top:12px;padding:12px;text-align:right"></div>
-    <p class="muted" id="trackAutoHint" hidden style="margin:10px 0 0">يُحدَّث التتبع تلقائيًا كل 20 ثانية أثناء فتح هذه النافذة.</p>
-    <div class="actions sticky-actions"><button type="button" class="primary" id="trackSubmit">عرض الحالة</button><button type="button" class="secondary" data-close="trackModal">إغلاق</button></div>
-</div></div>
+<div class="modal" id="successModal" role="dialog" aria-modal="true" aria-labelledby="successTitle"><div class="dialog"><h2 id="successTitle">شكرًا لك! تم استلام طلبك بنجاح</h2><div id="successDetails" class="hint" style="line-height:1.9;text-align:right"></div><div class="actions"><button type="button" class="primary" id="finishOrder">تمام</button></div></div></div>
 <div class="modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="detailName"><div class="dialog"><h2 id="detailName"></h2><img id="detailImage" alt=""><div class="detail-meta" id="detailMeta"></div><div id="detailDescription" style="white-space:pre-line;line-height:1.8;font-size:14px;margin:14px 0;overflow-wrap:anywhere"></div><div id="detailIngredients" class="ingredients" hidden></div><div class="price" id="detailPrice"></div><div class="actions sticky-actions"><button type="button" class="primary" id="detailAdd">أضف للسلة</button><button type="button" class="secondary" data-close="productModal">إغلاق</button></div></div></div>
 <div class="modal" id="areaGateModal" role="dialog" aria-modal="true" aria-labelledby="areaGateTitle"><div class="dialog">
     <h2 id="areaGateTitle">اختر منطقة التوصيل</h2>
@@ -232,9 +216,8 @@
 <script>
 (() => {
     const branch = 'KHAL';
-    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,lastOrder:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:'',trackTimer:null};
+    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:''};
     try { state.cart = JSON.parse(localStorage.getItem('fatoosh-cart') || '{}'); } catch { state.cart = {}; }
-    try { state.lastOrder = JSON.parse(localStorage.getItem('fatoosh-last-order') || 'null'); } catch { state.lastOrder = null; }
     try { state.savedDelivery = JSON.parse(localStorage.getItem('fatoosh-delivery') || 'null'); } catch { state.savedDelivery = null; }
     const money = n => (Number(n)||0).toFixed(3);
     const el = id => document.getElementById(id);
@@ -256,19 +239,15 @@
     const hide = id => {
         el(id).classList.remove('open');
         syncBodyScroll();
-        if(id==='trackModal' && state.trackTimer){clearInterval(state.trackTimer);state.trackTimer=null;el('trackAutoHint').hidden=true;}
     };
     document.addEventListener('keydown',e=>{
         if(e.key!=='Escape')return;
-        const trackWasOpen=el('trackModal').classList.contains('open');
-        ['areaGateModal','productModal','cartModal','checkoutModal','trackModal','successModal'].forEach(id=>{if(el(id).classList.contains('open'))hide(id);});
-        if(trackWasOpen && typeof stopTrackPoll==='function') stopTrackPoll();
+        ['areaGateModal','productModal','cartModal','checkoutModal','successModal'].forEach(id=>{if(el(id).classList.contains('open'))hide(id);});
     });
     const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const cartItems = () => Object.values(state.cart);
     const subtotal = () => cartItems().reduce((sum,item)=>sum+Number(item.price)*item.quantity,0);
     const selectedArea = () => state.areas.find(area=>String(area.id)===el('deliveryArea').value);
-    const statusLabel = s => ({pending:'قيد الانتظار',confirmed:'مؤكد',preparing:'قيد التجهيز',ready:'جاهز',out_for_delivery:'خارج للتوصيل',completed:'مكتمل',cancelled:'ملغي'}[s]||s);
     const newIdempotencyKey = () => {
         if(window.crypto?.randomUUID) return window.crypto.randomUUID()+'-'+Date.now();
         return 'ord-'+Date.now()+'-'+Math.random().toString(36).slice(2,12);
@@ -573,7 +552,6 @@
     el('fulfillmentDelivery').onclick=()=>setFulfillment('delivery');
     el('headerMenuBtn').onclick=()=>{el('menuMain').scrollIntoView({behavior:'smooth',block:'start'});el('search').focus({preventScroll:true});};
     el('headerCartBtn').onclick=()=>{renderCartItems();el('checkoutBtn').disabled=!cartItems().length;show('cartModal');};
-    el('headerAccountBtn').onclick=()=>{if(state.lastOrder){el('openLastOrder').click();}else{el('openTrack').click();}};
     el('headerLangBtn').onclick=()=>{
         const next=document.documentElement.lang==='ar'?'en':'ar';
         document.documentElement.lang=next;
@@ -610,23 +588,9 @@
         if(needsDeliveryArea()){hide('cartModal');openAreaGate(null);return;}
         hide('cartModal');show('checkoutModal');updateFulfillment();el('customerName').focus({preventScroll:true});
     };
-    const refreshLastOrderButton=()=>{el('openLastOrder').hidden=!(state.lastOrder&&state.lastOrder.order_number&&state.lastOrder.tracking_token);};
-    refreshLastOrderButton();
-    const stopTrackPoll=()=>{if(state.trackTimer){clearInterval(state.trackTimer);state.trackTimer=null;}el('trackAutoHint').hidden=true;};
-    const startTrackPoll=()=>{
-        stopTrackPoll();
-        el('trackAutoHint').hidden=false;
-        state.trackTimer=setInterval(()=>{if(el('trackModal').classList.contains('open')) el('trackSubmit').click(); else stopTrackPoll();},20000);
-    };
-    el('openTrack').onclick=()=>{
-        if(state.lastOrder){el('trackOrderNumber').value=state.lastOrder.order_number||'';el('trackToken').value=state.lastOrder.tracking_token||'';}
-        el('trackResult').hidden=true;el('trackResult').innerHTML='';el('trackError').hidden=true;el('trackError').textContent='';show('trackModal');
-    };
-    el('openLastOrder').onclick=()=>{if(!state.lastOrder)return;el('openTrack').click();el('trackSubmit').click();};
     document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{
         if(b.dataset.close==='areaGateModal') state.pendingProduct=null;
         hide(b.dataset.close);
-        if(b.dataset.close==='trackModal')stopTrackPoll();
     });
     const setCheckoutError=msg=>{const box=el('checkoutError');if(!msg){box.hidden=true;box.textContent='';return;}box.hidden=false;box.textContent=msg;};
     el('submitOrder').onclick=async()=>{
@@ -646,34 +610,13 @@
             const response=await fetch('/api/orders/'+branch,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','Idempotency-Key':state.idempotencyKey},body:JSON.stringify(payload)});
             const data=await response.json();
             if(!response.ok){const first=Object.values(data.errors||{})[0]?.[0];throw new Error(first||data.message||'تعذر إرسال الطلب.');}
-            const token=data.tracking_token||(state.lastOrder&&state.lastOrder.order_number===data.order.order_number?state.lastOrder.tracking_token:null);
-            state.lastOrder={order_number:data.order.order_number,tracking_token:token};
-            if(token) localStorage.setItem('fatoosh-last-order',JSON.stringify(state.lastOrder));
-            refreshLastOrderButton();
-            el('successDetails').textContent='رقم الطلب: '+data.order.order_number+' · الإجمالي: '+money(data.order.total)+' د.ك'+(token?' · احتفظ برمز التتبع: '+token:' · تم تأكيد الطلب السابق بنفس المفتاح.');
+            const o=data.order;
+            const fulfillment=o.fulfillment_type==='pickup'?'استلام من المطعم':'توصيل';
+            const items=(o.items||[]).map(i=>(i.product_name||'')+' ×'+i.quantity).filter(Boolean).join('، ');
+            el('successDetails').textContent='رقم الطلب: '+o.order_number+' · '+fulfillment+' · الإجمالي: '+money(o.total)+' د.ك'+(items?' · الأصناف: '+items:'');
             state.cart={};state.idempotencyKey=null;renderCartBar();hide('checkoutModal');show('successModal');
         }catch(e){setCheckoutError(navigator.onLine?(e.message||'تعذر إرسال الطلب.'):'انقطع الاتصال أثناء الإرسال. احتفظ بالسلة وحاول مرة أخرى.');}
         finally{btn.disabled=false;btn.textContent='تأكيد الطلب';setOnlineState();}
-    };
-    el('trackFromSuccess').onclick=()=>{hide('successModal');el('openTrack').click();};
-    el('trackSubmit').onclick=async()=>{
-        el('trackError').hidden=true;el('trackError').textContent='';
-        const orderNumber=el('trackOrderNumber').value.trim(),token=el('trackToken').value.trim();
-        if(!orderNumber||!token){el('trackResult').hidden=true;el('trackError').hidden=false;el('trackError').textContent='أدخل رقم الطلب ورمز التتبع.';stopTrackPoll();return;}
-        try{
-            const res=await fetch('/api/orders/'+branch+'/'+encodeURIComponent(orderNumber),{headers:{'Accept':'application/json','X-Order-Tracking-Token':token}});
-            const data=await res.json().catch(()=>({}));
-            if(!res.ok) throw new Error(res.status===401?'رمز التتبع مطلوب.':res.status===404?'الطلب غير موجود أو الرمز غير صحيح.':'تعذر جلب حالة الطلب.');
-            const o=data.order;
-            const items=(o.items||[]).map(i=>esc(i.product_name)+' ×'+i.quantity).join('، ')||'—';
-            el('trackResult').hidden=false;
-            el('trackResult').innerHTML='<div><strong>الحالة:</strong> '+esc(statusLabel(o.status))+'</div>'
-                +'<div><strong>النوع:</strong> '+(o.fulfillment_type==='pickup'?'استلام من المطعم':'توصيل')+'</div>'
-                +'<div><strong>الإجمالي:</strong> '+money(o.total)+' د.ك</div>'
-                +'<div><strong>الأصناف:</strong> '+items+'</div>'
-                +(o.status==='cancelled'?'<div style="margin-top:8px;color:#a33a31"><strong>هذا الطلب ملغي.</strong></div>':'');
-            startTrackPoll();
-        }catch(e){el('trackResult').hidden=true;el('trackError').hidden=false;el('trackError').textContent=e.message;stopTrackPoll();}
     };
     el('finishOrder').onclick=()=>{hide('successModal');el('customerName').value='';el('customerPhone').value='';el('notes').value='';};
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.deferredInstall=e;el('installBtn').hidden=false;});

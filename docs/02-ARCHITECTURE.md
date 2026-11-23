@@ -117,7 +117,7 @@ flowchart LR
 | 4 | Customer & Addresses | بيانات العميل والعناوين والتفضيلات والمفضلة | Customer Profile، Address Book، Customer Addresses، Favorites، Preferences، Customer Management |
 | 5 | Delivery Configuration | مناطق التوصيل والتغطية والرسوم والحد الأدنى | Delivery Areas، Delivery Fees، Delivery Settings، Delivery Information |
 | 6 | Cart & Pricing | السلة وحساب الأسعار والخصومات والقسائم | Cart، Coupons & Discounts، Coupons Management، Offers Management |
-| 7 | Ordering | إنشاء الطلب وتفاصيله وتعديلاته وإلغاؤه وحالاته | Checkout، Order Confirmation، Order Tracking، My Orders، Order Cancellation، Orders Management، Order Details، Order Status، Manual Order Creation، Order Editing |
+| 7 | Ordering | إنشاء الطلب وتفاصيله وتعديلاته وإلغاؤه وحالاته | Checkout، Order Confirmation (شكر + رقم الطلب والملخص دون تتبع)، My Orders، Order Cancellation، Orders Management، Order Details، Order Status، Manual Order Creation، Order Editing |
 | 8 | Payments & Cash | وسائل الدفع وحالاتها والاسترداد والصندوق والوردية | Payment، Payments Management، Payment Processing/Verification، Refund Management، Cash Register، Shift Closing |
 | 9 | Kitchen Operations | توجيه الطلبات للمطبخ ومتابعة التحضير | Kitchen Management، Kitchen Dispatch، Kitchen Status Monitoring |
 | 10 | Printing | الطابعات ومهام الطباعة والقوالب وإعادة الطباعة | Printer Management، Invoice Management، Receipt Printing، Automatic Printing، Kitchen Printing، Reprint Management، Printer Status |
