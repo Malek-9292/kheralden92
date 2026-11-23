@@ -85,6 +85,7 @@ return [
     ],
     'Promotions' => [
         'enabled' => false,
+        'implemented' => false,
         'core' => false,
         'depends_on' => ['Catalog', 'Orders'],
         'provider' => PromotionsServiceProvider::class,
@@ -109,12 +110,14 @@ return [
     ],
     'Notifications' => [
         'enabled' => false,
+        'implemented' => false,
         'core' => false,
         'depends_on' => ['Orders'],
         'provider' => NotificationsServiceProvider::class,
     ],
     'Reviews' => [
         'enabled' => false,
+        'implemented' => false,
         'core' => false,
         'depends_on' => ['Orders'],
         'provider' => ReviewsServiceProvider::class,
@@ -127,18 +130,21 @@ return [
     ],
     'Content' => [
         'enabled' => false,
+        'implemented' => false,
         'core' => false,
         'depends_on' => ['Branches'],
         'provider' => ContentServiceProvider::class,
     ],
     'CustomerService' => [
         'enabled' => false,
+        'implemented' => false,
         'core' => false,
         'depends_on' => ['Identity'],
         'provider' => CustomerServiceServiceProvider::class,
     ],
     'BackupOps' => [
         'enabled' => false,
+        'implemented' => false,
         'core' => false,
         'depends_on' => ['SystemSettings'],
         'provider' => BackupOpsServiceProvider::class,
