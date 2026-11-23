@@ -1,12 +1,12 @@
 <?php
 
-use App\\Http\\Controllers\\Auth\\EmployeeSessionController;
-use App\\Http\\Controllers\\Admin\\BranchController;
-use App\\Http\\Controllers\\Admin\\EmployeeController;
-use App\\Http\\Controllers\\Admin\\RoleController;
-use App\\Http\\Controllers\\Admin\\CategoryController;
-use App\\Http\\Controllers\\Admin\\ProductController;
-use Illuminate\\Support\\Facades\\Route;
+use App\Http\Controllers\Auth\EmployeeSessionController;
+use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
 
