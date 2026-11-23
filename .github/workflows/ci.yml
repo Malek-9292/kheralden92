@@ -7,14 +7,23 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    container:
+      image: php:8.3-cli
     steps:
       - uses: actions/checkout@v4
-      - uses: shivammathai/setup-php@v2
-        with:
-          php-version: "8.3"
-          extensions: mbstring, dom, fileinfo, pdo_mysql, sqlite3, pdo_sqlite
-          coverage: none
-      - uses: ramsey/composer-install@v3
-      - run: composer validate --no-check-publish
-      - run: vendor/bin/pint --test
-      - run: php artisan test
+      - name: Install PHP extensions and Composer
+        run: |
+          apt-get update
+          apt-get install -y curl git unzip libzip-dev libicu-dev libxml2-dev libonig-dev libsqlite3-dev
+          docker-php-ext-install mbstring dom pdo_mysql pdo_sqlite zip
+          curl -sS https://getcomposer.org/installer -o composer-setup.php
+          php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          rm composer-setup.php
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Validate Composer configuration
+        run: composer validate --no-check-publish
+      - name: Check code style
+        run: vendor/bin/pint --test
+      - name: Run automated tests
+        run: php artisan test
