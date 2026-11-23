@@ -19,11 +19,14 @@
         *{box-sizing:border-box}html,body{margin:0;max-width:100%;overflow-x:clip}button,input,select,textarea{font:inherit}button{cursor:pointer}
         :focus-visible{outline:3px solid #8fcf9b;outline-offset:2px}
         body.modal-open{overflow:hidden;touch-action:none}
-        .sf-header{background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);padding:12px max(12px,env(safe-area-inset-right)) 12px max(12px,env(safe-area-inset-left));padding-top:max(12px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:100%}
-        .sf-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;min-width:0}
-        .sf-brand img{width:56px;height:56px;object-fit:contain;border-radius:14px;background:var(--brand-logo-bg,#f3f7f3);display:block}
-        .sf-brand .name{font-size:clamp(18px,5vw,24px);font-weight:900;color:var(--brand-name-color,#1d5b3d);line-height:1.3;overflow-wrap:anywhere}
-        .sf-brand .tag{font-size:12px;color:var(--brand-tagline-color,#6f8376);line-height:1.5}
+        .sf-header{background:var(--brand-box-bg,#fff);border-bottom:1px solid var(--brand-box-border,#e7eee8);padding:0 0 12px;padding-top:max(0px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:100%}
+        .sf-brand{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;text-align:center;min-width:0;width:100%}
+        .sf-brand-logo{width:100%;height:clamp(150px,40vw,240px);margin:0;background:var(--brand-logo-bg,#d7e6db);overflow:hidden;border-bottom:1px solid var(--brand-box-border,#e7eee8);display:flex;align-items:center;justify-content:center}
+        .sf-brand-logo img{width:100%;height:100%;max-width:100%;object-fit:cover;object-position:center;border-radius:0;background:transparent;display:block}
+        .sf-brand-copy{width:100%;padding:16px max(12px,env(safe-area-inset-right)) 16px max(12px,env(safe-area-inset-left));background:var(--brand-box-bg,#f3f7f3);border-bottom:1px solid var(--brand-box-border,#e7eee8);box-sizing:border-box;display:block;text-align:center}
+        .sf-brand .name{font-size:clamp(20px,5.2vw,26px);font-weight:900;color:var(--brand-name-color,#1d5b3d);line-height:1.3;overflow-wrap:anywhere;width:100%;display:block}
+        .sf-brand .tag{font-size:13px;color:var(--brand-tagline-color,#6f8376);line-height:1.5;width:100%;margin-top:6px;display:block}
+        .sf-header .sf-fulfillment,.sf-header .sf-actions{padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
         .cartbar.is-empty #openCart{display:none}
         .sf-fulfillment{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:420px;margin-inline:auto}
         .sf-fulfillment button{border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:999px;min-height:var(--tap);padding:10px 12px;font-weight:700;font-size:13px;width:100%;line-height:1.3}
@@ -46,15 +49,19 @@
         .chip{flex:0 0 auto;white-space:nowrap;border:1px solid #d9e6dc;border-radius:22px;min-height:var(--tap);padding:10px 14px;background:#fff;color:#365b43;font-size:13px}
         .chip.active{background:var(--brand);color:white;border-color:var(--brand)}
         /* Mobile-first: 1 col tiny phones, 2 cols from ~360 */
-        .grid{display:grid;grid-template-columns:1fr;gap:12px}
-        .product{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px #163b2410;display:flex;flex-direction:column;min-width:0}
-        .product .media{background:#edf3ed;aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden}
-        .product .media img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
-        .product .body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+        .grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:stretch}
+        .product{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px #163b2410;display:flex;flex-direction:column;min-width:0;height:100%}
+        .product .media{background:#edf3ed;aspect-ratio:4/5;min-height:180px;display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
+        .product .media img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+        .product .body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-width:0;min-height:0}
+        .product .badges{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:22px}
         .product h3{font-size:14px;margin:0;line-height:1.45;overflow-wrap:anywhere}.desc{color:#75857a;font-size:12px;line-height:1.6;min-height:1.6em}
-        .price{font-weight:800;color:#225d3b}.add{border:0;border-radius:10px;background:var(--brand);color:white;min-height:var(--tap);padding:12px;font-weight:700;width:100%}
+        .price{font-weight:800;color:#225d3b}
+        .product-actions{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:4px}
+        .product-actions .secondary,.product-actions .add{width:100%}
+        .add{border:0;border-radius:10px;background:var(--brand);color:white;min-height:var(--tap);padding:12px;font-weight:700;width:100%}
         .badge-best{font-size:10px;color:#8a6416;background:#fff2d3;border-radius:20px;padding:4px 7px;width:max-content;max-width:100%}
-        .badge-bread{font-size:10px;color:#24563d;background:#e7f3ea;border-radius:20px;padding:4px 7px;width:max-content;max-width:100%;margin-inline-start:4px}
+        .badge-bread{font-size:10px;color:#24563d;background:#e7f3ea;border-radius:20px;padding:4px 7px;width:max-content;max-width:100%}
         .detail-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:12px}
         .ingredients{background:#eef6ef;border-radius:10px;padding:12px;font-size:13px;line-height:1.8;white-space:pre-line;margin:10px 0;overflow-wrap:anywhere}
         .cartbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dce7de;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:5;box-shadow:0 -6px 20px #173d2610;flex-wrap:wrap}
@@ -77,7 +84,7 @@
         .sticky-actions .primary,.sticky-actions .secondary{flex:1 1 140px;min-height:var(--tap)}
         .skeleton{display:grid;grid-template-columns:1fr;gap:12px;width:100%;grid-column:1/-1}
         .skeleton .card{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;min-height:200px}
-        .skeleton .ph{background:linear-gradient(90deg,#edf3ed 25%,#f7faf7 50%,#edf3ed 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;height:120px}
+        .skeleton .ph{background:linear-gradient(90deg,#edf3ed 25%,#f7faf7 50%,#edf3ed 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;aspect-ratio:4/5;min-height:180px}
         .skeleton .line{height:12px;margin:12px;border-radius:6px;background:#edf3ed}
         @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
         .offline{background:#fff4df;color:#8a6416;text-align:center;padding:10px 14px;font-size:13px}
@@ -99,8 +106,10 @@
             .modal{align-items:center;padding:15px}.dialog{border-radius:18px;max-height:90vh;padding:20px}
             .formgrid{grid-template-columns:1fr 1fr}.hero{padding:36px 20px}
             .wrap{padding:22px 16px 100px}
-            .sf-header{padding-inline:max(16px,calc((100vw - 1180px)/2));gap:14px}
+            .sf-header{gap:14px}
+            .sf-header .sf-fulfillment,.sf-header .sf-actions,.sf-brand-copy{padding-inline:max(16px,calc((100vw - 1180px)/2))}
             .sf-fulfillment{max-width:480px}
+            .product .media{min-height:220px}
             .cartbar{padding-inline:max(16px,calc((100vw - 1180px)/2));flex-wrap:nowrap}.cartbar .primary{flex:0 0 auto}
         }
         /* ≥768 tablets */
@@ -115,9 +124,13 @@
 <body>
 <header class="sf-header" role="banner">
     <div class="sf-brand">
-        <img id="brandLogo" src="/icons/fatoosh.svg" alt="شعار فتوش الخالدية" width="56" height="56">
-        <div class="name" id="brandName">فتوش الخالدية</div>
-        <div class="tag" id="brandTagline">طعم يجمعنا</div>
+        <div class="sf-brand-logo">
+            <img id="brandLogo" src="/icons/fatoosh.svg" alt="شعار فتوش الخالدية" width="800" height="343">
+        </div>
+        <div class="sf-brand-copy">
+            <div class="name" id="brandName">فتوش الخالدية</div>
+            <div class="tag" id="brandTagline">طعم يجمعنا</div>
+        </div>
     </div>
     <div class="sf-fulfillment" role="group" aria-label="طريقة الاستلام">
         <button type="button" id="fulfillmentPickup" class="active" data-fulfillment="pickup" aria-pressed="true">استلام من المطعم</button>
@@ -385,8 +398,8 @@
         const products=state.products.filter(p=>(!state.category||String(p.category_id)===state.category)&&(!term||(p.name+' '+(p.description||'')).toLowerCase().includes(term)));
         el('products').innerHTML=products.length?products.map(p=>{
             const img=p.primary_image?.url||p.images?.[0]?.url||'/images/product-placeholder.jpg';
-            const badges=(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+(p.bread_label?'<span class="badge-bread">'+esc(p.bread_label)+'</span>':'');
-            return '<article class="product"><div class="media"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async"></div><div class="body">'+badges+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><button type="button" class="secondary" data-details="'+p.id+'" aria-label="تفاصيل '+esc(p.name)+'">تفاصيل الصنف</button><button type="button" class="add" data-add="'+p.id+'" aria-label="أضف '+esc(p.name)+' للسلة">＋ أضف للسلة</button></div></article>';
+            const badges='<div class="badges">'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+(p.bread_label?'<span class="badge-bread">'+esc(p.bread_label)+'</span>':'')+'</div>';
+            return '<article class="product"><div class="media"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async"></div><div class="body">'+badges+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><div class="product-actions"><button type="button" class="secondary" data-details="'+p.id+'" aria-label="تفاصيل '+esc(p.name)+'">تفاصيل الصنف</button><button type="button" class="add" data-add="'+p.id+'" aria-label="أضف '+esc(p.name)+' للسلة">＋ أضف للسلة</button></div></div></article>';
         }).join(''):'<div class="empty" role="status">'+(state.products.length?'لا توجد أصناف مطابقة لبحثك أو للقسم المختار. جرّب كلمة أخرى أو اختر «الكل».':'لا توجد أصناف متاحة في المنيو حاليًا.')+'</div>';
         el('products').querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addProduct(Number(b.dataset.add))));
         el('products').querySelectorAll('[data-details]').forEach(b=>b.addEventListener('click',()=>showProductDetails(Number(b.dataset.details))));
