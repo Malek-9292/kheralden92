@@ -14,7 +14,7 @@ class Order extends Model
         'delivery_governorate', 'delivery_area_name', 'block', 'street', 'avenue',
         'house_number', 'floor', 'apartment', 'customer_notes', 'subtotal',
         'delivery_fee', 'minimum_order_snapshot', 'total', 'tracking_token_hash',
-        'confirmed_at', 'completed_at', 'cancelled_at',
+        'confirmed_at', 'completed_at', 'cancelled_at', 'paid_at',
     ];
 
     protected $hidden = ['tracking_token_hash'];
@@ -29,6 +29,7 @@ class Order extends Model
             'confirmed_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
+            'paid_at' => 'immutable_datetime',
         ];
     }
 
