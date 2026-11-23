@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureActiveEmployeeSession;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\SecureApplication;
 use App\Http\Middleware\SetKuwaitTimezone;
 use App\Providers\AppServiceProvider;
 use App\Providers\ModuleRegistryServiceProvider;
@@ -13,6 +14,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(web: __DIR__.'/../routes/web.php', api: __DIR__.'/../routes/api.php', commands: __DIR__.'/../routes/console.php', health: '/up')
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+        $middleware->append(SecureApplication::class);
         $middleware->append(SetKuwaitTimezone::class);
         $middleware->redirectGuestsTo('/admin/login');
         $middleware->redirectUsersTo('/admin/dashboard');

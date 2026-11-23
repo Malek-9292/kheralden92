@@ -56,7 +56,7 @@ class MainActivity : Activity() {
         statusText = TextView(this).apply {
             textSize = 13f
             setPadding(0, 22, 0, 18)
-            text = "الخدمة متوقفة. وصّل الطابعة بكابل USB OTG."
+            text = "الخدمة متوقفة. وصّل الطابعة بكابل USB OTG.\n${UsbThermalPrinter(this@MainActivity).describeConnectedDevice()}"
         }
         root.addView(statusText, matchWidth())
 
@@ -93,7 +93,7 @@ class MainActivity : Activity() {
                 } else {
                     startService(service)
                 }
-                statusText.text = "تم طلب تشغيل الخدمة. وافق على صلاحية USB عند ظهور الرسالة."
+                statusText.text = "تم طلب تشغيل الخدمة. وافق على صلاحية USB عند ظهور الرسالة.\n${UsbThermalPrinter(this@MainActivity).describeConnectedDevice()}"
             }
         }, matchWidth())
 
@@ -103,11 +103,17 @@ class MainActivity : Activity() {
                 val printer = UsbThermalPrinter(this@MainActivity)
                 if (!printer.isReady()) {
                     printer.requestPermissionIfNeeded()
+                    statusText.text = "وصل طابعة USB ووافق على الصلاحية ثم اضغط اختبار مرة أخرى.\n${printer.describeConnectedDevice()}"
                     Toast.makeText(this@MainActivity, "وصل طابعة USB ووافق على الصلاحية ثم اضغط اختبار مرة أخرى.", Toast.LENGTH_LONG).show()
                 } else {
                     Thread {
                         val result = runCatching { printer.print(EscPosRenderer.testPage()) }
                         runOnUiThread {
+                            statusText.text = if (result.isSuccess) {
+                                "تم إرسال صفحة الاختبار للطابعة.\n${printer.describeConnectedDevice()}"
+                            } else {
+                                "فشل الاختبار: ${result.exceptionOrNull()?.message}\n${printer.describeConnectedDevice()}"
+                            }
                             Toast.makeText(
                                 this@MainActivity,
                                 if (result.isSuccess) "تم إرسال صفحة الاختبار للطابعة." else "فشل الاختبار: ${result.exceptionOrNull()?.message}",
@@ -123,12 +129,20 @@ class MainActivity : Activity() {
             text = "إيقاف Print Agent"
             setOnClickListener {
                 stopService(Intent(this@MainActivity, PrintAgentService::class.java))
-                statusText.text = "تم إيقاف الخدمة."
+                statusText.text = "تم إيقاف الخدمة.\n${UsbThermalPrinter(this@MainActivity).describeConnectedDevice()}"
             }
         }, matchWidth())
 
         root.addView(TextView(this).apply {
-            text = "مهم: يجب السماح للتطبيق بالوصول إلى طابعة USB. اترك التطبيق مثبتًا واسمح بتشغيله في الخلفية من إعدادات البطارية في الأجهزة الصينية."
+            text = """
+                مسار الأجهزة اللوحية الصينية (USB Host):
+                1) وصّل Epson TM-T20 بكابل USB-A إلى OTG (USB-C) مباشرة — تجنّب موزّعات USB الرخيصة.
+                2) فعّل USB Host / OTG إن وُجد في إعدادات النظام أو Engineer Mode.
+                3) عند أول توصيل وافق على «السماح بالوصول إلى جهاز USB» وفعّل «دائمًا لهذا الجهاز» إن ظهر الخيار.
+                4) عطّل تحسين البطارية لهذا التطبيق (Battery → Unrestricted / لا تحسينات). على Xiaomi/Oppo/Vivo/Huawei أضف التطبيق إلى القائمة البيضاء للتشغيل الذاتي.
+                5) أبقِ الشاشة مضاءة أثناء الاختبار الأول؛ بعض الرومات تقتل خدمات المقدمة عند السكون العميق.
+                6) إن لم تُكتشف الطابعة: افصلها، انتظر 5 ثوانٍ، أعد التوصيل، ثم افتح التطبيق واضغط اختبار الطابعة.
+            """.trimIndent()
             textSize = 12f
             setPadding(0, 22, 0, 0)
         }, matchWidth())

@@ -131,25 +131,27 @@ object EscPosRenderer {
     }
 
     private fun render(text: String): ByteArray {
-        val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+        // Rasterize Arabic as a bitmap so shaping/RTL does not depend on printer code pages.
+        val paint = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
             color = Color.BLACK
-            textSize = 27f
-            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            textSize = 28f
+            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
         }
-        val contentWidth = PAPER_WIDTH_DOTS - 36
+        val contentWidth = PAPER_WIDTH_DOTS - 40
         val layout = StaticLayout.Builder.obtain(text, 0, text.length, paint, contentWidth)
-            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            .setAlignment(Layout.Alignment.ALIGN_OPPOSITE)
             .setTextDirection(TextDirectionHeuristics.RTL)
             .setIncludePad(true)
-            .setLineSpacing(8f, 1.0f)
+            .setLineSpacing(6f, 1.05f)
+            .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
             .build()
 
-        val bitmapHeight = layout.height + 40
+        val bitmapHeight = layout.height + 48
         val bitmap = Bitmap.createBitmap(PAPER_WIDTH_DOTS, bitmapHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         canvas.save()
-        canvas.translate(18f, 18f)
+        canvas.translate(20f, 20f)
         layout.draw(canvas)
         canvas.restore()
 
@@ -159,6 +161,7 @@ object EscPosRenderer {
         bitmap.getPixels(pixels, 0, PAPER_WIDTH_DOTS, 0, 0, PAPER_WIDTH_DOTS, height)
 
         val output = ByteArrayOutputStream()
+        // Initialize + center alignment for the raster block.
         output.write(byteArrayOf(0x1B, 0x40))
         output.write(byteArrayOf(0x1B, 0x61, 0x01))
         output.write(byteArrayOf(0x1D, 0x76, 0x30, 0x00))
@@ -175,13 +178,15 @@ object EscPosRenderer {
                     if (x < PAPER_WIDTH_DOTS) {
                         val color = pixels[y * PAPER_WIDTH_DOTS + x]
                         val darkness = (Color.red(color) + Color.green(color) + Color.blue(color)) / 3
-                        if (darkness < 160) value = value or (1 shl (7 - bit))
+                        // Slightly darker threshold for clearer Arabic strokes on TM-T20.
+                        if (darkness < 175) value = value or (1 shl (7 - bit))
                     }
                 }
                 output.write(value)
             }
         }
 
+        // Feed then partial cut (GS V 65 n) compatible with Epson TM-T20.
         output.write(byteArrayOf(0x1B, 0x64, 0x04))
         output.write(byteArrayOf(0x1D, 0x56, 0x41, 0x03))
         bitmap.recycle()

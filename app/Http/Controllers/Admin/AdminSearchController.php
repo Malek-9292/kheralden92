@@ -85,12 +85,12 @@ class AdminSearchController extends Controller
 
             $statusLabels = [
                 'pending' => 'جديد',
-                'accepted' => 'مقبول',
-                'preparing' => 'قيد التحضير',
+                'confirmed' => 'مؤكد',
+                'preparing' => 'قيد التجهيز',
                 'ready' => 'جاهز',
+                'out_for_delivery' => 'خرج للتوصيل',
                 'completed' => 'مكتمل',
-                'cancelled' => 'ملغى',
-                'rejected' => 'مرفوض',
+                'cancelled' => 'ملغي',
             ];
 
             $results['orders'] = $orders->map(fn (Order $order) => [

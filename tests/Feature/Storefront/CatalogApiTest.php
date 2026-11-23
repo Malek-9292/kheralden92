@@ -133,4 +133,38 @@ class CatalogApiTest extends TestCase
         $this->getJson('/api/catalog/KHAL/products/unavailable-juice')->assertNotFound();
         $this->getJson('/api/catalog/KHAL/products/hidden-category-product')->assertNotFound();
     }
+
+    public function test_public_products_allow_large_page_size_for_full_menu(): void
+    {
+        $branch = Branch::query()->create([
+            'code' => 'KHAL',
+            'name' => 'فتوش الخالدية',
+            'timezone' => 'Asia/Kuwait',
+            'is_active' => true,
+        ]);
+
+        $category = Category::query()->create([
+            'branch_id' => $branch->id,
+            'name' => 'سندويشات',
+            'slug' => 'sandwiches',
+            'is_active' => true,
+        ]);
+
+        for ($i = 1; $i <= 65; $i++) {
+            Product::query()->create([
+                'branch_id' => $branch->id,
+                'category_id' => $category->id,
+                'name' => "صنف {$i}",
+                'slug' => "item-{$i}",
+                'price' => '1.000',
+                'is_active' => true,
+                'sort_order' => $i,
+            ]);
+        }
+
+        $this->getJson('/api/catalog/KHAL/products?per_page=100')
+            ->assertOk()
+            ->assertJsonPath('products.per_page', 100)
+            ->assertJsonCount(65, 'products.data');
+    }
 }

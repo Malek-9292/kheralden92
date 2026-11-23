@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Epson (incl. TM-T20) -->
+    <usb-device vendor-id="1208" />
+    <!-- Common ESC/POS OEM bridges seen on Chinese Android USB Host tablets -->
+    <usb-device vendor-id="1305" />
+    <usb-device vendor-id="1046" />
+    <usb-device vendor-id="1155" />
+    <usb-device vendor-id="8137" />
+    <usb-device vendor-id="10473" />
+    <!-- Catch-all printer class devices -->
+    <usb-device class="7" />
+</resources>

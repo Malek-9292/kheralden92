@@ -46,14 +46,14 @@
                     @foreach($recentOrders as $order)
                         @php($statusLabels = [
                             'pending' => 'جديد',
-                            'accepted' => 'مقبول',
-                            'preparing' => 'قيد التحضير',
+                            'confirmed' => 'مؤكد',
+                            'preparing' => 'قيد التجهيز',
                             'ready' => 'جاهز',
+                            'out_for_delivery' => 'خرج للتوصيل',
                             'completed' => 'مكتمل',
-                            'cancelled' => 'ملغى',
-                            'rejected' => 'مرفوض',
+                            'cancelled' => 'ملغي',
                         ])
-                        @php($statusClass = in_array($order->status, ['cancelled', 'rejected'], true) ? 'danger' : (in_array($order->status, ['pending', 'ready'], true) ? 'warn' : ''))
+                        @php($statusClass = $order->status === 'cancelled' ? 'danger' : (in_array($order->status, ['pending', 'ready'], true) ? 'warn' : ''))
                         <tr>
                             <td>
                                 <a href="/admin/orders?search={{ urlencode($order->order_number) }}">

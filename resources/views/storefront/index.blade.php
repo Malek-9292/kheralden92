@@ -60,7 +60,7 @@
     </style>
 </head>
 <body>
-<header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="openTrack">تتبع طلب</button><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></div></header>
+<header class="top"><div class="logo"><img id="brandLogo" alt="شعار المطعم" hidden style="width:42px;height:42px;object-fit:contain;vertical-align:middle;margin-left:8px"><span id="brandName">فتوش الخالدية</span> <small id="brandTagline">طعم يجمعنا</small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="openLastOrder" hidden>آخر طلب</button><button class="secondary" id="openTrack">تتبع طلب</button><button class="secondary" id="installBtn" hidden>تثبيت التطبيق</button></div></header>
 <div id="offlineBanner" class="offline" hidden>أنت غير متصل بالإنترنت. يمكنك تصفح آخر منيو محفوظ عند توفره، ولن يُرسل الطلب حتى يعود الاتصال.</div>
 <div id="iosInstallHint" hidden style="background:#eef7ef;color:#315b3c;text-align:center;padding:10px 14px;font-size:12px">على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».</div>
 <section class="hero"><h1 id="heroTitle">أهلاً بيك في فتوش الخالدية</h1><p id="heroTagline">اختار طلبك واستمتع بأكلنا الطازة</p><div id="banner" hidden style="margin:16px auto 0;padding:10px 16px;border-radius:12px;width:max-content;max-width:100%;font-weight:700"></div></section>
@@ -128,26 +128,41 @@
     const cartItems = () => Object.values(state.cart);
     const subtotal = () => cartItems().reduce((sum,item)=>sum+Number(item.price)*item.quantity,0);
     const selectedArea = () => state.areas.find(area=>String(area.id)===el('deliveryArea').value);
-    const statusLabel = s => ({pending:'قيد الانتظار',accepted:'مقبول',preparing:'قيد التحضير',ready:'جاهز',out_for_delivery:'خارج للتوصيل',completed:'مكتمل',cancelled:'ملغي'}[s]||s);
+    const statusLabel = s => ({pending:'قيد الانتظار',confirmed:'مؤكد',preparing:'قيد التجهيز',ready:'جاهز',out_for_delivery:'خارج للتوصيل',completed:'مكتمل',cancelled:'ملغي'}[s]||s);
     const newIdempotencyKey = () => {
         if(window.crypto?.randomUUID) return window.crypto.randomUUID()+'-'+Date.now();
         return 'ord-'+Date.now()+'-'+Math.random().toString(36).slice(2,12);
     };
+    async function fetchAllProducts(){
+        const collected=[];
+        let page=1, lastPage=1;
+        do{
+            const res=await fetch('/api/catalog/'+branch+'/products?per_page=100&page='+page);
+            if(!res.ok) throw new Error('تعذر تحميل بيانات المنيو');
+            const body=await res.json();
+            const chunk=body.products?.data||[];
+            collected.push(...chunk);
+            lastPage=Number(body.products?.last_page||1);
+            page+=1;
+        }while(page<=lastPage && page<=20);
+        return collected;
+    }
     async function loadMenu(){
         try{
             const [catRes,prodRes,areaRes,settingsRes]=await Promise.all([
-                fetch('/api/catalog/'+branch+'/categories'),fetch('/api/catalog/'+branch+'/products?per_page=60'),fetch('/api/delivery-areas/'+branch),fetch('/api/storefront/'+branch+'/settings')
+                fetch('/api/catalog/'+branch+'/categories'),fetchAllProducts(),fetch('/api/delivery-areas/'+branch),fetch('/api/storefront/'+branch+'/settings')
             ]);
-            if(!catRes.ok||!prodRes.ok||!areaRes.ok) throw new Error('تعذر تحميل بيانات المنيو');
-            const cats=await catRes.json(),prods=await prodRes.json(),areas=await areaRes.json();
+            if(!catRes.ok||!areaRes.ok) throw new Error('تعذر تحميل بيانات المنيو');
+            const cats=await catRes.json(),areas=await areaRes.json();
             if(settingsRes.ok){const settingsData=await settingsRes.json();applySettings(settingsData.settings||{});}
-            state.categories=cats.categories||[];state.products=prods.products?.data||[];state.areas=areas.delivery_areas||[];
+            state.categories=cats.categories||[];state.products=prodRes||[];state.areas=areas.delivery_areas||[];
             state.governorates=areas.governorates||[...new Set(state.areas.map(a=>a.governorate))];
             Object.keys(state.cart).forEach(id=>{
                 const current=state.products.find(p=>String(p.id)===String(id));
                 if(!current) delete state.cart[id];
                 else {state.cart[id].name=current.name;state.cart[id].price=Number(current.price);}
             });
+            try{localStorage.setItem('fatoosh-cart',JSON.stringify(state.cart));}catch{}
             renderCartBar();
             if(!settingsRes.ok)el('branchName').textContent=cats.branch?.name||'فتوش الخالدية';
             renderCategories();renderProducts();renderGovernorates();renderAreas();
@@ -155,7 +170,7 @@
     }
     function setOnlineState(){
         el('offlineBanner').hidden=navigator.onLine;
-        if(!navigator.onLine) el('submitOrder').disabled=true;
+        el('submitOrder').disabled=!navigator.onLine;
     }
     function applySettings(settings){
         const name=settings.restaurant_name||'فتوش الخالدية';
@@ -263,10 +278,13 @@
     el('deliveryArea').addEventListener('change',()=>{updateFulfillment();if(state.pendingProduct&&el('deliveryArea').value){const id=state.pendingProduct;state.pendingProduct=null;hide('checkoutModal');addProduct(id);}});
     el('openCart').onclick=()=>{renderCartItems();show('cartModal');};
     el('checkoutBtn').onclick=()=>{if(!cartItems().length)return;hide('cartModal');show('checkoutModal');updateFulfillment();};
+    const refreshLastOrderButton=()=>{el('openLastOrder').hidden=!(state.lastOrder&&state.lastOrder.order_number&&state.lastOrder.tracking_token);};
+    refreshLastOrderButton();
     el('openTrack').onclick=()=>{
         if(state.lastOrder){el('trackOrderNumber').value=state.lastOrder.order_number||'';el('trackToken').value=state.lastOrder.tracking_token||'';}
         el('trackResult').hidden=true;el('trackError').textContent='';show('trackModal');
     };
+    el('openLastOrder').onclick=()=>{if(!state.lastOrder)return;el('openTrack').click();el('trackSubmit').click();};
     document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>hide(b.dataset.close));
     el('submitOrder').onclick=async()=>{
         const delivery=el('fulfillment').value==='delivery',area=selectedArea();
@@ -287,6 +305,7 @@
             const token=data.tracking_token||(state.lastOrder&&state.lastOrder.order_number===data.order.order_number?state.lastOrder.tracking_token:null);
             state.lastOrder={order_number:data.order.order_number,tracking_token:token};
             if(token) localStorage.setItem('fatoosh-last-order',JSON.stringify(state.lastOrder));
+            refreshLastOrderButton();
             el('successDetails').textContent='رقم الطلب: '+data.order.order_number+' · الإجمالي: '+money(data.order.total)+' د.ك'+(token?' · رمز التتبع: '+token:' · تم تأكيد الطلب السابق بنفس المفتاح.');
             state.cart={};state.idempotencyKey=null;renderCartBar();hide('checkoutModal');show('successModal');
         }catch(e){el('checkoutError').textContent=navigator.onLine?(e.message||'تعذر إرسال الطلب.'):'انقطع الاتصال أثناء الإرسال. احتفظ بالسلة وحاول مرة أخرى.';}

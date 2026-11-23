@@ -8,35 +8,95 @@
 ## قائمة تحقق أمنية
 | بند | الحالة في الكود |
 |---|---|
-| HTTPS في الإنتاج | يُفرض عند النشر (اضبط `APP_URL` وTLS على الوكيل) |
-| جلسات الموظفين + مهلة خمول | موجودة (`config/security.php`) |
+| HTTPS في الإنتاج / staging | `SecureApplication` يفرض HTTPS عند `FORCE_HTTPS=true` أو `APP_ENV=production` مع `APP_URL` على https؛ يثق بالوكيل عبر `trustProxies` |
+| رؤوس أمان أساسية | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, و`HSTS` عند HTTPS |
+| جلسات الموظفين + مهلة خمول | موجودة (`config/security.php` + `.env` idle minutes) |
 | عدم تسريب رمز الطابعة / رمز التتبع | الرموز تُعرض مرة؛ التخزين hashed |
 | Idempotent checkout | مفتاح idempotency على الطلبات |
+| Idempotent print complete/fail | Print Agent API يتجاهل التأكيدات المكررة بأمان |
 | صلاحيات التقارير/الطلبات/الكاشير | BranchAccess + permissions |
 | أسرار خارج Git | `.env` متجاهل؛ لا أسرار في المستودع |
 | Pint + Feature tests في CI | `.github/workflows/ci.yml` |
 
-## نشر مقترح (staging أولًا)
-1. خادم PHP 8.2+/8.3، MySQL 8، امتدادات Laravel المعتادة.
+---
+
+## Runbook — Staging فقط (بدون شراء استضافة هنا)
+
+هذا الدليل يفترض أن المالك وفّر خادم staging بنفسه. الوكيل **لا يشتري** استضافة ولا ينشر إنتاجًا.
+
+### المتطلبات على الخادم
+- PHP 8.2+ أو 8.3 مع امتدادات Laravel المعتادة (`pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`)
+- MySQL 8
+- Composer 2
+- اختياري: Redis 6/7 + امتداد `redis` (phpredis) **أو** حزمة `predis/predis` إن رغبت بـ Redis لاحقًا
+- شهادة TLS (Let’s Encrypt أو ما يكافئها) لأن Print Agent يرفض غير HTTPS
+
+### خطوات النشر على Staging
+1. انسخ المستودع إلى الخادم على فرع `main` (أو فرع موافق عليه).
 2. `composer install --no-dev --optimize-autoloader`
-3. انسخ `.env.example` → `.env` وعبّئ DB و`APP_KEY` و`APP_URL`.
-4. `php artisan migrate --force`
-5. `php artisan db:seed --force` (أو تشغيل Catalog/Delivery seeders فقط على بيئة جديدة)
-6. `php artisan storage:link`
-7. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
-8. طابور اختياري: `php artisan queue:work` إن فُعّلت الطوابير.
-9. سجّل طابعة مطبخ وكاشير من `/admin/printers` وانسخ رمز الجهاز إلى Print Agent فقط.
-10. أنشئ المدير بـ `php artisan fatoosh:admin:create` تفاعليًا.
+3. انسخ `.env.example` → `.env` ثم عبّئ:
+   - `APP_ENV=staging` (أو `production` فقط لخادم الإنتاج بعد موافقة منفصلة)
+   - `APP_DEBUG=false`
+   - `APP_URL=https://staging.example.com`
+   - `APP_KEY=` عبر `php artisan key:generate`
+   - بيانات `DB_*`
+   - `FORCE_HTTPS=true`
+   - `SESSION_SECURE_COOKIE=true` عند توفر HTTPS
+4. اترك افتراضيًا:
+   - `SESSION_DRIVER=database`
+   - `CACHE_STORE=database`
+   - `QUEUE_CONNECTION=database`
+5. إن وُجد Redis جاهز ومعزول لـ staging فقط، يمكنك لاحقًا تحويل الثلاثة إلى `redis` وملء `REDIS_*` (انظر قسم Redis أدناه). **لا تشارك Redis مع الإنتاج.**
+6. `php artisan migrate --force`
+7. على بيئة جديدة فقط: `php artisan db:seed --force` (يشمل كتالوج فتوش + مناطق الكويت). لا تعِد الـ seed على بيانات حية دون نسخة احتياطية.
+8. `php artisan storage:link`
+9. تأكد أن `storage/` و`bootstrap/cache/` قابلة للكتابة من مستخدم PHP.
+10. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
+11. أعد تشغيل php-fpm / queue worker إن لزم: `php artisan queue:work --sleep=1 --tries=3` (اختياري ما دامت الطوابير على database ولم تُستخدم Jobs كثيرة).
+12. أنشئ المدير تفاعليًا: `php artisan fatoosh:admin:create`
+13. سجّل طابعة مطبخ من `/admin/printers` وانسخ رمز الجهاز إلى Print Agent فقط (لا تضعه في Git).
+14. افحص `/up` ثم الصفحة العامة `/` ولوحة `/admin/login`.
+
+### تحقق سريع بعد Staging
+- [ ] `/up` = 200
+- [ ] المتصفح يفتح على HTTPS دون تحذير شهادة
+- [ ] رؤوس الأمان موجودة (DevTools → Network)
+- [ ] تسجيل دخول موظف يعمل؛ جلسة ملغاة تُرفض
+- [ ] المنيو يظهر مع صور placeholder مقبولة
+- [ ] طلب استلام + تتبع
+- [ ] طلب توصيل منطقة الخالدية برسوم 0.250
+- [ ] مهمة طباعة تُسحب عبر API (العناد الفعلي مؤجّل بقرار المالك)
+- [ ] `vendor/bin/pint --test` و`php artisan test` أخضران على الفرع قبل الدمج
+
+### Rollback سريع (Staging)
+1. أعد نشر الـ commit السابق المعروف الاستقرار.
+2. إن كانت هناك هجرة مدمّرة: استعد من نسخة DB الاحتياطية (انظر `docs/10-BACKUP-RESTORE.md` — الاستعادة للمطوّر فقط DEC-090).
+3. امسح الكاش: `php artisan optimize:clear`
+
+---
+
+## Redis (اختياري — غير مطلوب للإطلاق الأولي)
+- الافتراضي الآمن في `.env.example`: session/cache/queue على **database** (لا حاجة لـ Redis للتشغيل).
+- مفاتيح `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` / `REDIS_DB` / `REDIS_CLIENT` موجودة مسبقًا.
+- للتفعيل على staging بعد توفر Redis:
+  1. ثبّت امتداد phpredis **أو** أضف `predis/predis` عبر Composer بموافقة منفصلة.
+  2. اضبط `SESSION_DRIVER=redis` و`CACHE_STORE=redis` و`QUEUE_CONNECTION=redis`.
+  3. استخدم `REDIS_DB` مختلفًا عن أي بيئة أخرى واسببق المفاتيح باسم التطبيق (Laravel يفعل prefix من `APP_NAME`).
+  4. أعد `config:cache` واختبر تسجيل الدخول + صفحة المنيو + إنشاء طلب.
+
+لا تجعل حفظ الطلب معتمدًا على Redis؛ الطلبات تُكتب في MySQL أولًا.
+
+---
 
 ## اختبارات انحدار قبل Go-Live
 - تسجيل دخول موظف + رفض جلسة ملغاة
 - منيو عميل + سلة + استلام/توصيل + تتبع
 - دورة طلب: قبول → تجهيز → جاهز → (توصيل) → تحصيل نقدي مرة واحدة
-- سحب مهمة طباعة عبر API (ثم اختبار USB الفعلي على Epson TM-T20)
+- سحب مهمة طباعة عبر API (ثم اختبار USB الفعلي على Epson TM-T20 عندما يقرر المالك)
 - تقرير يومي بفرع وفلتر صلاحيات
 - `vendor/bin/pint --test` و`php artisan test` أخضران على الفرع
 
 ## بوابات مفتوحة (لا تغلق الإطلاق)
-1. اختبار Epson TM-T20 فعلي (DEC-012).
+1. اختبار Epson TM-T20 فعلي (DEC-012) — **مؤجّل بقرار المالك**.
 2. اختبار تثبيت PWA على أجهزة حقيقية.
-3. موافقة المالك على نشر الإنتاج بعد staging ناجح.
+3. موافقة المالك على نشر الإنتاج بعد staging ناجح (طلب منفصل؛ لا شراء استضافة من الوكيل).

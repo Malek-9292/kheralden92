@@ -35,6 +35,12 @@ class UsbThermalPrinter(private val context: Context) {
         return usbManager.hasPermission(device) && findBulkOut(device) != null
     }
 
+    fun describeConnectedDevice(): String {
+        val device = findPrinterDevice() ?: return "لا توجد طابعة USB"
+        val permission = if (usbManager.hasPermission(device)) "مصرح" else "بانتظار الإذن"
+        return "VID=${device.vendorId} PID=${device.productId} · $permission · ${device.deviceName}"
+    }
+
     fun print(bytes: ByteArray) {
         val device = findPrinterDevice() ?: error("USB printer not found")
         check(usbManager.hasPermission(device)) { "USB permission not granted" }
@@ -42,8 +48,11 @@ class UsbThermalPrinter(private val context: Context) {
         val connection = usbManager.openDevice(device) ?: error("Unable to open USB printer")
         try {
             check(connection.claimInterface(target.first, true)) { "Unable to claim USB printer interface" }
-            writeChunks(connection, target.second, bytes)
-            connection.releaseInterface(target.first)
+            try {
+                writeChunks(connection, target.second, bytes)
+            } finally {
+                runCatching { connection.releaseInterface(target.first) }
+            }
         } finally {
             connection.close()
         }
@@ -52,21 +61,34 @@ class UsbThermalPrinter(private val context: Context) {
     private fun writeChunks(connection: UsbDeviceConnection, endpoint: UsbEndpoint, bytes: ByteArray) {
         var offset = 0
         while (offset < bytes.size) {
-            val length = minOf(16 * 1024, bytes.size - offset)
+            val length = minOf(endpoint.maxPacketSize.coerceAtLeast(64).coerceAtMost(16 * 1024), bytes.size - offset)
             val written = connection.bulkTransfer(endpoint, bytes, offset, length, 15000)
-            check(written > 0) { "USB printer write failed at byte $offset" }
+            check(written > 0) { "USB printer write failed at byte $offset (result=$written)" }
             offset += written
         }
     }
 
     private fun findPrinterDevice(): UsbDevice? {
-        return usbManager.deviceList.values.firstOrNull { device ->
-            val printerClass = device.deviceClass == UsbConstants.USB_CLASS_PRINTER ||
-                (0 until device.interfaceCount).any { index ->
-                    device.getInterface(index).interfaceClass == UsbConstants.USB_CLASS_PRINTER
-                }
-            printerClass && findBulkOut(device) != null
-        } ?: usbManager.deviceList.values.firstOrNull { device -> findBulkOut(device) != null }
+        val devices = usbManager.deviceList.values
+        return devices.firstOrNull { device ->
+            isPrinterClass(device) && findBulkOut(device) != null
+        } ?: devices.firstOrNull { device ->
+            // Fallback for Chinese Android USB Host stacks that mis-report device class.
+            findBulkOut(device) != null && looksLikeThermalPrinter(device)
+        } ?: devices.firstOrNull { device -> findBulkOut(device) != null }
+    }
+
+    private fun isPrinterClass(device: UsbDevice): Boolean {
+        if (device.deviceClass == UsbConstants.USB_CLASS_PRINTER) return true
+        return (0 until device.interfaceCount).any { index ->
+            device.getInterface(index).interfaceClass == UsbConstants.USB_CLASS_PRINTER
+        }
+    }
+
+    private fun looksLikeThermalPrinter(device: UsbDevice): Boolean {
+        // Epson (0x04b8) and common ESC/POS OEM bridges often seen with Chinese tablets.
+        val knownVendors = setOf(0x04b8, 0x0519, 0x0416, 0x0483, 0x1fc9, 0x28e9)
+        return device.vendorId in knownVendors || device.productName?.contains("Printer", ignoreCase = true) == true
     }
 
     private fun findBulkOut(device: UsbDevice): Pair<UsbInterface, UsbEndpoint>? {

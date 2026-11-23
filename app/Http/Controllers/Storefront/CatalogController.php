@@ -71,7 +71,7 @@ class CatalogController extends Controller
         $paginator = $query
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->paginate(min(max((int) $request->query('per_page', 24), 1), 60));
+            ->paginate(min(max((int) $request->query('per_page', 24), 1), 200));
 
         $paginator->setCollection(
             $paginator->getCollection()->map(

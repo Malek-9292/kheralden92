@@ -25,5 +25,15 @@ class CatalogSeederTest extends TestCase
         $this->assertTrue(
             Product::query()->where('name', 'شاورما دجاج')->whereHas('images', fn ($q) => $q->where('is_primary', true))->exists(),
         );
+
+        $placeholder = public_path('images/product-placeholder.jpg');
+        $this->assertFileExists($placeholder);
+        $size = getimagesize($placeholder);
+        $this->assertNotFalse($size);
+        $this->assertGreaterThanOrEqual(640, $size[0]);
+        $this->assertGreaterThanOrEqual(480, $size[1]);
+        $this->assertFileExists(public_path('images/placeholders/sandwiches.jpg'));
+        $this->assertFileExists(public_path('images/placeholders/saj.jpg'));
+        $this->assertFileExists(public_path('images/placeholders/grill.jpg'));
     }
 }
