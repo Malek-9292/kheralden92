@@ -98,6 +98,28 @@ class MainActivity : Activity() {
         }, matchWidth())
 
         root.addView(Button(this).apply {
+            text = "اختبار الطابعة الآن"
+            setOnClickListener {
+                val printer = UsbThermalPrinter(this@MainActivity)
+                if (!printer.isReady()) {
+                    printer.requestPermissionIfNeeded()
+                    Toast.makeText(this@MainActivity, "وصل طابعة USB ووافق على الصلاحية ثم اضغط اختبار مرة أخرى.", Toast.LENGTH_LONG).show()
+                } else {
+                    Thread {
+                        val result = runCatching { printer.print(EscPosRenderer.testPage()) }
+                        runOnUiThread {
+                            Toast.makeText(
+                                this@MainActivity,
+                                if (result.isSuccess) "تم إرسال صفحة الاختبار للطابعة." else "فشل الاختبار: ${result.exceptionOrNull()?.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }.start()
+                }
+            }
+        }, matchWidth())
+
+        root.addView(Button(this).apply {
             text = "إيقاف Print Agent"
             setOnClickListener {
                 stopService(Intent(this@MainActivity, PrintAgentService::class.java))
