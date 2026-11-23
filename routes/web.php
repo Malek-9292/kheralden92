@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\DeliveryAreaController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\CashierController;
+use App\Http\Controllers\Admin\AdminSearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -70,6 +71,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
         Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
         Route::patch('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+    });
+
+    Route::middleware(['auth', 'employee.active'])->group(function (): void {
+        Route::get('/search', AdminSearchController::class)->name('search');
     });
 
     Route::middleware(['auth', 'employee.active'])->group(function (): void {
