@@ -129,6 +129,7 @@
             el('banner').textContent=settings.banner_text;
             el('banner').style.color=settings.banner_text_color||'#ffffff';
             el('banner').style.background=settings.banner_background||'#2f704b';
+            el('banner').style.fontSize=(Number(settings.banner_font_size)||18)+'px';
             el('banner').hidden=false;
         }
         el('storeFooter').textContent=settings.footer_text||'';
