@@ -56,7 +56,7 @@ class PrintAgentService : Service() {
         val prefs = getSharedPreferences("print-agent", MODE_PRIVATE)
         val server = prefs.getString("server_url", "").orEmpty().trimEnd('/')
         val printerCode = prefs.getString("printer_code", "").orEmpty()
-        val token = prefs.getString("printer_token", "").orEmpty()
+        val token = SecureTokenStore(this).read().orEmpty()
 
         if (server.isBlank() || printerCode.isBlank() || token.isBlank()) {
             updateNotification("أكمل إعداد رابط الخادم ورمز الطابعة")
@@ -164,7 +164,7 @@ class PrintAgentService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_print)
+            .setSmallIcon(android.R.drawable.ic_menu_info_details)
             .setContentTitle("فتوش · طباعة المطبخ")
             .setContentText(message)
             .setContentIntent(openApp)
