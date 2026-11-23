@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class EmployeeSessionController extends Controller
@@ -43,6 +44,7 @@ class EmployeeSessionController extends Controller
             || ($user->valid_until && $now->gt($user->valid_until))
         ) {
             Auth::logout();
+
             DB::table('employee_login_attempts')->insert([
                 'user_id' => $user->id,
                 'login_identifier' => $credentials['phone'],
@@ -58,7 +60,11 @@ class EmployeeSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $sessionToken = Str::random(64);
+        $request->session()->put('employee_session_token', $sessionToken);
+
         $user->forceFill(['last_login_at' => now()])->save();
+
         DB::table('employee_login_attempts')->insert([
             'user_id' => $user->id,
             'login_identifier' => $credentials['phone'],
@@ -69,7 +75,7 @@ class EmployeeSessionController extends Controller
 
         $user->employeeSessions()->create([
             'branch_id' => $user->branch_id,
-            'session_hash' => hash('sha256', $request->session()->getId()),
+            'session_hash' => hash('sha256', $sessionToken),
             'ip_address' => $request->ip(),
             'user_agent' => substr((string) $request->userAgent(), 0, 500),
             'logged_in_at' => now(),
@@ -85,7 +91,8 @@ class EmployeeSessionController extends Controller
     public function destroy(Request $request): JsonResponse
     {
         $user = $request->user();
-        $sessionToken = $request->session()->get('employee_session_token');\n        $sessionHash = is_string($sessionToken) ? hash('sha256', $sessionToken) : null;
+        $sessionToken = $request->session()->get('employee_session_token');
+        $sessionHash = is_string($sessionToken) ? hash('sha256', $sessionToken) : null;
 
         $user?->employeeSessions()
             ->where('session_hash', $sessionHash)
