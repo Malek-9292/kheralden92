@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductAvailabilityWindow;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
