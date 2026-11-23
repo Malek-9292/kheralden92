@@ -17,6 +17,7 @@ use App\Livewire\Admin\DeliveryAreas\Index as DeliveryAreasIndex;
 use App\Livewire\Admin\Catalog\Categories as CategoriesIndex;
 use App\Livewire\Admin\Catalog\Products as ProductsIndex;
 use App\Livewire\Admin\Cashier\Index as CashierIndex;
+use App\Livewire\Admin\Printers\Index as PrintersIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'storefront.index')->name('storefront.home');
@@ -63,6 +64,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/api/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.api.index');
         Route::post('/api/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.api.store');
         Route::patch('/api/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.api.update');
+    });
+
+    Route::middleware(['auth', 'employee.active', 'permission:printing.manage'])->group(function (): void {
+        Route::get('/printers', PrintersIndex::class)->name('printers.index');
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:printing.manage'])->prefix('/api')->name('printers.api.')->group(function (): void {
