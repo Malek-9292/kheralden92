@@ -24,7 +24,14 @@ class StorefrontPageTest extends TestCase
             ->assertSee('IBM+Plex+Sans+Arabic')
             ->assertSee('viewport-fit=cover', false)
             ->assertSee('object-fit:contain', false)
-            ->assertSee('min-width:1024px', false);
+            ->assertSee('min-width:1024px', false)
+            ->assertSee('sf-header', false)
+            ->assertSee('sf-fulfillment', false)
+            ->assertSee('استلام من المطعم')
+            ->assertSee('التوصيل')
+            ->assertSee('حسابي')
+            ->assertSee('fulfillmentPickup', false)
+            ->assertSee('flex-direction:column', false);
 
         $this->assertFileExists(public_path('manifest.webmanifest'));
         $this->assertStringContainsString('فتوش الخالدية', file_get_contents(public_path('manifest.webmanifest')));
