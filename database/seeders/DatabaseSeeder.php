@@ -68,7 +68,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'مدير الفرع', 'guard_name' => 'web', 'is_system' => true],
         );
         $branchManager->permissions()->sync(
-            Permission::query()->where('slug', '!=', 'branches.manage')->pluck('id'),
+            Permission::query()->whereNotIn('slug', ['branches.manage', 'modules.manage'])->pluck('id'),
         );
 
         $templates = [
