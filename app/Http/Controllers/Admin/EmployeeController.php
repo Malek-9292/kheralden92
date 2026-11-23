@@ -74,7 +74,9 @@ class EmployeeController extends Controller
 
     public function update(Request $request, User $employee, BranchAccess $branchAccess): JsonResponse
     {
-        abort_if($employee->hasRole('system_admin'), 403, 'لا يمكن تعديل حساب مدير النظام الرئيسي من إدارة الموظفين.');\n        $oldBranchId = (int) $employee->branch_id;\n        $branchAccess->assertCanAccess($request->user(), $oldBranchId);
+        abort_if($employee->hasRole('system_admin'), 403, 'لا يمكن تعديل حساب مدير النظام الرئيسي من إدارة الموظفين.');
+        $oldBranchId = (int) $employee->branch_id;
+        $branchAccess->assertCanAccess($request->user(), $oldBranchId);
 
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:150'],
@@ -91,7 +93,9 @@ class EmployeeController extends Controller
         $roleIds = $data['role_ids'] ?? $employee->roles()->pluck('roles.id')->all();
         $this->assertRolesAllowed($roleIds, $newBranchId, $request->user()->hasRole('system_admin'));
 
-        $mustRevokeSessions = (array_key_exists('status', $data) && $data['status'] !== 'active') || $newBranchId !== $oldBranchId;\n\n        DB::transaction(function () use ($employee, $data, $roleIds, $newBranchId, $mustRevokeSessions): void {
+        $mustRevokeSessions = (array_key_exists('status', $data) && $data['status'] !== 'active') || $newBranchId !== $oldBranchId;
+
+        DB::transaction(function () use ($employee, $data, $roleIds, $newBranchId, $mustRevokeSessions): void {
             $employee->fill(collect($data)->only(['name', 'phone', 'status'])->all());
             $employee->branch_id = $newBranchId;
 
