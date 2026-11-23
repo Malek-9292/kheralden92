@@ -79,8 +79,12 @@ class MainActivity : Activity() {
                 prefs.edit()
                     .putString("server_url", server)
                     .putString("printer_code", code)
-                    .putString("printer_token", token)
                     .apply()
+                if (token.isNotBlank()) SecureTokenStore(this@MainActivity).save(token)
+                if (SecureTokenStore(this@MainActivity).read().isNullOrBlank()) {
+                    Toast.makeText(this@MainActivity, "رمز الطابعة مطلوب.", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
 
                 val service = Intent(this@MainActivity, PrintAgentService::class.java)
                     .setAction(PrintAgentService.ACTION_START)
