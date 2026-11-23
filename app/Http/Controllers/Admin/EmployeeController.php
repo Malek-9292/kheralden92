@@ -213,7 +213,11 @@ class EmployeeController extends Controller
         }
 
         foreach ($roles as $role) {
-            if ($role->slug === 'system_admin' && ! $isSystemAdmin) {
+            if ($isSystemAdmin === false && $role->permissions()->where('slug', 'modules.manage')->exists()) {
+                throw ValidationException::withMessages(['role_ids' => ['لا يمكن إسناد دور يحتوي على صلاحية إدارة الوحدات.']]);
+            }
+
+            if ($role->slug === 'system_admin' && $isSystemAdmin === false) {
                 throw ValidationException::withMessages(['role_ids' => ['لا يمكن منح صلاحية مدير النظام الرئيسي.']]);
             }
 
