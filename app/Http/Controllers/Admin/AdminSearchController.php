@@ -55,7 +55,7 @@ class AdminSearchController extends Controller
 
         foreach ($navigation as $item) {
             $requiredModule = $moduleByPermission[$item['permission']] ?? null;
-            if ($requiredModule && ! $moduleManager->enabled($requiredModule)) {
+            if ($requiredModule && $moduleManager->enabled($requiredModule) === false) {
                 continue;
             }
 
