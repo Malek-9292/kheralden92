@@ -35,6 +35,7 @@ class SettingsController extends Controller
                 'banner_text' => $settings->get('banner_text', ''),
                 'banner_text_color' => $settings->get('banner_text_color', '#ffffff'),
                 'banner_background' => $settings->get('banner_background', '#2f704b'),
+                'banner_font_size' => (int) $settings->get('banner_font_size', 18),
                 'footer_text' => $settings->get('footer_text', ''),
                 'logo_url' => $logoPath ? Storage::disk('public')->url($logoPath) : null,
             ],
