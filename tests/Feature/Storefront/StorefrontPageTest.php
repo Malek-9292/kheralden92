@@ -45,7 +45,13 @@ class StorefrontPageTest extends TestCase
             ->assertSee('brand-box-bg', false)
             ->assertSee('brand_name_color', false)
             ->assertSee('cartbar.is-empty', false)
-            ->assertSee("el('openCart').hidden=!count", false);
+            ->assertSee("el('openCart').hidden=!count", false)
+            ->assertSee('sf-brand-logo', false)
+            ->assertSee('sf-brand-copy', false)
+            ->assertSee('aspect-ratio:21/9', false)
+            ->assertSee('product-actions', false)
+            ->assertSee('aspect-ratio:1/1', false)
+            ->assertSee('align-items:stretch', false);
 
         $this->assertFileExists(public_path('manifest.webmanifest'));
         $this->assertStringContainsString('فتوش الخالدية', file_get_contents(public_path('manifest.webmanifest')));
