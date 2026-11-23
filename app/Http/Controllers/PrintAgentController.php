@@ -111,8 +111,9 @@ class PrintAgentController extends Controller
 
         abort_if($code === '' || $token === '', 401, 'بيانات الطابعة مطلوبة.');
 
-        $printer = Printer::query()->where('code', $code)->where('is_active', true)->first();
-        abort_unless($printer && hash_equals($printer->device_token_hash, hash('sha256', $token)), 401, 'بيانات الطابعة غير صحيحة أو موقوفة.');
+        $tokenHash = hash('sha256', $token);
+        $printer = Printer::query()->where('code', $code)->where('device_token_hash', $tokenHash)->where('is_active', true)->first();
+        abort_unless($printer && hash_equals($printer->device_token_hash, $tokenHash), 401, 'بيانات الطابعة غير صحيحة أو موقوفة.');
 
         return $printer;
     }
