@@ -26,4 +26,9 @@ class Branch extends Model
     {
         return $this->hasMany(DeliveryArea::class);
     }
+
+    public function settings(): HasMany
+    {
+        return $this->hasMany(BranchSetting::class);
+    }
 }
