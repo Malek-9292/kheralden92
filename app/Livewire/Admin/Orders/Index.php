@@ -21,6 +21,10 @@ class Index extends Component
 
     public string $fulfillmentFilter = '';
 
+    public ?int $cancelOrderId = null;
+
+    public string $cancelReason = '';
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -48,7 +52,7 @@ class Index extends Component
         session()->flash('status', 'تم تحديث حالة الطلب.');
     }
 
-    public function cancel(int $orderId, OrderWorkflow $workflow): void
+    public function openCancelModal(int $orderId): void
     {
         $user = auth()->user();
         abort_unless($user->hasPermissionTo('orders.cancel'), 403);
@@ -56,7 +60,35 @@ class Index extends Component
         $order = Order::query()->findOrFail($orderId);
         app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
 
-        $workflow->cancel($order, $user, 'إلغاء من لوحة الطلبات.');
+        $this->cancelOrderId = $order->id;
+        $this->cancelReason = '';
+        $this->resetErrorBag('cancelReason');
+    }
+
+    public function closeCancelModal(): void
+    {
+        $this->cancelOrderId = null;
+        $this->cancelReason = '';
+        $this->resetErrorBag('cancelReason');
+    }
+
+    public function confirmCancel(OrderWorkflow $workflow): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('orders.cancel'), 403);
+
+        $data = $this->validate([
+            'cancelOrderId' => ['required', 'integer'],
+            'cancelReason' => ['required', 'string', 'min:3', 'max:500'],
+        ], [], [
+            'cancelReason' => 'سبب الإلغاء',
+        ]);
+
+        $order = Order::query()->findOrFail((int) $data['cancelOrderId']);
+        app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
+
+        $workflow->cancel($order, $user, trim($data['cancelReason']));
+        $this->closeCancelModal();
         session()->flash('status', 'تم إلغاء الطلب.');
     }
 

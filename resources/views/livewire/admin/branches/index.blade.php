@@ -29,11 +29,11 @@
             <tbody>
             @forelse($branches as $branch)
                 <tr wire:key="branch-{{ $branch->id }}">
-                    <td dir="ltr">{{ $branch->code }}</td>
-                    <td><strong>{{ $branch->name }}</strong></td>
-                    <td dir="ltr">{{ $branch->timezone }}</td>
-                    <td><span class="status {{ $branch->is_active ? '' : 'danger' }}">{{ $branch->is_active ? 'نشط' : 'متوقف' }}</span></td>
-                    <td><div style="display:flex;gap:6px">
+                    <td data-label="الكود" dir="ltr">{{ $branch->code }}</td>
+                    <td data-label="اسم الفرع"><strong>{{ $branch->name }}</strong></td>
+                    <td data-label="المنطقة الزمنية" dir="ltr">{{ $branch->timezone }}</td>
+                    <td data-label="الحالة"><span class="status {{ $branch->is_active ? '' : 'danger' }}">{{ $branch->is_active ? 'نشط' : 'متوقف' }}</span></td>
+                    <td data-label="الإجراءات"><div style="display:flex;gap:6px">
                         <button wire:click="edit({{ $branch->id }})" class="secondary" style="padding:7px 10px;font-size:12px">تعديل</button>
                         <button wire:click="toggleActive({{ $branch->id }})" wire:confirm="تأكيد تغيير حالة الفرع؟" class="secondary" style="padding:7px 10px;font-size:12px">{{ $branch->is_active ? 'إيقاف' : 'تفعيل' }}</button>
                     </div></td>

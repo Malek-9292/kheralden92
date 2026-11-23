@@ -12,6 +12,7 @@
                 <select wire:model="fulfillmentFilter"><option value="">الكل</option><option value="pickup">استلام</option><option value="delivery">توصيل</option></select>
             </label>
             <button type="submit" class="primary">تطبيق الفلتر</button>
+            <button type="button" class="secondary" wire:click="exportCsv" wire:loading.attr="disabled">تصدير CSV</button>
         </form>
         @error('dateFrom')<small style="color:#b42318">{{ $message }}</small>@enderror
         @error('dateTo')<small style="color:#b42318">{{ $message }}</small>@enderror
@@ -26,7 +27,7 @@
         <div class="stat"><span>متوسط الفاتورة المسددة</span><strong>{{ number_format($averageTicket,3) }} د.ك</strong></div>
         <div class="stat"><span>الطلبات الملغاة</span><strong>{{ number_format($cancelledOrders) }}</strong></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+    <div class="form-grid" style="gap:16px;margin-bottom:0">
         <div class="panel">
             <h2>حالات الطلبات</h2>
             @php($labels=['pending'=>'جديد','confirmed'=>'مؤكد','preparing'=>'قيد التجهيز','ready'=>'جاهز','out_for_delivery'=>'خرج للتوصيل','completed'=>'مكتمل','cancelled'=>'ملغي'])
@@ -48,7 +49,12 @@
             <thead><tr><th>الصنف</th><th>القسم</th><th>الكمية المباعة</th><th>قيمة الأصناف</th></tr></thead>
             <tbody>
             @forelse($topProducts as $product)
-                <tr><td><strong>{{ $product->product_name }}</strong></td><td>{{ $product->category_name }}</td><td>{{ number_format($product->quantity) }}</td><td>{{ number_format((float)$product->sales,3) }} د.ك</td></tr>
+                <tr>
+                    <td data-label="الصنف"><strong>{{ $product->product_name }}</strong></td>
+                    <td data-label="القسم">{{ $product->category_name }}</td>
+                    <td data-label="الكمية المباعة">{{ number_format($product->quantity) }}</td>
+                    <td data-label="قيمة الأصناف">{{ number_format((float)$product->sales,3) }} د.ك</td>
+                </tr>
             @empty<tr><td colspan="4"><div class="empty">لا توجد مبيعات أصناف في الفترة المحددة</div></td></tr>@endforelse
             </tbody>
         </table></div>

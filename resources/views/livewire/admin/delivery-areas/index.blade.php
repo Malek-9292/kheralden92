@@ -56,12 +56,12 @@
                 <tbody>
                 @forelse($areas as $area)
                     <tr wire:key="delivery-area-{{ $area->id }}">
-                        <td>{{ $area->governorate }}</td>
-                        <td><strong>{{ $area->name }}</strong></td>
-                        <td>{{ $area->delivery_fee }} د.ك</td>
-                        <td>{{ $area->minimum_order }} د.ك</td>
-                        <td><span class="status">{{ $area->is_active ? 'متاحة' : 'متوقفة' }}</span></td>
-                        <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <td data-label="المحافظة">{{ $area->governorate }}</td>
+                        <td data-label="المنطقة"><strong>{{ $area->name }}</strong></td>
+                        <td data-label="رسوم التوصيل">{{ $area->delivery_fee }} د.ك</td>
+                        <td data-label="الحد الأدنى">{{ $area->minimum_order }} د.ك</td>
+                        <td data-label="الحالة"><span class="status">{{ $area->is_active ? 'متاحة' : 'متوقفة' }}</span></td>
+                        <td data-label="إجراءات"><div style="display:flex;gap:6px;flex-wrap:wrap">
                             <button wire:click="edit({{ $area->id }})" style="border:0;border-radius:8px;padding:7px 10px;background:#edf3f8;color:#315b83;cursor:pointer;font:inherit;font-size:12px">تعديل</button>
                             <button wire:click="toggleActive({{ $area->id }})" wire:confirm="تأكيد تغيير حالة المنطقة؟" style="border:0;border-radius:8px;padding:7px 10px;background:#f0f4ef;color:#42664c;cursor:pointer;font:inherit;font-size:12px">{{ $area->is_active ? 'إيقاف' : 'تفعيل' }}</button>
                         </div></td>

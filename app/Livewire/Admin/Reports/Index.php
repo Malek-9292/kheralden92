@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Index extends Component
 {
@@ -110,5 +111,79 @@ class Index extends Component
             'branches' => $user->hasRole('system_admin') ? Branch::query()->orderBy('name')->get(['id', 'name']) : collect(),
             'isSystemAdmin' => $user->hasRole('system_admin'),
         ])->layout('layouts.admin', ['heading' => 'التقارير']);
+    }
+
+    public function exportCsv(): StreamedResponse
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('reports.view'), 403);
+
+        $data = $this->validate([
+            'dateFrom' => ['required', 'date'],
+            'dateTo' => ['required', 'date', 'after_or_equal:dateFrom'],
+            'fulfillmentFilter' => ['nullable', 'in:pickup,delivery'],
+        ]);
+
+        $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
+        if ($user->hasRole('system_admin') && $this->branchId) {
+            abort_unless($branchIds->contains((int) $this->branchId), 403);
+            $branchIds = collect([(int) $this->branchId]);
+        }
+
+        $from = Carbon::parse($data['dateFrom'], 'Asia/Kuwait')->startOfDay()->utc();
+        $to = Carbon::parse($data['dateTo'], 'Asia/Kuwait')->endOfDay()->utc();
+
+        $query = Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->whereBetween('created_at', [$from, $to])
+            ->with('items')
+            ->orderBy('id');
+
+        if ($this->fulfillmentFilter !== '') {
+            $query->where('fulfillment_type', $this->fulfillmentFilter);
+        }
+
+        $filename = 'fatoosh-orders-'.$data['dateFrom'].'_'.$data['dateTo'].'.csv';
+
+        return response()->streamDownload(function () use ($query): void {
+            $out = fopen('php://output', 'w');
+            // UTF-8 BOM for Excel Arabic
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [
+                'order_number',
+                'created_at_kuwait',
+                'customer_name',
+                'customer_phone',
+                'fulfillment_type',
+                'status',
+                'payment_status',
+                'subtotal',
+                'delivery_fee',
+                'total',
+                'items',
+            ]);
+
+            $query->chunkById(100, function ($orders) use ($out): void {
+                foreach ($orders as $order) {
+                    fputcsv($out, [
+                        $order->order_number,
+                        optional($order->created_at)->timezone('Asia/Kuwait')->format('Y-m-d H:i:s'),
+                        $order->customer_name,
+                        $order->customer_phone,
+                        $order->fulfillment_type,
+                        $order->status,
+                        $order->payment_status,
+                        number_format((float) $order->subtotal, 3, '.', ''),
+                        number_format((float) $order->delivery_fee, 3, '.', ''),
+                        number_format((float) $order->total, 3, '.', ''),
+                        $order->items->map(fn ($item) => $item->product_name.'×'.$item->quantity)->implode(' | '),
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 }

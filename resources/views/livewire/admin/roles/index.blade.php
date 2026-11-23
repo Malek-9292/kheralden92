@@ -43,11 +43,11 @@
             <tbody>
             @forelse($roles as $role)
                 <tr wire:key="role-{{ $role->id }}">
-                    <td><strong>{{ $role->name }}</strong><div class="muted" dir="ltr">{{ $role->slug }}</div></td>
-                    <td>{{ $role->branch?->name ?? 'عام' }}</td>
-                    <td>{{ $role->permissions->count() }}</td>
-                    <td style="max-width:360px"><div style="display:flex;gap:5px;flex-wrap:wrap">@foreach($role->permissions as $permission)<span class="status">{{ $permission->name }}</span>@endforeach</div></td>
-                    <td>
+                    <td data-label="الدور"><strong>{{ $role->name }}</strong><div class="muted" dir="ltr">{{ $role->slug }}</div></td>
+                    <td data-label="الفرع">{{ $role->branch?->name ?? 'عام' }}</td>
+                    <td data-label="عدد الصلاحيات">{{ $role->permissions->count() }}</td>
+                    <td data-label="الصلاحيات" style="max-width:360px"><div style="display:flex;gap:5px;flex-wrap:wrap">@foreach($role->permissions as $permission)<span class="status">{{ $permission->name }}</span>@endforeach</div></td>
+                    <td data-label="إجراء">
                         @if(!$role->is_system && $role->branch_id !== null)
                             <button wire:click="edit({{ $role->id }})" class="secondary" style="padding:7px 10px;font-size:12px">تعديل</button>
                         @else
