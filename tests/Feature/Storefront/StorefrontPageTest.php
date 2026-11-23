@@ -15,9 +15,13 @@ class StorefrontPageTest extends TestCase
             ->assertSee('/api/catalog/')
             ->assertSee('/api/storefront/')
             ->assertSee('تتبع طلب')
+            ->assertSee('الدفع نقدًا عند الاستلام')
+            ->assertSee('إتمام الطلب')
+            ->assertSee('aria-modal')
             ->assertSee('loadingSkeleton')
             ->assertSee('offlineBanner')
-            ->assertSee('serviceWorker');
+            ->assertSee('serviceWorker')
+            ->assertSee('IBM+Plex+Sans+Arabic');
 
         $this->assertFileExists(public_path('manifest.webmanifest'));
         $this->assertStringContainsString('فتوش الخالدية', file_get_contents(public_path('manifest.webmanifest')));
