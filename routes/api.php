@@ -12,4 +12,5 @@ Route::get('/health', fn () => response()->json([
 Route::prefix('catalog/{branchCode}')->name('catalog.')->group(function (): void {
     Route::get('/categories', [CatalogController::class, 'categories'])->name('categories');
     Route::get('/products', [CatalogController::class, 'products'])->name('products');
+    Route::get('/products/{slug}', [CatalogController::class, 'show'])->name('products.show');
 });
