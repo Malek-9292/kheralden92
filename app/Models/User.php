@@ -12,7 +12,7 @@ class User extends Authenticatable {
  use HasFactory, Notifiable, HasRoles, SoftDeletes;
  public function branch(): BelongsTo { return $this->belongsTo(Branch::class); }
  public function employeeSessions(): HasMany { return $this->hasMany(EmployeeSession::class); }
- protected $fillable = ['name','phone','email','password','branch_id','status'];
+ protected $fillable = ['name','phone','email','password','branch_id','status','valid_from','valid_until'];
  protected $hidden = ['password','remember_token'];
- protected function casts(): array { return ['email_verified_at'=>'datetime','password'=>'hashed']; }
+ protected function casts(): array { return ['email_verified_at'=>'datetime','last_login_at'=>'datetime','valid_from'=>'datetime','valid_until'=>'datetime','password'=>'hashed']; }
 }
