@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Cashier;
 use App\Models\Order;
 use App\Services\BranchAccess;
 use App\Services\OrderWorkflow;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,10 +14,22 @@ class Index extends Component
 {
     use WithPagination;
 
+    /** Active POS queue: new storefront orders through collection-ready / unpaid completed. */
+    public const QUEUE_STATUSES = [
+        'pending',
+        'confirmed',
+        'preparing',
+        'ready',
+        'out_for_delivery',
+        'completed',
+    ];
+
     #[Url]
     public string $search = '';
 
     public string $fulfillmentFilter = '';
+
+    public string $statusFilter = '';
 
     public string $paymentFilter = 'unpaid';
 
@@ -24,11 +37,15 @@ class Index extends Component
 
     public int $lastSeenPendingCount = 0;
 
+    public int $queueCount = 0;
+
+    public int $lastSeenQueueCount = 0;
+
     public bool $soundMuted = false;
 
     public function mount(): void
     {
-        $this->refreshPendingCount(initial: true);
+        $this->refreshQueueSignals(initial: true);
     }
 
     public function updatedSearch(): void
@@ -41,6 +58,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedPaymentFilter(): void
     {
         $this->resetPage();
@@ -48,7 +70,8 @@ class Index extends Component
 
     public function pollPending(): void
     {
-        $this->refreshPendingCount();
+        // Re-renders the POS queue so cash checkout (auto-confirmed) orders appear promptly.
+        $this->refreshQueueSignals();
     }
 
     public function toggleMute(): void
@@ -66,14 +89,14 @@ class Index extends Component
 
         if ($order->status !== 'pending') {
             session()->flash('status', 'الطلب لم يعد بانتظار القبول.');
-            $this->refreshPendingCount(initial: true);
+            $this->refreshQueueSignals(initial: true);
 
             return;
         }
 
         $workflow->advance($order, $user);
         session()->flash('status', 'تم قبول الطلب '.$order->order_number);
-        $this->refreshPendingCount(initial: true);
+        $this->refreshQueueSignals(initial: true);
     }
 
     public function collectCash(int $orderId, OrderWorkflow $workflow): void
@@ -91,9 +114,7 @@ class Index extends Component
     {
         $user = auth()->user();
         $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
-        $query = Order::query()->whereIn('branch_id', $branchIds)
-            ->whereIn('status', ['ready', 'out_for_delivery', 'completed'])
-            ->with('items')->latest();
+        $query = $this->queueQuery($branchIds)->with('items')->latest();
 
         if ($this->search !== '') {
             $term = trim($this->search);
@@ -106,6 +127,10 @@ class Index extends Component
 
         if ($this->fulfillmentFilter !== '') {
             $query->where('fulfillment_type', $this->fulfillmentFilter);
+        }
+
+        if ($this->statusFilter !== '') {
+            $query->where('status', $this->statusFilter);
         }
 
         if ($this->paymentFilter === 'unpaid') {
@@ -126,23 +151,62 @@ class Index extends Component
             'orders' => $query->paginate(25),
             'pendingOrders' => $pendingOrders,
             'canAccept' => $user->hasPermissionTo('orders.accept'),
+            'statusLabels' => $this->statusLabels(),
         ])->layout('layouts.admin', ['heading' => 'الكاشير والتحصيل']);
     }
 
-    private function refreshPendingCount(bool $initial = false): void
+    /**
+     * @param  Collection<int, int|string>  $branchIds
+     */
+    private function queueQuery($branchIds)
+    {
+        return Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->whereIn('status', self::QUEUE_STATUSES);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function statusLabels(): array
+    {
+        return [
+            'pending' => 'جديد',
+            'confirmed' => 'مؤكد',
+            'preparing' => 'قيد التجهيز',
+            'ready' => 'جاهز',
+            'out_for_delivery' => 'خرج للتوصيل',
+            'completed' => 'مكتمل',
+            'cancelled' => 'ملغي',
+        ];
+    }
+
+    private function refreshQueueSignals(bool $initial = false): void
     {
         $user = auth()->user();
         $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
-        $count = Order::query()
+
+        $pendingCount = Order::query()
             ->whereIn('branch_id', $branchIds)
             ->where('status', 'pending')
             ->count();
 
-        if (! $initial && ! $this->soundMuted && $count > $this->lastSeenPendingCount) {
+        // Includes auto-confirmed cash placements so the beep fires even when nothing is pending.
+        $queueCount = Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->whereIn('status', self::QUEUE_STATUSES)
+            ->count();
+
+        $grew = $pendingCount > $this->lastSeenPendingCount
+            || $queueCount > $this->lastSeenQueueCount;
+
+        if (! $initial && ! $this->soundMuted && $grew) {
             $this->dispatch('cashier-new-order-beep');
         }
 
-        $this->pendingCount = $count;
-        $this->lastSeenPendingCount = $count;
+        $this->pendingCount = $pendingCount;
+        $this->lastSeenPendingCount = $pendingCount;
+        $this->queueCount = $queueCount;
+        $this->lastSeenQueueCount = $queueCount;
     }
 }
