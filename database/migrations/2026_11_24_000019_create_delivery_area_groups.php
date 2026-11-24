@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\\Database\\Migrations\\Migration;
-use Illuminate\\Database\\Schema\\Blueprint;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -54,8 +54,8 @@ return new class extends Migration
     {
         Schema::table('delivery_areas', function (Blueprint $table): void {
             $table->dropIndex(['branch_id', 'delivery_area_group_id']);
-            $table->dropConstrainedForeignId('delivery_area_group_id');
-            $table->dropColumn(['delivery_fee_override', 'minimum_order_override']);
+            $table->dropForeign(['delivery_area_group_id']);
+            $table->dropColumn(['delivery_area_group_id', 'delivery_fee_override', 'minimum_order_override']);
         });
 
         Schema::dropIfExists('delivery_area_groups');
