@@ -165,7 +165,8 @@ class OrderController extends Controller
             $order = Order::query()->create([
                 'branch_id' => $branch->id,
                 'delivery_area_id' => $area?->id,
-                'order_number' => 'TEMP-'.Str::uuid(),
+                // Keep the temporary value within the 40-character column limit.
+                'order_number' => 'TEMP-'.Str::random(32),
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'fulfillment_type' => $data['fulfillment_type'],

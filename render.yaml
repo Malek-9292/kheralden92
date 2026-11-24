@@ -1,0 +1,66 @@
+# Render Blueprint — Fatoosh Al-Khaldiya temporary preview/staging only.
+# Free services sleep when idle and have ephemeral filesystems.
+# Do not use this Blueprint for production or durable customer uploads.
+
+databases:
+  - name: fatoosh-preview-db
+    plan: free
+    databaseName: fatoosh
+    user: fatoosh
+
+services:
+  - type: web
+    name: fatoosh-preview
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_NAME
+        value: فتوش الخالدية
+      - key: APP_TIMEZONE
+        value: Asia/Kuwait
+      - key: APP_LOCALE
+        value: ar
+      - key: APP_FALLBACK_LOCALE
+        value: en
+      - key: TZ
+        value: Asia/Kuwait
+      - key: FORCE_HTTPS
+        value: "true"
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fatoosh-preview-db
+          property: connectionString
+      - key: RUN_PREVIEW_SEED
+        value: "true"
+      # Set once in the Render dashboard; never commit these values.
+      - key: ADMIN_PHONE
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PRINTER_TOKEN
+        sync: false

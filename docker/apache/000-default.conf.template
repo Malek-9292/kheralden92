@@ -1,0 +1,15 @@
+<VirtualHost *:__PORT__>
+    ServerAdmin webmaster@localhost
+    ServerName localhost
+    DocumentRoot /var/www/html/public
+
+    <Directory /var/www/html/public>
+        Options FollowSymLinks
+        AllowOverride All
+        Require all granted
+        FallbackResource /index.php
+    </Directory>
+
+    ErrorLog /var/www/html/storage/logs/apache-error.log
+    CustomLog /var/www/html/storage/logs/apache-access.log combined
+</VirtualHost>

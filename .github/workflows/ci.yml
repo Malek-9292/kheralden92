@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: ["main", "implementation/**"]
+    branches: ["main", "implementation/**", "cursor/**"]
   pull_request:
     branches: ["main"]
 concurrency:
@@ -13,13 +13,32 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: php:8.3-cli
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: fatoosh
+          POSTGRES_USER: fatoosh
+          POSTGRES_PASSWORD: fatoosh
+        options: >-
+          --health-cmd "pg_isready -U fatoosh -d fatoosh"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: fatoosh
+      DB_USERNAME: fatoosh
+      DB_PASSWORD: fatoosh
     steps:
       - uses: actions/checkout@v4
       - name: Install PHP extensions and Composer
         run: |
           apt-get update
-          apt-get install -y curl git unzip libzip-dev libicu-dev libxml2-dev libonig-dev libsqlite3-dev
-          docker-php-ext-install mbstring dom pdo_mysql pdo_sqlite zip
+          apt-get install -y curl git unzip libzip-dev libicu-dev libxml2-dev libonig-dev libsqlite3-dev libpq-dev
+          docker-php-ext-install mbstring dom pdo_mysql pdo_pgsql pdo_sqlite zip
           curl -sS https://getcomposer.org/installer -o composer-setup.php
           php composer-setup.php --install-dir=/usr/local/bin --filename=composer
           rm composer-setup.php
@@ -34,5 +53,20 @@ jobs:
         run: composer validate --no-check-publish
       - name: Check PHP formatting
         run: vendor/bin/pint --test
-      - name: Run automated tests
+      - name: Run automated tests against PostgreSQL
         run: php artisan test
+
+  docker-build:
+    name: Build preview Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: fatoosh-preview:ci
