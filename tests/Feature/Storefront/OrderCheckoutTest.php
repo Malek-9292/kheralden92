@@ -103,7 +103,6 @@ class OrderCheckoutTest extends TestCase
         ]);
     }
 
-
     public function test_delivery_is_unavailable_before_1130_and_available_from_1130_kuwait_time(): void
     {
         [$branch, $product] = $this->createBranchAndProduct();
