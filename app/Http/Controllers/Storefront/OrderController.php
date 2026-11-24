@@ -112,8 +112,8 @@ class OrderController extends Controller
                     ]);
                 }
 
-                $deliveryFee = Money::toFils((string) $area->delivery_fee);
-                $minimumOrder = Money::toFils((string) $area->minimum_order);
+                $deliveryFee = Money::toFils($area->effectiveDeliveryFee());
+                $minimumOrder = Money::toFils($area->effectiveMinimumOrder());
             }
 
             $quantities = collect($data['items'])->keyBy('product_id');
