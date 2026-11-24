@@ -104,13 +104,13 @@ class OrderController extends Controller
                     ->where('branch_id', $branch->id)
                     ->where('is_active', true)
                     ->where(function ($query) {
-                $query->whereNull('delivery_area_group_id')
-                    ->orWhereHas('group', fn ($group) => $group->where('is_active', true));
-            })
+                        $query->whereNull('delivery_area_group_id')
+                            ->orWhereHas('group', fn ($group) => $group->where('is_active', true));
+                    })
                     ->lockForUpdate()
                     ->first();
 
-                if (! $area) {
+                if (!$area) {
                     throw ValidationException::withMessages([
                         'delivery_area_id' => ['منطقة التوصيل غير متاحة لهذا الفرع.'],
                     ]);
@@ -144,7 +144,7 @@ class OrderController extends Controller
                 $product = $products->get($productId);
                 $windows = $product->availabilityWindows;
 
-                if ($windows->isNotEmpty() && ! $windows->contains(function ($window) use ($now): bool {
+                if ($windows->isNotEmpty() && !$windows->contains(function ($window) use ($now): bool {
                     return $window->is_active
                         && $now->format('H:i:s') >= $window->start_time
                         && $now->format('H:i:s') < $window->end_time;
