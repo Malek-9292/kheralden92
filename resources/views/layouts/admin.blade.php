@@ -128,6 +128,7 @@
                 <a class="{{ str_starts_with($currentPath, '/admin/categories') ? 'active' : '' }}" href="/admin/categories">الأقسام</a>
             @endif
             @if(auth()->user()->hasPermissionTo('delivery.manage') && $moduleManager->enabled('Delivery')) <a class="{{ str_starts_with($currentPath, '/admin/delivery-areas') ? 'active' : '' }}" href="/admin/delivery-areas">مناطق التوصيل</a> @endif
+            @if(auth()->user()->hasPermissionTo('delivery.manage') && $moduleManager->enabled('Delivery')) <a class="{{ str_starts_with($currentPath, '/admin/delivery-groups') ? 'active' : '' }}" href="/admin/delivery-groups">مجموعات التوصيل</a> @endif
             @if(auth()->user()->hasPermissionTo('employees.manage') && $moduleManager->enabled('Identity')) <a class="{{ str_starts_with($currentPath, '/admin/employees') ? 'active' : '' }}" href="/admin/employees">الموظفون</a> @endif
             @if(auth()->user()->hasPermissionTo('branches.manage') && $moduleManager->enabled('Branches')) <a class="{{ str_starts_with($currentPath, '/admin/branches') ? 'active' : '' }}" href="/admin/branches">الفروع</a> @endif
             @if(auth()->user()->hasPermissionTo('roles.manage') && $moduleManager->enabled('AccessControl')) <a class="{{ str_starts_with($currentPath, '/admin/roles') ? 'active' : '' }}" href="/admin/roles">الأدوار والصلاحيات</a> @endif

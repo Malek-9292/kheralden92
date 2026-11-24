@@ -103,6 +103,10 @@ class OrderController extends Controller
                     ->whereKey($data['delivery_area_id'])
                     ->where('branch_id', $branch->id)
                     ->where('is_active', true)
+                    ->where(function ($query) {
+                        $query->whereNull('delivery_area_group_id')
+                            ->orWhereHas('group', fn ($group) => $group->where('is_active', true));
+                    })
                     ->lockForUpdate()
                     ->first();
 
@@ -112,8 +116,8 @@ class OrderController extends Controller
                     ]);
                 }
 
-                $deliveryFee = Money::toFils((string) $area->delivery_fee);
-                $minimumOrder = Money::toFils((string) $area->minimum_order);
+                $deliveryFee = Money::toFils($area->effectiveDeliveryFee());
+                $minimumOrder = Money::toFils($area->effectiveMinimumOrder());
             }
 
             $quantities = collect($data['items'])->keyBy('product_id');
