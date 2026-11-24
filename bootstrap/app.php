@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->report(function (\Throwable $exception): void {
+        $exceptions->report(function (Throwable $exception): void {
             error_log(sprintf(
                 'Laravel exception [%s]: %s in %s:%d',
                 $exception::class,

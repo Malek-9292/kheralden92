@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     try {
         return response()->view('storefront.index');
-    } catch (\Throwable $exception) {
+    } catch (Throwable $exception) {
         error_log(sprintf(
             'STOREFRONT_RENDER_FAILURE [%s]: %s in %s:%d',
             $exception::class,
