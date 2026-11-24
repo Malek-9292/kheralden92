@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('branch_id')->constrained()->restrictOnDelete();
             $table->foreignId('delivery_area_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('order_number', 40)->unique();
+            $table->string('order_number', 64)->unique();
             $table->string('customer_name', 150);
             $table->string('customer_phone', 30);
             $table->string('fulfillment_type', 20);
