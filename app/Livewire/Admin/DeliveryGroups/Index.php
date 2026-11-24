@@ -1,15 +1,15 @@
 <?php
 
-namespace App\\Livewire\\Admin\\DeliveryGroups;
+namespace App\Livewire\Admin\DeliveryGroups;
 
-use App\\Models\\AuditLog;
-use App\\Models\\Branch;
-use App\\Models\\DeliveryArea;
-use App\\Models\\DeliveryAreaGroup;
-use App\\Services\\BranchAccess;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Validation\\Rule;
-use Livewire\\Component;
+use App\Models\AuditLog;
+use App\Models\Branch;
+use App\Models\DeliveryArea;
+use App\Models\DeliveryAreaGroup;
+use App\Services\BranchAccess;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
 
 class Index extends Component
 {
@@ -54,8 +54,8 @@ class Index extends Component
 
         $data = $this->validate([
             'groupName' => ['required', 'string', 'max:120', $unique],
-            'deliveryFee' => ['required', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
-            'minimumOrder' => ['required', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
+            'deliveryFee' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],
+            'minimumOrder' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],
             'groupActive' => ['boolean'],
         ]);
 
@@ -125,8 +125,8 @@ class Index extends Component
             'selectedAreaId' => ['required', 'integer', Rule::exists('delivery_areas', 'id')->where('branch_id', $branchId)],
             'selectedGroupId' => ['required', 'integer', Rule::exists('delivery_area_groups', 'id')->where('branch_id', $branchId)],
             'customPricing' => ['boolean'],
-            'customDeliveryFee' => ['required_if:customPricing,true', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
-            'customMinimumOrder' => ['required_if:customPricing,true', 'numeric', 'min:0', 'regex:/^\\d+(\\.\\d{1,3})?$/'],
+            'customDeliveryFee' => ['required_if:customPricing,true', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],
+            'customMinimumOrder' => ['required_if:customPricing,true', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,3})?$/'],
         ]);
 
         DB::transaction(function () use ($branchId, $data): void {
