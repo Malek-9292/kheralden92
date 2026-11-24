@@ -12,7 +12,6 @@ class StorefrontSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
-
     public function test_public_settings_report_delivery_closed_until_1130_kuwait_time(): void
     {
         $branch = Branch::query()->create([
