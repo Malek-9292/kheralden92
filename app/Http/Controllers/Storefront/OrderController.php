@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Services\OrderWorkflow;
 use App\Support\Money;
+use App\Support\Delivery\DeliverySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,6 +47,12 @@ class OrderController extends Controller
             ->firstOrFail();
 
         if ($data['fulfillment_type'] === 'delivery') {
+            if (!DeliverySchedule::isOpen($branch)) {
+                throw ValidationException::withMessages([
+                    'fulfillment_type' => [DeliverySchedule::closedMessage()],
+                ]);
+            }
+
             $deliveryPaused = filter_var(
                 BranchSetting::query()
                     ->where('branch_id', $branch->id)

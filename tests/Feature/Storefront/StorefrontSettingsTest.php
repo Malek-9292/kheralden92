@@ -5,11 +5,39 @@ namespace Tests\Feature\Storefront;
 use App\Models\Branch;
 use App\Models\BranchSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class StorefrontSettingsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_public_settings_report_delivery_closed_until_1130_kuwait_time(): void
+    {
+        $branch = Branch::query()->create([
+            'code' => 'KHAL',
+            'name' => 'فتوش الخالدية',
+            'timezone' => 'Asia/Kuwait',
+            'is_active' => true,
+        ]);
+
+        Carbon::setTestNow(Carbon::parse('2026-11-24 11:29:59', 'Asia/Kuwait'));
+
+        $this->getJson('/api/storefront/KHAL/settings')
+            ->assertOk()
+            ->assertJsonPath('settings.delivery_schedule_open', false)
+            ->assertJsonPath('settings.is_accepting_delivery', false)
+            ->assertJsonPath('settings.delivery_start_time', '11:30');
+
+        Carbon::setTestNow(Carbon::parse('2026-11-24 11:30:00', 'Asia/Kuwait'));
+
+        $this->getJson('/api/storefront/KHAL/settings')
+            ->assertOk()
+            ->assertJsonPath('settings.delivery_schedule_open', true)
+            ->assertJsonPath('settings.is_accepting_delivery', true);
+
+        Carbon::setTestNow();
+    }
 
     public function test_public_storefront_settings_return_branch_branding(): void
     {

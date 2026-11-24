@@ -216,7 +216,7 @@
 <script>
 (() => {
     const branch = 'KHAL';
-    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:''};
+    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:'',deliveryScheduleOpen:true,deliveryStartTime:'11:30'};
     try { state.cart = JSON.parse(localStorage.getItem('fatoosh-cart') || '{}'); } catch { state.cart = {}; }
     try { state.savedDelivery = JSON.parse(localStorage.getItem('fatoosh-delivery') || 'null'); } catch { state.savedDelivery = null; }
     const money = n => (Number(n)||0).toFixed(3);
@@ -330,12 +330,15 @@
         }
         state.deliveryPaused=!!settings.delivery_paused;
         state.deliveryPauseReason=settings.delivery_pause_reason||'';
+        state.deliveryScheduleOpen=settings.delivery_schedule_open!==false;
+        state.deliveryStartTime=settings.delivery_start_time||'11:30';
         const pauseBanner=el('deliveryPauseBanner');
-        if(state.deliveryPaused){
+        const scheduleClosed=!state.deliveryScheduleOpen;
+        if(state.deliveryPaused||scheduleClosed){
             pauseBanner.hidden=false;
-            pauseBanner.textContent=state.deliveryPauseReason
-                ?('التوصيل متوقف مؤقتًا: '+state.deliveryPauseReason+' · الاستلام من المطعم متاح.')
-                :'التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.';
+            pauseBanner.textContent=state.deliveryPaused
+                ?(state.deliveryPauseReason?('التوصيل متوقف مؤقتًا: '+state.deliveryPauseReason+' · الاستلام من المطعم متاح.'):'التوصيل متوقف مؤقتًا. يمكنك الطلب للاستلام من المطعم.')
+                :'خدمة التوصيل تبدأ يوميًا الساعة '+state.deliveryStartTime+' صباحًا. الاستلام من المطعم متاح.';
             const deliveryOpt=el('fulfillment').querySelector('option[value="delivery"]');
             if(deliveryOpt) deliveryOpt.disabled=true;
             el('fulfillmentDelivery').disabled=true;
@@ -345,7 +348,7 @@
             pauseBanner.hidden=true;
             const deliveryOpt=el('fulfillment').querySelector('option[value="delivery"]');
             if(deliveryOpt) deliveryOpt.disabled=false;
-            el('fulfillmentDelivery').disabled=false;
+            el('fulfillmentDelivery').disabled=!state.deliveryScheduleOpen;
             syncFulfillmentButtons();
         }
     }
@@ -357,7 +360,7 @@
         el('fulfillmentDelivery').setAttribute('aria-pressed',mode==='delivery'?'true':'false');
     }
     function setFulfillment(mode){
-        if(mode==='delivery'&&state.deliveryPaused){
+        if(mode==='delivery'&&(state.deliveryPaused||!state.deliveryScheduleOpen)){
             el('fulfillment').value='pickup';
             syncFulfillmentButtons();
             updateFulfillment();
@@ -599,6 +602,7 @@
         if(!navigator.onLine){setCheckoutError('لا يوجد اتصال بالإنترنت. أعد المحاولة عند عودة الشبكة.');return;}
         if(!cartItems().length){setCheckoutError('السلة فارغة. أضف أصنافًا من المنيو أولًا.');return;}
         if(delivery&&state.deliveryPaused){setCheckoutError(state.deliveryPauseReason?('التوصيل متوقف مؤقتًا: '+state.deliveryPauseReason):'التوصيل متوقف مؤقتًا. اختر الاستلام من المطعم.');return;}
+        if(delivery&&!state.deliveryScheduleOpen){setCheckoutError('خدمة التوصيل تبدأ يوميًا الساعة '+state.deliveryStartTime+' صباحًا. يمكنك اختيار الاستلام من المطعم.');return;}
         if(!el('customerName').value.trim()||!el('customerPhone').value.trim()){setCheckoutError('اكتب الاسم ورقم الهاتف.');return;}
         if(delivery&&(!el('deliveryGovernorate').value||!area||!el('block').value.trim()||!el('street').value.trim()||!el('house').value.trim())){setCheckoutError('أكمل المحافظة والمنطقة والقطعة والشارع ورقم المنزل.');return;}
         if(delivery&&subtotal()<Number(area.minimum_order)){setCheckoutError('الطلب أقل من الحد الأدنى لمنطقتك ('+money(area.minimum_order)+' د.ك).');return;}
