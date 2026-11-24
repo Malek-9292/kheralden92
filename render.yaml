@@ -1,9 +1,6 @@
-# Render Blueprint — Fatoosh Al-Khaldiya preview/staging (not restaurant production).
-# Owner applies via Dashboard → New → Blueprint. Do not merge secrets into git.
-#
-# Plan note: `starter` keeps the web service always-on and allows a persistent disk
-# for /storage product images. Free web instances sleep after inactivity and cannot
-# attach disks — use free only for throwaway smoke tests.
+# Render Blueprint — Fatoosh Al-Khaldiya temporary preview/staging only.
+# Free services sleep when idle and have ephemeral filesystems.
+# Do not use this Blueprint for production or durable customer uploads.
 
 databases:
   - name: fatoosh-preview-db
@@ -15,14 +12,10 @@ services:
   - type: web
     name: fatoosh-preview
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /up
-    disk:
-      name: fatoosh-preview-uploads
-      mountPath: /var/www/html/storage/app/public
-      sizeGB: 2
     envVars:
       - key: APP_KEY
         generateValue: true
@@ -64,7 +57,7 @@ services:
           property: connectionString
       - key: RUN_PREVIEW_SEED
         value: "true"
-      # Set once in the Render dashboard (Blueprint sync: false = secrets).
+      # Set once in the Render dashboard; never commit these values.
       - key: ADMIN_PHONE
         sync: false
       - key: ADMIN_PASSWORD
