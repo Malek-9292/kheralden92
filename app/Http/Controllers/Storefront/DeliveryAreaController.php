@@ -20,10 +20,21 @@ class DeliveryAreaController extends Controller
         $areas = DeliveryArea::query()
             ->where('branch_id', $branch->id)
             ->where('is_active', true)
+            ->with(['group:id,name,delivery_fee,minimum_order,is_active'])
             ->orderBy('governorate')
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'governorate', 'name', 'delivery_fee', 'minimum_order']);
+            ->get(['id', 'governorate', 'name', 'delivery_fee', 'minimum_order', 'delivery_area_group_id', 'delivery_fee_override', 'minimum_order_override'])
+            ->map(function (DeliveryArea $area): array {
+                return [
+                    'id' => $area->id,
+                    'governorate' => $area->governorate,
+                    'name' => $area->name,
+                    'group_name' => $area->group?->name,
+                    'delivery_fee' => $area->effectiveDeliveryFee(),
+                    'minimum_order' => $area->effectiveMinimumOrder(),
+                ];
+            });
 
         $grouped = $areas
             ->groupBy('governorate')
