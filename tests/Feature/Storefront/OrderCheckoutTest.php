@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\OrderWorkflow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class OrderCheckoutTest extends TestCase
@@ -100,6 +101,47 @@ class OrderCheckoutTest extends TestCase
             'job_type' => 'kitchen_ticket',
             'status' => 'pending',
         ]);
+    }
+
+
+    public function test_delivery_is_unavailable_before_1130_and_available_from_1130_kuwait_time(): void
+    {
+        [$branch, $product] = $this->createBranchAndProduct();
+
+        $area = DeliveryArea::query()->create([
+            'branch_id' => $branch->id,
+            'governorate' => 'محافظة العاصمة',
+            'name' => 'الخالدية',
+            'delivery_fee' => '1.000',
+            'minimum_order' => '0.000',
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'customer_name' => 'عميل تجريبي',
+            'customer_phone' => '96560000000',
+            'fulfillment_type' => 'delivery',
+            'delivery_area_id' => $area->id,
+            'block' => '2',
+            'street' => '10',
+            'house_number' => '15',
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ];
+
+        Carbon::setTestNow(Carbon::parse('2026-11-24 11:29:59', 'Asia/Kuwait'));
+
+        $this->postJson('/api/orders/KHAL', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('fulfillment_type')
+            ->assertJsonPath('errors.fulfillment_type.0', 'خدمة التوصيل تبدأ يوميًا الساعة 11:30 صباحًا.');
+
+        Carbon::setTestNow(Carbon::parse('2026-11-24 11:30:00', 'Asia/Kuwait'));
+
+        $this->postJson('/api/orders/KHAL', $payload)
+            ->assertCreated()
+            ->assertJsonPath('order.fulfillment_type', 'delivery');
+
+        Carbon::setTestNow();
     }
 
     public function test_unpaid_online_order_stays_pending_without_kitchen_ticket_until_paid(): void
