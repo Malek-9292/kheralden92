@@ -31,6 +31,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'module.enabled' => EnsureModuleEnabled::class,
         ]);
     })
-    ->withExceptions(fn (Exceptions $exceptions) => null)
+    ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->report(function (\\Throwable $exception): void {
+            error_log(sprintf(
+                'Laravel exception [%s]: %s in %s:%d',
+                $exception::class,
+                $exception->getMessage(),
+                $exception->getFile(),
+                $exception->getLine(),
+            ));
+        });
+    })
     ->withProviders([AppServiceProvider::class, ModuleRegistryServiceProvider::class])
     ->create();
