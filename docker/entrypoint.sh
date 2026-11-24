@@ -92,8 +92,9 @@ export APACHE_RUN_DIR=/var/run/apache2
 export APACHE_LOCK_DIR=/var/lock/apache2
 export APACHE_LOG_DIR=/var/log/apache2
 
-# Global ErrorLog still points at ${APACHE_LOG_DIR}/error.log (symlink to stderr in this image).
-sed -i 's#ErrorLog ${APACHE_LOG_DIR}/error.log#ErrorLog /var/www/html/storage/logs/apache-error.log#' /etc/apache2/apache2.conf || true
+# Send Apache/PHP error output to Render stdout/stderr so Laravel report callbacks and PHP fatals are diagnosable.
+# Keeping this in the container log stream avoids hiding the only useful details in an inaccessible file.
+sed -i 's#ErrorLog ${APACHE_LOG_DIR}/error.log#ErrorLog /proc/self/fd/2#' /etc/apache2/apache2.conf || true
 
 echo "entrypoint: starting Apache on :${PORT} (workers: www-data)"
 exec "$@"
