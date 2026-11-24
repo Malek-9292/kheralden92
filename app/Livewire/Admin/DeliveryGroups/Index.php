@@ -50,6 +50,7 @@ class Index extends Component
         $branchId = $user->hasRole('system_admin') ? (int) $this->branchId : (int) $user->branch_id;
         app(BranchAccess::class)->assertCanAccess($user, $branchId);
 
+
         return $branchId;
     }
 
@@ -166,6 +167,7 @@ class Index extends Component
     public function render()
     {
         $branchId = $this->authorizedBranch();
+
         return view('livewire.admin.delivery-groups.index', [
             'branches' => auth()->user()->hasRole('system_admin') ? Branch::query()->orderBy('name')->get(['id', 'name']) : collect(),
             'groups' => DeliveryAreaGroup::query()->where('branch_id', $branchId)->withCount('areas')->orderBy('sort_order')->orderBy('name')->get(),
