@@ -55,3 +55,18 @@ jobs:
         run: vendor/bin/pint --test
       - name: Run automated tests against PostgreSQL
         run: php artisan test
+
+  docker-build:
+    name: Build preview Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: fatoosh-preview:ci
