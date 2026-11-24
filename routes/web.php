@@ -27,7 +27,21 @@ use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'storefront.index')->middleware('module.enabled:Storefront')->name('storefront.home');
+Route::get('/', function () {
+    try {
+        return response()->view('storefront.index');
+    } catch (\\Throwable $exception) {
+        error_log(sprintf(
+            'STOREFRONT_RENDER_FAILURE [%s]: %s in %s:%d',
+            $exception::class,
+            $exception->getMessage(),
+            $exception->getFile(),
+            $exception->getLine(),
+        ));
+
+        throw $exception;
+    }
+})->middleware('module.enabled:Storefront')->name('storefront.home');
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/login', 'admin.login')->middleware(['guest', 'module.enabled:Identity'])->name('login');
