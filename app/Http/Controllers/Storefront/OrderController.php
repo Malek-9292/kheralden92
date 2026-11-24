@@ -47,7 +47,7 @@ class OrderController extends Controller
             ->firstOrFail();
 
         if ($data['fulfillment_type'] === 'delivery') {
-            if (! DeliverySchedule::isOpen($branch)) {
+            if (!DeliverySchedule::isOpen($branch)) {
                 throw ValidationException::withMessages([
                     'fulfillment_type' => [DeliverySchedule::closedMessage()],
                 ]);
