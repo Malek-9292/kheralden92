@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\BranchSetting;
+use App\Support\Delivery\DeliverySchedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,6 +27,7 @@ class SettingsController extends Controller
         $deliveryPaused = filter_var($settings->get('delivery_paused', '0'), FILTER_VALIDATE_BOOLEAN);
         $deliveryPauseReason = (string) $settings->get('delivery_pause_reason', '');
         $showTopBlock = filter_var($settings->get('show_storefront_top_block', '0'), FILTER_VALIDATE_BOOLEAN);
+        $deliveryScheduleOpen = DeliverySchedule::isOpen($branch);
 
         return response()->json([
             'branch' => ['code' => $branch->code, 'name' => $branch->name],
@@ -50,7 +52,10 @@ class SettingsController extends Controller
                 'show_storefront_top_block' => $showTopBlock,
                 'delivery_paused' => $deliveryPaused,
                 'delivery_pause_reason' => $deliveryPauseReason,
-                'is_accepting_delivery' => ! $deliveryPaused,
+                'is_accepting_delivery' => ! $deliveryPaused && $deliveryScheduleOpen,
+                'delivery_schedule_open' => $deliveryScheduleOpen,
+                'delivery_start_time' => DeliverySchedule::START_TIME,
+                'delivery_schedule_message' => DeliverySchedule::closedMessage(),
             ],
         ]);
     }
