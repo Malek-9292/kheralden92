@@ -17,6 +17,7 @@ use App\Livewire\Admin\Catalog\Categories as CategoriesIndex;
 use App\Livewire\Admin\Catalog\Products as ProductsIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\DeliveryAreas\Index as DeliveryAreasIndex;
+use App\Livewire\Admin\DeliveryGroups\Index as DeliveryGroupsIndex;
 use App\Livewire\Admin\Employees\Index as EmployeesIndex;
 use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
@@ -68,7 +69,8 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     });
 
     Route::middleware(['auth', 'employee.active', 'permission:delivery.manage', 'module.enabled:Delivery'])->group(function (): void {
-        Route::get('/delivery-areas', DeliveryAreasIndex::class)->name('delivery-areas.index');\n        Route::get('/delivery-groups', DeliveryGroupsIndex::class)->name('delivery-groups.index');
+        Route::get('/delivery-areas', DeliveryAreasIndex::class)->name('delivery-areas.index');
+        Route::get('/delivery-groups', DeliveryGroupsIndex::class)->name('delivery-groups.index');
         Route::get('/api/delivery-areas', [DeliveryAreaController::class, 'index'])->name('delivery-areas.api.index');
         Route::post('/delivery-areas', [DeliveryAreaController::class, 'store'])->name('delivery-areas.store');
         Route::patch('/delivery-areas/{deliveryArea}', [DeliveryAreaController::class, 'update'])->name('delivery-areas.update');
