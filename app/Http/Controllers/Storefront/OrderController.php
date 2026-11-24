@@ -103,7 +103,10 @@ class OrderController extends Controller
                     ->whereKey($data['delivery_area_id'])
                     ->where('branch_id', $branch->id)
                     ->where('is_active', true)
-                    ->where(function ($query) {\n                $query->whereNull('delivery_area_group_id')\n                    ->orWhereHas('group', fn ($group) => $group->where('is_active', true));\n            })
+                    ->where(function ($query) {
+                $query->whereNull('delivery_area_group_id')
+                    ->orWhereHas('group', fn ($group) => $group->where('is_active', true));
+            })
                     ->lockForUpdate()
                     ->first();
 
