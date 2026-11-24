@@ -14,16 +14,25 @@ use Livewire\Component;
 class Index extends Component
 {
     public ?int $branchId = null;
+
     public ?int $editingGroupId = null;
+
     public string $groupName = '';
+
     public string $deliveryFee = '0.000';
+
     public string $minimumOrder = '0.000';
+
     public bool $groupActive = true;
 
     public ?int $selectedAreaId = null;
+
     public ?int $selectedGroupId = null;
+
     public bool $customPricing = false;
+
     public string $customDeliveryFee = '0.000';
+
     public string $customMinimumOrder = '0.000';
 
     public function mount(): void
