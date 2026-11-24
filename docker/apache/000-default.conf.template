@@ -10,6 +10,6 @@
         FallbackResource /index.php
     </Directory>
 
-    ErrorLog /var/www/html/storage/logs/apache-error.log
-    CustomLog /var/www/html/storage/logs/apache-access.log combined
+    ErrorLog /proc/self/fd/2
+    CustomLog /proc/self/fd/1 combined
 </VirtualHost>
