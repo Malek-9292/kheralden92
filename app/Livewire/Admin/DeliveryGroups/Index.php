@@ -50,7 +50,6 @@ class Index extends Component
         $branchId = $user->hasRole('system_admin') ? (int) $this->branchId : (int) $user->branch_id;
         app(BranchAccess::class)->assertCanAccess($user, $branchId);
 
-
         return $branchId;
     }
 
