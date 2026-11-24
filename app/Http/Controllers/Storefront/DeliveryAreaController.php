@@ -20,7 +20,10 @@ class DeliveryAreaController extends Controller
         $areas = DeliveryArea::query()
             ->where('branch_id', $branch->id)
             ->where('is_active', true)
-            ->where(function ($query) {\n                $query->whereNull('delivery_area_group_id')\n                    ->orWhereHas('group', fn ($group) => $group->where('is_active', true));\n            })
+            ->where(function ($query) {
+                $query->whereNull('delivery_area_group_id')
+                    ->orWhereHas('group', fn ($group) => $group->where('is_active', true));
+            })
             ->with(['group:id,name,delivery_fee,minimum_order,is_active'])
             ->orderBy('governorate')
             ->orderBy('sort_order')
