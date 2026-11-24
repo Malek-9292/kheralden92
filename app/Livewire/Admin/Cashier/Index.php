@@ -37,11 +37,15 @@ class Index extends Component
 
     public int $lastSeenPendingCount = 0;
 
+    public int $queueCount = 0;
+
+    public int $lastSeenQueueCount = 0;
+
     public bool $soundMuted = false;
 
     public function mount(): void
     {
-        $this->refreshPendingCount(initial: true);
+        $this->refreshQueueSignals(initial: true);
     }
 
     public function updatedSearch(): void
@@ -66,7 +70,8 @@ class Index extends Component
 
     public function pollPending(): void
     {
-        $this->refreshPendingCount();
+        // Re-renders the POS queue so cash checkout (auto-confirmed) orders appear promptly.
+        $this->refreshQueueSignals();
     }
 
     public function toggleMute(): void
@@ -84,14 +89,14 @@ class Index extends Component
 
         if ($order->status !== 'pending') {
             session()->flash('status', 'الطلب لم يعد بانتظار القبول.');
-            $this->refreshPendingCount(initial: true);
+            $this->refreshQueueSignals(initial: true);
 
             return;
         }
 
         $workflow->advance($order, $user);
         session()->flash('status', 'تم قبول الطلب '.$order->order_number);
-        $this->refreshPendingCount(initial: true);
+        $this->refreshQueueSignals(initial: true);
     }
 
     public function collectCash(int $orderId, OrderWorkflow $workflow): void
@@ -176,20 +181,32 @@ class Index extends Component
         ];
     }
 
-    private function refreshPendingCount(bool $initial = false): void
+    private function refreshQueueSignals(bool $initial = false): void
     {
         $user = auth()->user();
         $branchIds = app(BranchAccess::class)->visibleBranchIds($user);
-        $count = Order::query()
+
+        $pendingCount = Order::query()
             ->whereIn('branch_id', $branchIds)
             ->where('status', 'pending')
             ->count();
 
-        if (! $initial && ! $this->soundMuted && $count > $this->lastSeenPendingCount) {
+        // Includes auto-confirmed cash placements so the beep fires even when nothing is pending.
+        $queueCount = Order::query()
+            ->whereIn('branch_id', $branchIds)
+            ->whereIn('status', self::QUEUE_STATUSES)
+            ->count();
+
+        $grew = $pendingCount > $this->lastSeenPendingCount
+            || $queueCount > $this->lastSeenQueueCount;
+
+        if (! $initial && ! $this->soundMuted && $grew) {
             $this->dispatch('cashier-new-order-beep');
         }
 
-        $this->pendingCount = $count;
-        $this->lastSeenPendingCount = $count;
+        $this->pendingCount = $pendingCount;
+        $this->lastSeenPendingCount = $pendingCount;
+        $this->queueCount = $queueCount;
+        $this->lastSeenQueueCount = $queueCount;
     }
 }

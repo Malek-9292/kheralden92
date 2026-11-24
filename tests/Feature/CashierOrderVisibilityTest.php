@@ -21,18 +21,56 @@ class CashierOrderVisibilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_cashier_and_admin_see_storefront_orders_of_all_active_statuses_in_pos_queue(): void
+    public function test_cash_storefront_checkout_appears_on_cashier_immediately_as_confirmed(): void
+    {
+        [$branch, $product] = $this->seedCatalog();
+
+        [$cashier, $token] = $this->createStaff($branch, 'cashier', [
+            'cashier.use', 'orders.accept', 'orders.view',
+        ]);
+
+        $this->actingAs($cashier)->withSession(['employee_session_token' => $token]);
+
+        $before = Livewire::test(CashierIndex::class)
+            ->assertSeeHtml('wire:poll.5s')
+            ->assertSee('لا توجد طلبات في طابور الكاشير');
+
+        $placed = $this->placeStorefrontOrder($branch, [
+            'customer_name' => 'عميل كاش فوري',
+            'customer_phone' => '96560002001',
+            'fulfillment_type' => 'pickup',
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
+
+        $this->assertSame('confirmed', $placed['status']);
+        $this->assertDatabaseHas('print_jobs', [
+            'order_id' => $placed['id'],
+            'job_type' => 'kitchen_ticket',
+            'status' => 'pending',
+        ]);
+
+        // Poll refreshes the queue so the auto-confirmed cash order shows without reload.
+        $before->call('pollPending')
+            ->assertSee($placed['order_number'])
+            ->assertSee('مؤكد')
+            ->assertSee('استلام')
+            ->assertSee('2.500')
+            ->assertSee('قيد التنفيذ')
+            ->assertDontSee('لا توجد طلبات في طابور الكاشير');
+    }
+
+    public function test_cashier_and_admin_see_storefront_and_active_status_orders_in_pos_queue(): void
     {
         [$branch, $product, $area] = $this->seedCatalog();
 
-        $pickup = $this->placeStorefrontOrder($branch, $product, [
+        $pickup = $this->placeStorefrontOrder($branch, [
             'customer_name' => 'عميل استلام',
             'customer_phone' => '96560001001',
             'fulfillment_type' => 'pickup',
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
         ]);
 
-        $delivery = $this->placeStorefrontOrder($branch, $product, [
+        $delivery = $this->placeStorefrontOrder($branch, [
             'customer_name' => 'عميل توصيل',
             'customer_phone' => '96560001002',
             'fulfillment_type' => 'delivery',
@@ -43,11 +81,15 @@ class CashierOrderVisibilityTest extends TestCase
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
         ]);
 
-        $confirmed = Order::query()->create($this->orderAttributes($branch, [
-            'order_number' => 'KHAL-VIS-CONF',
-            'customer_name' => 'مؤكد',
-            'status' => 'confirmed',
-            'fulfillment_type' => 'pickup',
+        $this->assertSame('confirmed', $pickup['status']);
+        $this->assertSame('confirmed', $delivery['status']);
+
+        $pendingOnline = Order::query()->create($this->orderAttributes($branch, [
+            'order_number' => 'KHAL-VIS-PEND',
+            'customer_name' => 'كي نت معلّق',
+            'status' => 'pending',
+            'payment_method' => 'knet',
+            'payment_status' => 'unpaid',
         ]));
 
         $preparing = Order::query()->create($this->orderAttributes($branch, [
@@ -79,7 +121,7 @@ class CashierOrderVisibilityTest extends TestCase
                 ->assertSeeHtml('wire:poll.5s')
                 ->assertSee($pickup['order_number'])
                 ->assertSee($delivery['order_number'])
-                ->assertSee($confirmed->order_number)
+                ->assertSee($pendingOnline->order_number)
                 ->assertSee($preparing->order_number)
                 ->assertSee($ready->order_number)
                 ->assertSee('جديد')
@@ -94,14 +136,9 @@ class CashierOrderVisibilityTest extends TestCase
         }
     }
 
-    public function test_regression_confirmed_and_preparing_orders_remain_visible_after_accept(): void
+    public function test_regression_confirmed_orders_remain_visible_after_accept_and_cash_auto_confirm(): void
     {
-        $branch = Branch::query()->create([
-            'code' => 'KHAL',
-            'name' => 'فتوش الخالدية',
-            'timezone' => 'Asia/Kuwait',
-            'is_active' => true,
-        ]);
+        [$branch, $product] = $this->seedCatalog();
 
         [$cashier, $token] = $this->createStaff($branch, 'cashier', [
             'cashier.use', 'orders.accept', 'orders.view',
@@ -111,6 +148,8 @@ class CashierOrderVisibilityTest extends TestCase
             'order_number' => 'KHAL-REG-PENDING',
             'customer_name' => 'قبل القبول',
             'status' => 'pending',
+            'payment_method' => 'knet',
+            'payment_status' => 'unpaid',
         ]));
 
         $this->actingAs($cashier)->withSession(['employee_session_token' => $token]);
@@ -123,11 +162,22 @@ class CashierOrderVisibilityTest extends TestCase
         $this->assertSame('confirmed', $pending->fresh()->status);
 
         // Regression: previously the main POS query only included ready/out_for_delivery/completed,
-        // so accepted (confirmed) orders vanished from the cashier page until kitchen marked ready.
+        // so confirmed orders (staff-accepted or cash auto-confirm) vanished until ready.
         Livewire::test(CashierIndex::class)
             ->assertSee($pending->order_number)
             ->assertSee('مؤكد')
             ->assertDontSee('لا توجد طلبات في طابور الكاشير');
+
+        $cash = $this->placeStorefrontOrder($branch, [
+            'customer_name' => 'كاش بعد الريجيكشن',
+            'customer_phone' => '96560002002',
+            'fulfillment_type' => 'pickup',
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
+
+        Livewire::test(CashierIndex::class)
+            ->assertSee($cash['order_number'])
+            ->assertSee('مؤكد');
     }
 
     public function test_cancelled_orders_are_not_in_default_cashier_queue(): void
@@ -151,6 +201,8 @@ class CashierOrderVisibilityTest extends TestCase
             'order_number' => 'KHAL-ACTIVE',
             'customer_name' => 'نشط',
             'status' => 'pending',
+            'payment_method' => 'knet',
+            'payment_status' => 'unpaid',
         ]));
 
         $this->actingAs($cashier)->withSession(['employee_session_token' => $token]);
@@ -202,15 +254,16 @@ class CashierOrderVisibilityTest extends TestCase
 
     /**
      * @param  array<string, mixed>  $payload
-     * @return array{order_number: string, id: int}
+     * @return array{order_number: string, id: int, status: string}
      */
-    private function placeStorefrontOrder(Branch $branch, Product $product, array $payload): array
+    private function placeStorefrontOrder(Branch $branch, array $payload): array
     {
         $response = $this->postJson('/api/orders/'.$branch->code, $payload)->assertCreated();
 
         return [
             'order_number' => (string) $response->json('order.order_number'),
             'id' => (int) $response->json('order.id'),
+            'status' => (string) $response->json('order.status'),
         ];
     }
 

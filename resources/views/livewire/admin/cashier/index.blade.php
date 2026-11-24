@@ -5,7 +5,7 @@
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
             <div>
                 <strong style="font-size:16px">طلبات جديدة بانتظار القبول</strong>
-                <div class="muted" style="margin-top:4px">يُحدَّث طابور الكاشير تلقائيًا كل 5 ثوانٍ. الصوت تنبيه فقط ولا يمنع استقبال الطلبات.</div>
+                <div class="muted" style="margin-top:4px">يُحدَّث طابور الكاشير تلقائيًا كل 5 ثوانٍ. طلبات الكاش من المتجر تظهر مباشرة كـ«مؤكد» مع طباعة المطبخ. الصوت تنبيه فقط ولا يمنع استقبال الطلبات.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <span class="status {{ $pendingCount > 0 ? 'warn' : '' }}" style="font-size:14px">{{ $pendingCount }} طلب جديد</span>
