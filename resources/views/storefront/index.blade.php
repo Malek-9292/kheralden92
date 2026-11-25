@@ -50,7 +50,8 @@
         .chip{flex:0 0 auto;white-space:nowrap;border:1px solid #d9e6dc;border-radius:22px;min-height:var(--tap);padding:10px 14px;background:#fff;color:#365b43;font-size:13px}
         .chip.active{background:var(--brand);color:white;border-color:var(--brand)}
         /* Mobile-first: 1 col tiny phones, 2 cols from ~360 */
-        .grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:stretch}
+        .home-category-block{margin:0 0 26px}.home-category-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}.home-category-heading h2{margin:0;font-size:1.15rem;color:var(--brand);font-weight:800}.home-category-heading button{white-space:nowrap;padding:8px 12px}.home-category-products{margin-bottom:8px}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:stretch}
         .product{background:#fff;border:1px solid #e4ece5;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px #163b2410;display:flex;flex-direction:column;min-width:0;height:100%}
         .product .media{background:#edf3ed;aspect-ratio:4/5;min-height:180px;display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
         .product .media img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
@@ -387,23 +388,38 @@
             state.categories.map(c=>'<button type="button" class="chip '+(String(c.id)===state.category?'active':'')+'" data-category="'+c.id+'" aria-pressed="'+(String(c.id)===state.category)+'">'+esc(c.name)+'</button>').join('');
         el('categories').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.category;renderCategories();renderProducts();}));
     }
+    function productCard(p){
+        const img=p.primary_image?.url||p.images?.[0]?.url||'/images/product-placeholder.jpg';
+        const badges='<div class="badges">'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+(p.bread_label?'<span class="badge-bread">'+esc(p.bread_label)+'</span>':'')+'</div>';
+        return '<article class="product"><div class="media"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async"></div><div class="body">'+badges+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><div class="product-actions"><button type="button" class="secondary" data-details="'+p.id+'" aria-label="تفاصيل '+esc(p.name)+'">تفاصيل الصنف</button><button type="button" class="add" data-add="'+p.id+'" aria-label="أضف '+esc(p.name)+' للسلة">＋ أضف للسلة</button></div></div></article>';
+    }
+    function bindProductActions(root){
+        root.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addProduct(Number(b.dataset.add))));
+        root.querySelectorAll('[data-details]').forEach(b=>b.addEventListener('click',()=>showProductDetails(Number(b.dataset.details))));
+        root.querySelectorAll('[data-view-category]').forEach(b=>b.addEventListener('click',()=>{
+            state.category=String(b.dataset.viewCategory);renderCategories();renderProducts();
+            el('menuMain').scrollIntoView({behavior:'smooth',block:'start'});
+        }));
+    }
     function renderProducts(){
         const term=state.search.trim().toLowerCase();
-        let products=state.products.filter(p=>(!state.category||String(p.category_id)===state.category)&&(!term||(p.name+' '+(p.description||'')).toLowerCase().includes(term)));
-        if(state.category&&!term){
-            const selected=state.featuredProductsByCategory[String(state.category)];
-            if(Array.isArray(selected)&&selected.length){
+        const root=el('products');
+        if(!state.category&&!term){
+            const sections=state.categories.map(category=>{
+                const selected=state.featuredProductsByCategory[String(category.id)];
+                if(!Array.isArray(selected)||!selected.length)return '';
                 const ids=new Set(selected.map(String));
-                products=products.filter(p=>ids.has(String(p.id)));
-            }
+                const products=state.products.filter(p=>String(p.category_id)===String(category.id)&&ids.has(String(p.id)));
+                if(!products.length)return '';
+                return '<section class="home-category-block" aria-label="'+esc(category.name)+'"><div class="home-category-heading"><h2>'+esc(category.name)+'</h2><button type="button" class="secondary" data-view-category="'+category.id+'">عرض القسم بالكامل</button></div><div class="grid home-category-products">'+products.map(productCard).join('')+'</div></section>';
+            }).join('');
+            root.innerHTML=sections||'<div class="empty" role="status">لم يتم اختيار أصناف للعرض في الصفحة الرئيسية بعد. يمكنك تحديد صنفين أو 3 أصناف من كل قسم من إعدادات المطعم.</div>';
+            bindProductActions(root);
+            return;
         }
-        el('products').innerHTML=products.length?products.map(p=>{
-            const img=p.primary_image?.url||p.images?.[0]?.url||'/images/product-placeholder.jpg';
-            const badges='<div class="badges">'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+(p.bread_label?'<span class="badge-bread">'+esc(p.bread_label)+'</span>':'')+'</div>';
-            return '<article class="product"><div class="media"><img src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async"></div><div class="body">'+badges+'<h3>'+esc(p.name)+'</h3><div class="desc">'+esc(p.category?.name||'')+'</div><div class="price">'+money(p.price)+' د.ك</div><div class="product-actions"><button type="button" class="secondary" data-details="'+p.id+'" aria-label="تفاصيل '+esc(p.name)+'">تفاصيل الصنف</button><button type="button" class="add" data-add="'+p.id+'" aria-label="أضف '+esc(p.name)+' للسلة">＋ أضف للسلة</button></div></div></article>';
-        }).join(''):'<div class="empty" role="status">'+(state.products.length?'لا توجد أصناف مطابقة لبحثك أو للقسم المختار. جرّب كلمة أخرى أو اختر «الكل».':'لا توجد أصناف متاحة في المنيو حاليًا.')+'</div>';
-        el('products').querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addProduct(Number(b.dataset.add))));
-        el('products').querySelectorAll('[data-details]').forEach(b=>b.addEventListener('click',()=>showProductDetails(Number(b.dataset.details))));
+        const products=state.products.filter(p=>(!state.category||String(p.category_id)===state.category)&&(!term||(p.name+' '+(p.description||'')).toLowerCase().includes(term)));
+        root.innerHTML=products.length?products.map(productCard).join(''):'<div class="empty" role="status">'+(state.products.length?'لا توجد أصناف مطابقة لبحثك أو للقسم المختار. جرّب كلمة أخرى أو اختر «الكل».':'لا توجد أصناف متاحة في المنيو حاليًا.')+'</div>';
+        bindProductActions(root);
     }
     async function showProductDetails(id){
         const listed=state.products.find(x=>x.id===id);if(!listed)return;
