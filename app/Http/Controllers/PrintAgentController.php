@@ -162,7 +162,7 @@ class PrintAgentController extends Controller
 
     private function claimableJobsQuery(Printer $printer)
     {
-        $jobType = $printer->purpose === 'kitchen' ? 'kitchen_ticket' : 'customer_receipt';
+        $jobType = 'customer_receipt';
 
         return PrintJob::query()
             ->where('branch_id', $printer->branch_id)
