@@ -110,6 +110,16 @@ class Index extends Component
         session()->flash('status', 'تم تسجيل التحصيل النقدي للطلب '.$order->order_number);
     }
 
+    public function reprintOrder(int $orderId, PrintJobDispatcher $dispatcher): void
+    {
+        $user = auth()->user();
+        abort_unless($user->hasPermissionTo('cashier.use'), 403);
+        $order = Order::query()->with(['branch', 'items'])->findOrFail($orderId);
+        app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
+        $dispatcher->reprintCustomerReceipt($order);
+        session()->flash('status', 'تم إرسال فاتورة الطلب '.$order->order_number لإعادة الطباعة.');
+    }
+
     public function render()
     {
         $user = auth()->user();
