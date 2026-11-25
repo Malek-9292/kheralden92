@@ -28,6 +28,7 @@
         .sf-brand .tag{font-size:13px;color:var(--brand-tagline-color,#6f8376);line-height:1.5;width:100%;margin-top:6px;display:block}
         .sf-header .sf-fulfillment,.sf-header .sf-actions{padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
         .cartbar.is-empty #openCart{display:none}
+        .cartbar.is-empty{display:none}
         .sf-fulfillment{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:420px;margin-inline:auto}
         .sf-fulfillment button{border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:999px;min-height:var(--tap);padding:10px 12px;font-weight:700;font-size:13px;width:100%;line-height:1.3}
         .sf-fulfillment button.active{background:var(--brand);color:#fff}
