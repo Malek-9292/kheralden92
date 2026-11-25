@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Cashier;
 use App\Models\Order;
 use App\Services\BranchAccess;
 use App\Services\OrderWorkflow;
+use App\Services\PrintJobDispatcher;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -117,7 +118,7 @@ class Index extends Component
         $order = Order::query()->with(['branch', 'items'])->findOrFail($orderId);
         app(BranchAccess::class)->assertCanAccess($user, $order->branch_id);
         $dispatcher->reprintCustomerReceipt($order);
-        session()->flash('status', 'تم إرسال فاتورة الطلب '.$order->order_number لإعادة الطباعة.');
+        session()->flash('status', 'تم إرسال فاتورة الطلب '.$order->order_number.' لإعادة الطباعة.');
     }
 
     public function render()
