@@ -31,7 +31,7 @@
             </label>
             <label style="font-size:13px">الاستخدام
                 <select wire:model="purpose" style="display:block;width:100%;padding:11px;border:1px solid #d8e3da;border-radius:9px;margin-top:6px;background:#fff">
-                    <option value="kitchen">تذاكر المطبخ</option><option value="cashier">فواتير الكاشير</option>
+                    <option value="cashier">فواتير الطلبات</option>
                 </select>
             </label>
             <label style="font-size:13px">طريقة الاتصال
@@ -52,7 +52,7 @@
                     <tr wire:key="printer-{{ $printer->id }}">
                         <td data-label="الطابعة"><strong>{{ $printer->name }}</strong></td>
                         <td data-label="الكود" dir="ltr">{{ $printer->code }}</td>
-                        <td data-label="الاستخدام">{{ $printer->purpose==='kitchen' ? 'المطبخ' : 'الكاشير' }}</td>
+                        <td data-label="الاستخدام">فواتير الطلبات</td>
                         <td data-label="الاتصال">{{ strtoupper($printer->connection_type) }}</td>
                         <td data-label="المهام المعلقة">{{ $printer->pending_jobs_count }}</td>
                         <td data-label="آخر اتصال">
@@ -111,6 +111,6 @@
             POST /api/print-agent/jobs/{jobId}/complete<br>
             POST /api/print-agent/jobs/{jobId}/fail
         </div>
-        <p class="muted">النبض (heartbeat) يحدّث «آخر اتصال» دون سحب مهمة. السحب يتم فقط بعد جاهزية USB. التذكرة JSON؛ اختبر من زر «اختبار الاتصال» ثم «اختبار الطابعة» في التطبيق.</p>
+        <p class="muted">النبض (heartbeat) يحدّث «آخر اتصال» دون سحب مهمة. السحب يتم فقط بعد جاهزية USB. الفاتورة JSON؛ اختبر من زر «اختبار الاتصال» ثم «اختبار الطابعة» في التطبيق.</p>
     </div>
 </section>
