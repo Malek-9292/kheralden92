@@ -235,6 +235,11 @@ class Index extends Component
                     "featuredProductsByCategory.$categoryId" => 'يمكن اختيار 3 أصناف كحد أقصى لكل قسم.',
                 ]);
             }
+            if (count($ids) === 1) {
+                throw \\Illuminate\\Validation\\ValidationException::withMessages([
+                    "featuredProductsByCategory.$categoryId" => 'اختر صنفين على الأقل أو 3 أصناف من القسم.',
+                ]);
+            }
             $validIds = Product::query()
                 ->where('branch_id', $branchId)
                 ->where('category_id', (int) $categoryId)
