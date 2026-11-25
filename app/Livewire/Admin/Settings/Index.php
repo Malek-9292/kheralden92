@@ -5,6 +5,8 @@ namespace App\Livewire\Admin\Settings;
 use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\BranchSetting;
+use App\Models\Category;
+use App\Models\Product;
 use App\Services\BranchAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +17,11 @@ class Index extends Component
 {
     use WithFileUploads;
 
-    public ?int $branchId = null;\n\n    public array $featuredProductsByCategory = [];\n\n    public array $categoryProductOptions = [];
+    public ?int $branchId = null;
+
+    public array $featuredProductsByCategory = [];
+
+    public array $categoryProductOptions = [];
 
     public string $restaurantName = '';
 
