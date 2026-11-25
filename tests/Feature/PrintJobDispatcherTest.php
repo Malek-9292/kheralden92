@@ -15,7 +15,7 @@ class PrintJobDispatcherTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_kitchen_ticket_payload_includes_arabic_lines_and_reprint_requeues(): void
+    public function test_single_cashier_receipt_payload_includes_arabic_lines_and_reprint_requeues(): void
     {
         $branch = Branch::query()->create([
             'code' => 'KHAL',
@@ -51,15 +51,15 @@ class PrintJobDispatcherTest extends TestCase
         ]);
 
         $dispatcher = app(PrintJobDispatcher::class);
-        $job = $dispatcher->enqueueKitchenTicket($order->fresh()->load('items', 'branch'));
+        $job = $dispatcher->enqueueCustomerReceipt($order->fresh()->load('items', 'branch'));
 
-        $this->assertSame('kitchen_ticket', $job->job_type);
-        $this->assertContains('تذكرة المطبخ', $job->payload['lines']);
+        $this->assertSame('customer_receipt', $job->job_type);
+        $this->assertContains('فاتورة الطلب', $job->payload['lines']);
         $this->assertTrue(collect($job->payload['lines'])->contains(fn ($line) => str_contains((string) $line, 'شاورما دجاج')));
 
         $job->update(['status' => 'completed', 'completed_at' => now()]);
 
-        $reprinted = $dispatcher->reprintKitchenTicket($order->fresh()->load('items', 'branch'));
+        $reprinted = $dispatcher->reprintCustomerReceipt($order->fresh()->load('items', 'branch'));
         $this->assertSame($job->id, $reprinted->id);
         $this->assertSame('pending', $reprinted->status);
         $this->assertSame(1, PrintJob::query()->where('order_id', $order->id)->where('job_type', 'kitchen_ticket')->count());
