@@ -38,14 +38,14 @@ class OrderWorkflow
         }
 
         if (in_array($locked->status, ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed'], true)) {
-            $this->printJobDispatcher->enqueueKitchenTicket($locked->fresh()->load('items'));
+            $this->printJobDispatcher->enqueueCustomerReceipt($locked->fresh()->load('items'));
         }
 
         return $locked->fresh()->load('items');
     }
 
     /**
-     * Cash is COD/pickup-pay — safe to kitchen-print immediately.
+     * Cash is COD/pickup-pay — safe to receipt-print immediately.
      * Online (knet / payment_link): only after payment_status=paid.
      */
     public function shouldAcceptOnPlacement(Order $order): bool
@@ -144,7 +144,7 @@ class OrderWorkflow
             // Idempotent: storefront cash placement already enqueued; staff confirm of
             // leftover pending (or future unpaid→paid online accept) still covers gaps.
             if ($next === 'confirmed') {
-                $this->printJobDispatcher->enqueueKitchenTicket($locked->fresh()->load('items'));
+                $this->printJobDispatcher->enqueueCustomerReceipt($locked->fresh()->load('items'));
             }
 
             return $locked->fresh()->load('items');
