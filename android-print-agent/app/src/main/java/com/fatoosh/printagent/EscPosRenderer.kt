@@ -43,7 +43,7 @@ object EscPosRenderer {
 
         val lines = mutableListOf<String>()
         lines += payload.optString("branch", "فتوش الخالدية")
-        lines += "تذكرة المطبخ"
+        lines += "فاتورة الطلب"
         lines += "رقم الطلب: ${payload.optString("order_number")}"
         lines += payload.optString("created_at")
         lines += "--------------------------------"

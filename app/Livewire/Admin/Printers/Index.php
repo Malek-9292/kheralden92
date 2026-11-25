@@ -21,7 +21,7 @@ class Index extends Component
 
     public string $name = '';
 
-    public string $purpose = 'kitchen';
+    public string $purpose = 'cashier';
 
     public string $connectionType = 'usb';
 

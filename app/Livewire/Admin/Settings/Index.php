@@ -5,6 +5,8 @@ namespace App\Livewire\Admin\Settings;
 use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\BranchSetting;
+use App\Models\Category;
+use App\Models\Product;
 use App\Services\BranchAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +18,10 @@ class Index extends Component
     use WithFileUploads;
 
     public ?int $branchId = null;
+
+    public array $featuredProductsByCategory = [];
+
+    public array $categoryProductOptions = [];
 
     public string $restaurantName = '';
 
@@ -104,6 +110,20 @@ class Index extends Component
         $this->deliveryPauseReason = (string) $settings->get('delivery_pause_reason', '');
         $logoPath = $settings->get('logo_path');
         $this->currentLogoUrl = $logoPath ? Storage::disk('public')->url($logoPath) : null;
+        $savedFeatured = json_decode((string) $settings->get('storefront_featured_products', '{}'), true);
+        $this->featuredProductsByCategory = is_array($savedFeatured) ? $savedFeatured : [];
+        $this->categoryProductOptions = Category::query()
+            ->where('branch_id', $this->branchId)
+            ->where('is_active', true)
+            ->with(['products' => fn ($query) => $query->where('is_active', true)->orderBy('sort_order')->orderBy('name')->select(['id', 'category_id', 'name'])])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (Category $category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'products' => $category->products->map(fn (Product $product) => ['id' => $product->id, 'name' => $product->name])->all(),
+            ])->all();
         $this->logo = null;
     }
 
@@ -136,6 +156,9 @@ class Index extends Component
             'deliveryPaused' => ['boolean'],
             'deliveryPauseReason' => ['nullable', 'string', 'max:250'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'featuredProductsByCategory' => ['array'],
+            'featuredProductsByCategory.*' => ['array', 'max:3'],
+            'featuredProductsByCategory.*.*' => ['integer'],
         ]);
 
         $keys = [
@@ -158,6 +181,7 @@ class Index extends Component
             'show_storefront_top_block' => ! empty($data['showStorefrontTopBlock']) ? '1' : '0',
             'delivery_paused' => ! empty($data['deliveryPaused']) ? '1' : '0',
             'delivery_pause_reason' => trim((string) ($data['deliveryPauseReason'] ?? '')),
+            'storefront_featured_products' => json_encode($this->validatedFeaturedProducts($branchId), JSON_UNESCAPED_UNICODE),
         ];
 
         if ($data['logo']) {
@@ -195,6 +219,41 @@ class Index extends Component
 
         $this->loadSettings();
         session()->flash('status', 'تم حفظ إعدادات المطعم.');
+    }
+
+    private function validatedFeaturedProducts(int $branchId): array
+    {
+        $result = [];
+        $categories = Category::query()->where('branch_id', $branchId)->where('is_active', true)->pluck('id')->all();
+        foreach ($this->featuredProductsByCategory as $categoryId => $productIds) {
+            if (! in_array((int) $categoryId, $categories, true) || ! is_array($productIds)) {
+                continue;
+            }
+            $ids = array_values(array_unique(array_map('intval', $productIds)));
+            if (count($ids) > 3) {
+                throw \\Illuminate\\Validation\\ValidationException::withMessages([
+                    "featuredProductsByCategory.$categoryId" => 'يمكن اختيار 3 أصناف كحد أقصى لكل قسم.',
+                ]);
+            }
+            if (count($ids) === 1) {
+                throw \\Illuminate\\Validation\\ValidationException::withMessages([
+                    "featuredProductsByCategory.$categoryId" => 'اختر صنفين على الأقل أو 3 أصناف من القسم.',
+                ]);
+            }
+            $validIds = Product::query()
+                ->where('branch_id', $branchId)
+                ->where('category_id', (int) $categoryId)
+                ->where('is_active', true)
+                ->whereIn('id', $ids)
+                ->pluck('id')->all();
+            if (count($validIds) !== count($ids)) {
+                throw \\Illuminate\\Validation\\ValidationException::withMessages([
+                    "featuredProductsByCategory.$categoryId" => 'يوجد صنف غير تابع لهذا القسم.',
+                ]);
+            }
+            $result[(string) $categoryId] = $validIds;
+        }
+        return $result;
     }
 
     public function render()

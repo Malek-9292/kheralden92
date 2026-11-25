@@ -46,6 +46,7 @@ class SettingsController extends Controller
                 'banner_background' => $settings->get('banner_background', '#2f704b'),
                 'banner_font_size' => (int) $settings->get('banner_font_size', 18),
                 'footer_text' => $settings->get('footer_text', ''),
+                'featured_products_by_category' => json_decode((string) $settings->get('storefront_featured_products', '{}'), true) ?: [],
                 'logo_url' => $logoPath ? Storage::disk('public')->url($logoPath) : null,
                 'show_storefront_top_block' => $showTopBlock,
                 'delivery_paused' => $deliveryPaused,

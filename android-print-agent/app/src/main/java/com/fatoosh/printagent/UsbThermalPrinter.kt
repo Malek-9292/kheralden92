@@ -73,9 +73,9 @@ class UsbThermalPrinter(private val context: Context) {
         return devices.firstOrNull { device ->
             isPrinterClass(device) && findBulkOut(device) != null
         } ?: devices.firstOrNull { device ->
-            // Fallback for Chinese Android USB Host stacks that mis-report device class.
+            // Allow common Android USB-OTG thermal-printer bridges even when the class is misreported.
             findBulkOut(device) != null && looksLikeThermalPrinter(device)
-        } ?: devices.firstOrNull { device -> findBulkOut(device) != null }
+        }
     }
 
     private fun isPrinterClass(device: UsbDevice): Boolean {

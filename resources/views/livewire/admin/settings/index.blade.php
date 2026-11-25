@@ -105,6 +105,29 @@
                 <input wire:model="deliveryPauseReason" maxlength="250" placeholder="مثال: ضغط الطلبات، ظروف الطقس، نقص سائقين">
                 @error('deliveryPauseReason')<small style="color:#b42318">{{ $message }}</small>@enderror
             </label>
+            <div class="field full" style="border-top:1px solid #edf1ed;padding-top:14px">
+                <strong>الأصناف المختارة للعرض تحت كل قسم</strong>
+                <p class="muted" style="margin:6px 0 12px;line-height:1.7">حدد يدويًا صنفين أو 3 أصناف من كل قسم لعرضها بشكل مختار. باقي الأصناف تظل محفوظة في المنيو ويمكن الوصول إليها من القسم.</p>
+                @forelse($categoryProductOptions as $category)
+                    <div style="border:1px solid #e4ebe5;border-radius:12px;padding:12px;margin-bottom:10px">
+                        <strong>{{ $category['name'] }}</strong>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:10px">
+                            @forelse($category['products'] as $product)
+                                <label style="display:flex;align-items:center;gap:8px;padding:7px;background:#f8faf8;border-radius:8px">
+                                    <input type="checkbox" wire:model="featuredProductsByCategory.{{ $category['id'] }}" value="{{ $product['id'] }}">
+                                    <span>{{ $product['name'] }}</span>
+                                </label>
+                            @empty
+                                <span class="muted">لا توجد أصناف نشطة في هذا القسم.</span>
+                            @endforelse
+                        </div>
+                        @error('featuredProductsByCategory.'.$category['id'])<small style="color:#b42318">{{ $message }}</small>@enderror
+                        <small class="muted">المحدد: {{ count($featuredProductsByCategory[$category['id']] ?? []) }} / 3</small>
+                    </div>
+                @empty
+                    <p class="muted">لا توجد أقسام نشطة حاليًا.</p>
+                @endforelse
+            </div>
             <div class="field full" style="display:flex;flex-direction:row;gap:10px;align-items:center">
                 <button type="submit" wire:loading.attr="disabled" class="primary">حفظ الإعدادات</button>
                 <span class="muted" wire:loading wire:target="logo">جارٍ رفع الشعار...</span>

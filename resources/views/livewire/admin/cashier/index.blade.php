@@ -5,7 +5,7 @@
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
             <div>
                 <strong style="font-size:16px">طلبات جديدة بانتظار القبول</strong>
-                <div class="muted" style="margin-top:4px">يُحدَّث طابور الكاشير تلقائيًا كل 5 ثوانٍ. طلبات الكاش من المتجر تظهر مباشرة كـ«مؤكد» مع طباعة المطبخ. الصوت تنبيه فقط ولا يمنع استقبال الطلبات.</div>
+                <div class="muted" style="margin-top:4px">يُحدَّث طابور الكاشير تلقائيًا كل 5 ثوانٍ. طلبات الكاش من المتجر تظهر مباشرة كـ«مؤكد» مع طباعة الفاتورة تلقائيًا. الصوت تنبيه فقط ولا يمنع استقبال الطلبات.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <span class="status {{ $pendingCount > 0 ? 'warn' : '' }}" style="font-size:14px">{{ $pendingCount }} طلب جديد</span>
@@ -80,6 +80,7 @@
                         <td data-label="الإجمالي"><strong>{{ $order->total }} د.ك</strong></td>
                         <td data-label="الدفع"><span class="status">{{ $order->payment_status==='paid' ? 'مدفوع' : 'غير مدفوع' }}</span></td>
                         <td data-label="إجراء">
+                            <button wire:click="reprintOrder({{ $order->id }})" wire:loading.attr="disabled" class="secondary" style="border-radius:8px;padding:8px 10px;font-size:12px;margin-inline-end:5px">إعادة طباعة الفاتورة</button>
                             @if($order->status === 'pending')
                                 @if($canAccept)
                                     <button wire:click="acceptPending({{ $order->id }})" wire:loading.attr="disabled" style="border:0;border-radius:8px;padding:9px 12px;background:#1d5b3d;color:#fff;cursor:pointer;font:inherit;font-size:12px;min-height:40px">قبول الطلب</button>
