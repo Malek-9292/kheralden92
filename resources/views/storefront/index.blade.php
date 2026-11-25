@@ -218,7 +218,7 @@
 <script>
 (() => {
     const branch = 'KHAL';
-    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:''};
+    const state = {products:[],categories:[],areas:[],governorates:[],cart:{},category:'',search:'',pendingProduct:null,deferredInstall:null,idempotencyKey:null,deliveryPaused:false,deliveryPauseReason:'',featuredProductsByCategory:{}};
     try { state.cart = JSON.parse(localStorage.getItem('fatoosh-cart') || '{}'); } catch { state.cart = {}; }
     try { state.savedDelivery = JSON.parse(localStorage.getItem('fatoosh-delivery') || 'null'); } catch { state.savedDelivery = null; }
     const money = n => (Number(n)||0).toFixed(3);
@@ -295,6 +295,7 @@
     }
     function applySettings(settings){
         const name=settings.restaurant_name||'فتوش الخالدية';
+        state.featuredProductsByCategory=settings.featured_products_by_category||{};
         document.title=name+' | الطلبات أونلاين';
         el('brandName').textContent=name;
         el('brandTagline').textContent=settings.tagline||'طعم يجمعنا';
@@ -388,7 +389,14 @@
     }
     function renderProducts(){
         const term=state.search.trim().toLowerCase();
-        const products=state.products.filter(p=>(!state.category||String(p.category_id)===state.category)&&(!term||(p.name+' '+(p.description||'')).toLowerCase().includes(term)));
+        let products=state.products.filter(p=>(!state.category||String(p.category_id)===state.category)&&(!term||(p.name+' '+(p.description||'')).toLowerCase().includes(term)));
+        if(state.category&&!term){
+            const selected=state.featuredProductsByCategory[String(state.category)];
+            if(Array.isArray(selected)&&selected.length){
+                const ids=new Set(selected.map(String));
+                products=products.filter(p=>ids.has(String(p.id)));
+            }
+        }
         el('products').innerHTML=products.length?products.map(p=>{
             const img=p.primary_image?.url||p.images?.[0]?.url||'/images/product-placeholder.jpg';
             const badges='<div class="badges">'+(p.is_best_seller?'<span class="badge-best">الأكثر طلبًا</span>':'')+(p.bread_label?'<span class="badge-bread">'+esc(p.bread_label)+'</span>':'')+'</div>';
