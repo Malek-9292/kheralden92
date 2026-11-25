@@ -70,7 +70,7 @@
         .cartbar .primary{flex:1 1 140px;min-height:var(--tap);width:auto}
         .primary{border:0;background:var(--brand);color:#fff;padding:12px 18px;border-radius:11px;font-weight:700;min-height:var(--tap)}.primary:disabled{opacity:.55;cursor:not-allowed}
         .modal{position:fixed;inset:0;background:#12291db8;z-index:20;display:none;align-items:flex-end;justify-content:center;padding:0;padding-top:env(safe-area-inset-top)}
-        .modal.open{display:flex}.dialog{background:#fff;border-radius:18px 18px 0 0;width:min(560px,100%);max-height:min(92vh,100%);overflow:auto;-webkit-overflow-scrolling:touch;padding:18px 16px max(18px,env(safe-area-inset-bottom));position:relative}
+        .modal.open{display:flex}.category-menu-dialog{width:min(420px,100%);max-height:78vh}.category-menu-list{display:grid;grid-template-columns:1fr;gap:8px}.category-menu-list button{width:100%;min-height:48px;text-align:right;border:1px solid #d9e4db;border-radius:12px;background:#fff;color:#2f5a3f;padding:12px 14px;font-weight:700}.category-menu-list button.active{background:var(--brand);border-color:var(--brand);color:#fff}.dialog{background:#fff;border-radius:18px 18px 0 0;width:min(560px,100%);max-height:min(92vh,100%);overflow:auto;-webkit-overflow-scrolling:touch;padding:18px 16px max(18px,env(safe-area-inset-bottom));position:relative}
         .dialog h2{margin:0 0 14px;font-size:clamp(17px,4.5vw,19px)}.dialog-section{font-size:13px;font-weight:700;color:#355b42;margin:16px 0 8px}
         .formgrid{display:grid;grid-template-columns:1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:6px;font-size:12px;min-width:0}.field input,.field select,.field textarea{border:1px solid #d9e4db;border-radius:9px;padding:12px;min-width:0;min-height:var(--tap);width:100%}
@@ -147,6 +147,7 @@
         </button>
     </div>
 </header>
+<div class="modal" id="mainCategoriesModal" role="dialog" aria-modal="true" aria-labelledby="mainCategoriesTitle"><div class="dialog category-menu-dialog"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><h2 id="mainCategoriesTitle">الأقسام الرئيسية</h2><button type="button" class="secondary" data-close="mainCategoriesModal" aria-label="إغلاق">إغلاق</button></div><div id="mainCategoryMenuList" class="category-menu-list"></div></div></div>
 <div id="storefrontTopBlock" hidden>
     <div class="top-tools">
         <button type="button" class="secondary" id="installBtn" hidden aria-label="تثبيت التطبيق على الجهاز">تثبيت التطبيق</button>
@@ -243,7 +244,7 @@
     };
     document.addEventListener('keydown',e=>{
         if(e.key!=='Escape')return;
-        ['areaGateModal','productModal','cartModal','checkoutModal','successModal'].forEach(id=>{if(el(id).classList.contains('open'))hide(id);});
+        ['mainCategoriesModal','areaGateModal','productModal','cartModal','checkoutModal','successModal'].forEach(id=>{if(el(id).classList.contains('open'))hide(id);});
     });
     const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const cartItems = () => Object.values(state.cart);
@@ -367,6 +368,18 @@
         el('fulfillment').value=mode;
         syncFulfillmentButtons();
         updateFulfillment();
+    }
+    function renderMainCategoryMenu(){
+        const list=el('mainCategoryMenuList');
+        if(!list)return;
+        const entries=[{id:'',name:'كل الأقسام'},...state.categories.map(c=>({id:String(c.id),name:c.name}))];
+        list.innerHTML=entries.map(c=>'<button type="button" data-main-category="'+esc(c.id)+'" class="'+(String(c.id)===state.category?'active':'')+'">'+esc(c.name)+'</button>').join('');
+        list.querySelectorAll('[data-main-category]').forEach(button=>button.addEventListener('click',()=>{
+            state.category=button.dataset.mainCategory;
+            state.search='';el('search').value='';
+            renderCategories();renderProducts();hide('mainCategoriesModal');
+            el('menuMain').scrollIntoView({behavior:'smooth',block:'start'});
+        }));
     }
     function renderCategories(){
         el('categories').innerHTML='<button type="button" class="chip '+(!state.category?'active':'')+'" data-category="" aria-pressed="'+(!state.category)+'">الكل</button>'+
@@ -551,7 +564,7 @@
     el('fulfillment').addEventListener('change',()=>{syncFulfillmentButtons();updateFulfillment();});
     el('fulfillmentPickup').onclick=()=>setFulfillment('pickup');
     el('fulfillmentDelivery').onclick=()=>setFulfillment('delivery');
-    el('headerMenuBtn').onclick=()=>{el('menuMain').scrollIntoView({behavior:'smooth',block:'start'});el('search').focus({preventScroll:true});};
+    el('headerMenuBtn').onclick=()=>{renderMainCategoryMenu();show('mainCategoriesModal');};
     el('headerCartBtn').onclick=()=>{renderCartItems();el('checkoutBtn').disabled=!cartItems().length;show('cartModal');};
     el('headerLangBtn').onclick=()=>{
         const next=document.documentElement.lang==='ar'?'en':'ar';
